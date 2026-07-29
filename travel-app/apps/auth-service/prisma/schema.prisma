@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String         @unique @db.VarChar(255)
+  passwordHash  String         @map("password_hash") @db.VarChar(255)
+  emailVerified Boolean        @default(false) @map("email_verified")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  lastLoginAt   DateTime?      @map("last_login_at")
+  role          AccountRole    @default(USER)
+  status        AccountStatus  @default(ACTIVE)
+  bannedRecords BanHistory[]   @relation("AccountBanHistory")
+  banHistories  BanHistory[]   @relation("AdminBanHistory")
+  loginSessions LoginSession[]
+  oauthAccounts OauthAccount[]
+  refreshTokens RefreshToken[]
+
+  @@map("account")
+}
+
+model RefreshToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId String   @map("account_id") @db.Uuid
+  tokenHash String   @map("token_hash")
+  expiredAt DateTime @map("expired_at")
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_token")
+}
+
+model LoginSession {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId    String   @map("account_id") @db.Uuid
+  deviceName   String?  @map("device_name") @db.VarChar(255)
+  browser      String?  @db.VarChar(255)
+  os           String?  @db.VarChar(255)
+  ipAddress    String?  @map("ip_address") @db.VarChar(100)
+  lastActiveAt DateTime @default(now()) @map("last_active_at")
+  isActive     Boolean  @default(true) @map("is_active")
+  account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("login_session")
+}
+
+model OauthAccount {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId      String       @map("account_id") @db.Uuid
+  providerUserId String       @map("provider_user_id") @db.VarChar(255)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  provider       ProviderType
+  account        Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@map("oauth_account")
+}
+
+model BanHistory {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId String    @map("account_id") @db.Uuid
+  adminId   String    @map("admin_id") @db.Uuid
+  reason    String
+  startAt   DateTime  @default(now()) @map("start_at")
+  endAt     DateTime? @map("end_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  account   Account   @relation("AccountBanHistory", fields: [accountId], references: [id], onDelete: Cascade)
+  admin     Account   @relation("AdminBanHistory", fields: [adminId], references: [id])
+
+  @@map("ban_history")
+}
+
+enum AccountRole {
+  USER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  BANNED
+  LOCKED
+}
+
+enum ProviderType {
+  LOCAL
+  GOOGLE
+  FACEBOOK
+  APPLE
+}

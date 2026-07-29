@@ -108,6 +108,114 @@
         "${workspaceFolder}/ai-service/dist/**/*.(m|c|)js",
         "!**/node_modules/**"
       ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug auth-service with Nx",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "serve", "auth-service"],
+      "env": {
+        "NODE_OPTIONS": "--inspect=9235"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/apps/auth-service/dist/**/*.(m|c|)js",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug user-service with Nx",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "serve", "user-service"],
+      "env": {
+        "NODE_OPTIONS": "--inspect=9236"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/apps/user-service/dist/**/*.(m|c|)js",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug social-service with Nx",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "serve", "social-service"],
+      "env": {
+        "NODE_OPTIONS": "--inspect=9237"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/apps/social-service/dist/**/*.(m|c|)js",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug chat-service with Nx",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "serve", "chat-service"],
+      "env": {
+        "NODE_OPTIONS": "--inspect=9238"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/apps/chat-service/dist/**/*.(m|c|)js",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug ai-service with Nx",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "serve", "ai-service"],
+      "env": {
+        "NODE_OPTIONS": "--inspect=9239"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/apps/ai-service/dist/**/*.(m|c|)js",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug api-gateway with Nx",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "serve", "api-gateway"],
+      "env": {
+        "NODE_OPTIONS": "--inspect=9240"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/apps/api-gateway/dist/**/*.(m|c|)js",
+        "!**/node_modules/**"
+      ]
     }
   ]
 }

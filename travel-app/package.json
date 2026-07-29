@@ -52,13 +52,18 @@
     "chat-service",
     "chat-service-e2e",
     "ai-service",
-    "ai-service-e2e"
+    "ai-service-e2e",
+    "apps/*"
   ],
   "dependencies": {
+    "@as-integrations/express5": "^1.1.2",
+    "@nestjs/apollo": "^13.4.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
+    "@nestjs/graphql": "^13.4.2",
     "@nestjs/platform-express": "^11.0.0",
     "axios": "^1.6.0",
+    "graphql": "^16.14.2",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0"
   }

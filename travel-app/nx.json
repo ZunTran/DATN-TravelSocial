@@ -57,11 +57,16 @@
         "user-service-e2e/**/*",
         "social-service-e2e/**/*",
         "chat-service-e2e/**/*",
-        "ai-service-e2e/**/*"
+        "ai-service-e2e/**/*",
+        "apps/auth-service-e2e/**/*",
+        "apps/user-service-e2e/**/*",
+        "apps/social-service-e2e/**/*",
+        "apps/chat-service-e2e/**/*",
+        "apps/ai-service-e2e/**/*",
+        "apps/api-gateway-e2e/**/*"
       ]
     }
   ],
-  "nxCloudId": "6a4e14107b5b1a0c83bf893f",
   "analytics": false,
   "targetDefaults": {
     "test": {

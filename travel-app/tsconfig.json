@@ -4,43 +4,43 @@
   "files": [],
   "references": [
     {
-      "path": "./api-gateway-e2e"
-    },
-    {
-      "path": "./api-gateway"
-    },
-    {
       "path": "./shared"
     },
     {
-      "path": "./auth-service-e2e"
+      "path": "./apps/auth-service-e2e"
     },
     {
-      "path": "./auth-service"
+      "path": "./apps/auth-service"
     },
     {
-      "path": "./user-service-e2e"
+      "path": "./apps/user-service-e2e"
     },
     {
-      "path": "./user-service"
+      "path": "./apps/user-service"
     },
     {
-      "path": "./social-service-e2e"
+      "path": "./apps/social-service-e2e"
     },
     {
-      "path": "./social-service"
+      "path": "./apps/social-service"
     },
     {
-      "path": "./chat-service-e2e"
+      "path": "./apps/chat-service-e2e"
     },
     {
-      "path": "./chat-service"
+      "path": "./apps/chat-service"
     },
     {
-      "path": "./ai-service-e2e"
+      "path": "./apps/ai-service-e2e"
     },
     {
-      "path": "./ai-service"
+      "path": "./apps/ai-service"
+    },
+    {
+      "path": "./apps/api-gateway-e2e"
+    },
+    {
+      "path": "./apps/api-gateway"
     }
   ]
 }
