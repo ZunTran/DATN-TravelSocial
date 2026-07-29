@@ -11,6 +11,36 @@
     },
     {
       "path": "./shared"
+    },
+    {
+      "path": "./auth-service-e2e"
+    },
+    {
+      "path": "./auth-service"
+    },
+    {
+      "path": "./user-service-e2e"
+    },
+    {
+      "path": "./user-service"
+    },
+    {
+      "path": "./social-service-e2e"
+    },
+    {
+      "path": "./social-service"
+    },
+    {
+      "path": "./chat-service-e2e"
+    },
+    {
+      "path": "./chat-service"
+    },
+    {
+      "path": "./ai-service-e2e"
+    },
+    {
+      "path": "./ai-service"
     }
   ]
 }

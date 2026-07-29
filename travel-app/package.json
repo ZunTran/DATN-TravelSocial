@@ -42,7 +42,17 @@
     "packages/*",
     "api-gateway",
     "api-gateway-e2e",
-    "shared"
+    "shared",
+    "auth-service",
+    "auth-service-e2e",
+    "user-service",
+    "user-service-e2e",
+    "social-service",
+    "social-service-e2e",
+    "chat-service",
+    "chat-service-e2e",
+    "ai-service",
+    "ai-service-e2e"
   ],
   "dependencies": {
     "@nestjs/common": "^11.0.0",
