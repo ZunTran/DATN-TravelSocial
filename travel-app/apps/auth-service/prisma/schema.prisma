@@ -21,6 +21,7 @@ model Account {
   loginSessions LoginSession[]
   oauthAccounts OauthAccount[]
   refreshTokens RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("account")
 }
@@ -77,15 +78,33 @@ model BanHistory {
   @@map("ban_history")
 }
 
+model PasswordResetToken {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId  String   @map("account_id") @db.Uuid
+  tokenHash  String   @map("token_hash")
+  expiredAt  DateTime @map("expired_at") @db.Timestamp()
+  used       Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp()
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_token")
+}
+
 enum AccountRole {
   USER
   ADMIN
+
+  @@map("account_role")
 }
+
 
 enum AccountStatus {
   ACTIVE
   BANNED
   LOCKED
+
+  @@map("account_status")
 }
 
 enum ProviderType {
@@ -93,4 +112,6 @@ enum ProviderType {
   GOOGLE
   FACEBOOK
   APPLE
+
+  @@map("provider_type")
 }

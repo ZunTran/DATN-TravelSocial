@@ -5,6 +5,8 @@ import { LoginInput } from './dto/login.input';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { ForgotPasswordInput } from './dto/forgot-pass.input';
+import { ResetPasswordInput } from './dto/reset-pass.input';
 
 @Resolver()
 export class AuthResolver {
@@ -26,5 +28,20 @@ export class AuthResolver {
   @UseGuards(JwtAuthGuard)
   async getMyProfile(@CurrentUser() user: any) {
     return `Xin chào user ID: ${user.userId} (${user.email})`;
+  }
+
+  // @Query(() => String)
+  // hello(): string {
+  //   return 'Hello from Auth Service';
+  // }
+
+  @Mutation(() => Boolean)
+  async forgotPassword(@Args('input') input: ForgotPasswordInput): Promise<boolean> {
+    return this.authService.forgetPassword(input);
+  }
+
+  @Mutation(() => Boolean)
+  async resetPassword(@Args('input') input: ResetPasswordInput): Promise<boolean> {
+    return this.authService.resetPassword(input);
   }
 }
