@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AccountRole, AccountStatus } from '@prisma/client';
+import { AccountRole, AccountStatus, ProviderType } from '@prisma/client';
 
 @Injectable()
 export class AccountRepository {
@@ -29,7 +29,7 @@ export class AccountRepository {
     });
   }
 
-  //==========|--- FORGOT & RESET PASSWORD ---|===========//
+  //-- Forgot & Reset password --
   async findRecentTokenByAccount(accountId: string) {
     return this.prisma.passwordResetToken.findFirst({
       where: { accountId },
@@ -37,7 +37,7 @@ export class AccountRepository {
     });
   }
 
-  // Vô hiệu hóa all token cũ chưa sử dụng của tài khoản
+  // Vô hiệu hóa all token cũ chưa sử dụng
   async invalidateOldTokens(accountId: string) {
     return this.prisma.passwordResetToken.updateMany({
       where: { accountId, used: false },
@@ -61,7 +61,7 @@ export class AccountRepository {
         used: false,
         expiredAt: { gte: new Date() },
       },
-      include: { account: true }, // Lấy kèm thông tin account để đổi pass
+      include: { account: true }, // Lấy kèm account để đổi pass
     });
   }
 
@@ -76,9 +76,33 @@ export class AccountRepository {
       where: { id: accountId },
       data: { passwordHash },});
   }
+
+  async changePasswordTransaction(accountId:string,passwordHash:string){
+  
+    return this.prisma.$transaction(async(tx)=>{
+      await tx.account.update({
+        where:{id:accountId},
+        data:{
+          passwordHash,
+          tokenVersion:{increment:1}
+        }
+      });
+
+      await tx.refreshToken.updateMany({
+        where:{accountId},
+        data:{revoked:true}
+      });
+
+      await tx.loginSession.updateMany({
+        where:{accountId},
+        data:{isActive:false}
+      });
+      });
+  }
+
   //==========----------------||---------------===========//
 
-  //==========|--- REFRESH TOKEN ---|===========//
+  //-- Refresh token --
   async createRefreshToken(accountId: string, tokenHash: string, expiredAt: Date) {
     return this.prisma.refreshToken.create({
       data: {
@@ -119,6 +143,35 @@ export class AccountRepository {
       data: { lastLoginAt: new Date() },
     });
   }
+
+
+    async rotateRefreshToken(tokenHash:string,newHash:string,expiredAt:Date){
+    return this.prisma.$transaction(async(tx)=>{
+      const token =await tx.refreshToken.findFirst({
+        where:{
+        tokenHash,
+        revoked:false,
+        expiredAt:{gte:new Date()}
+      },
+       include: {account: true,},
+    });
+    if(!token) throw new Error("Invalid token");
+    
+    await tx.refreshToken.update({
+      where:{id:token.id},
+      data:{revoked:true}
+    });
+
+    await tx.refreshToken.create({
+      data:{
+        accountId,
+        tokenHash:newHash,
+        expiredAt
+      }
+      });
+    return token.account;
+    });
+  }
   //==========----------------||---------------===========//
 
   async markEmailVerified(accountId: string) {
@@ -128,7 +181,8 @@ export class AccountRepository {
     });
   }
 
-  //==========|--- SESSION MANAGEMENT---|===========//
+
+  //--Session management--
   async createLoginSession(data: { accountId: string; deviceName?: string; ipAddress?: string }) {
     return this.prisma.loginSession.create({
       data: {
@@ -157,6 +211,61 @@ export class AccountRepository {
 
   // --- OAuth ---
 
-  
+  async findOauthAccount(provider: ProviderType, providerUserId: string) {
+    return this.prisma.oauthAccount.findUnique({
+      where: {
+        provider_providerUserId: {provider,providerUserId,},
+      },
+      include: { account: true },
+    });
+  }
+
+  async createOauthAccount(accountId: string, provider: ProviderType, providerUserId: string) {
+    return this.prisma.oauthAccount.create({
+      data: {
+        accountId,
+        provider,
+        providerUserId,
+      },
+    });
+  }
+
+  async createAccountWithOauth(email: string, provider: ProviderType, providerUserId: string) {
+    return this.prisma.account.create({
+      data: {
+        email,
+        passwordHash: '', // OAuth ko xai pass local
+        role: AccountRole.USER,
+        status: AccountStatus.ACTIVE,
+        emailVerified: true, // OAuth mặc định verify email từ Gg/FB
+        oauthAccounts: {
+          create: {
+            provider,
+            providerUserId
+          },
+        },
+      },
+    });
+  }
+
+  async logoutAllDevices(accountId: string) {
+    await this.prisma.refreshToken.updateMany({
+      where: { accountId, revoked: false },
+      data: { revoked: true },
+    });
+
+    await this.prisma.loginSession.updateMany({
+      where: { accountId, isActive: true },
+      data: { isActive: false },
+    });
+    return true;
+  }
+
+  async increaseTokenVersion(accountId:string){
+  return this.prisma.account.update({
+    where:{id:accountId},
+    data:{tokenVersion:{increment:1}}
+  });
+}
 
 }

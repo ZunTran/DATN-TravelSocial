@@ -9,6 +9,9 @@ import { ForgotPasswordInput } from './dto/forgot-pass.input';
 import { ResetPasswordInput } from './dto/reset-pass.input';
 import { LoginResponse } from './dto/login.response';
 import { RefreshTokenInput } from './dto/refresh-token.input';
+import { ChangePasswordInput } from './dto/change-pass.input';
+import { OauthLoginInput } from './dto/oauth.input';
+import { LoginSession } from './dto/login-session.object';
 
 @Resolver()
 export class AuthResolver {
@@ -31,12 +34,6 @@ export class AuthResolver {
     return this.authService.login(input);
   }
 
-  @Query(() => String)
-  @UseGuards(JwtAuthGuard)
-  async getMyProfile(@CurrentUser() user: any) {
-    return `Xin chào user ID: ${user.userId} (${user.email})`;
-  }
-
   // @Query(() => String)
   // hello(): string {
   //   return 'Hello from Auth Service';
@@ -57,6 +54,13 @@ export class AuthResolver {
     return this.authService.refreshToken(input);
   }
 
+    
+  @Query(() => String)
+  @UseGuards(JwtAuthGuard)
+  async getMyProfile(@CurrentUser() user: any) {
+    return `Xin chào user ID: ${user.userId} (${user.email})`;
+  }
+
   @Mutation(() => Boolean)
   @UseGuards(JwtAuthGuard)
   async logout(@Args('refreshToken') refreshToken: string): Promise<boolean> {
@@ -68,4 +72,47 @@ export class AuthResolver {
   async logoutAll(@CurrentUser() user: any): Promise<boolean> {
     return this.authService.logoutAll(user.userId);
   }
+
+  @Mutation(() => Boolean)
+  @UseGuards(JwtAuthGuard)
+  async changePassword(
+    @CurrentUser() user: any,
+    @Args('input') input: ChangePasswordInput,
+  ): Promise<boolean> {
+    return this.authService.changePassword(user.userId, input);
+  }
+
+  @Mutation(() => Boolean)
+  async verifyEmail(@Args('token') token: string): Promise<boolean> {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Mutation(() => Boolean)
+  async resendVerifyEmail(@Args('email') email: string): Promise<boolean> {
+    return this.authService.resendVerifyEmail(email);
+  }
+
+  @Query(() => [LoginSession])
+  @UseGuards(JwtAuthGuard)
+  async getActiveSessions(@CurrentUser() user: any) {
+    return this.authService.getActiveSessions(user.userId);
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(JwtAuthGuard)
+  async terminateSession(
+    @CurrentUser() user: any,
+    @Args('sessionId') sessionId: string,
+  ): Promise<boolean> {
+    return this.authService.terminateSession(sessionId, user.userId);
+  }
+
+  @Mutation(() => LoginResponse)
+  async oauthLogin(@Args('input') input: OauthLoginInput): Promise<LoginResponse> {
+    return this.authService.oauthLogin(input);
+  }
+
+
+
+
 }
