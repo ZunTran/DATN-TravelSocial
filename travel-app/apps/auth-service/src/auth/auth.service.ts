@@ -23,14 +23,10 @@ export class AuthService {
     if (existing) throw new BadRequestException('Email này đã tồn tại!');
     
     const passwordHash = await bcrypt.hash(password, 10);
-    const newAccount = await this.accountRepository.createAccount({
-      email,
-      passwordHash,
-    });
+    await this.accountRepository.createAccount({email,passwordHash,});
 
     return {
-      message: 'Đăng ký tài khoản thành công!',
-      account: newAccount,
+      message: 'Đăng ký tài khoản thành công! Hãy đăng nhập để tiếp tục.',
     };
   }
 
@@ -42,6 +38,7 @@ export class AuthService {
     const isMatch = await bcrypt.compare(password, account.passwordHash);
     if (!isMatch) throw new UnauthorizedException('Email hoặc mật khẩu không chính xác!');
 
+    await this.accountRepository.updateLastLogin(account.id);
     const payload = { sub: account.id, email: account.email, 
       role: account.role 
     };
@@ -55,13 +52,8 @@ export class AuthService {
 
     return {
       accessToken,
-      refreshToken: refreshToken,
-      account: {
-    id: account.id,
-    email: account.email,
-    role: account.role,
-    },
-  };
+      refreshToken,
+    };
   }
 
   async forgetPassword(input: ForgotPasswordInput):Promise<boolean> {

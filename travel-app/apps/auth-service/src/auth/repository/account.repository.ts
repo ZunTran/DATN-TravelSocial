@@ -30,7 +30,6 @@ export class AccountRepository {
   }
 
   //==========|--- FORGOT & RESET PASSWORD ---|===========//
-
   async findRecentTokenByAccount(accountId: string) {
     return this.prisma.passwordResetToken.findFirst({
       where: { accountId },
@@ -113,6 +112,51 @@ export class AccountRepository {
       data: { revoked: true },
     });
   }
+
+  async updateLastLogin(accountId: string) {
+    return this.prisma.account.update({
+      where: { id: accountId },
+      data: { lastLoginAt: new Date() },
+    });
+  }
   //==========----------------||---------------===========//
+
+  async markEmailVerified(accountId: string) {
+    return this.prisma.account.update({
+      where: { id: accountId },
+      data: { emailVerified: true },
+    });
+  }
+
+  //==========|--- SESSION MANAGEMENT---|===========//
+  async createLoginSession(data: { accountId: string; deviceName?: string; ipAddress?: string }) {
+    return this.prisma.loginSession.create({
+      data: {
+        accountId: data.accountId,
+        deviceName: data.deviceName || 'Unknown Device',
+        ipAddress: data.ipAddress || '127.0.0.1',
+        isActive: true,
+      },
+    });
+  }
+
+  async getActiveSessions(accountId: string) {
+    return this.prisma.loginSession.findMany({
+      where: { accountId, isActive: true },
+      orderBy: { lastActiveAt: 'desc' },
+    });
+  }
+
+  async terminateSession(sessionId: string, accountId: string) {
+    return this.prisma.loginSession.updateMany({
+      where: { id: sessionId, accountId },
+      data: { isActive: false },
+    });
+  }
+
+
+  // --- OAuth ---
+
+  
 
 }

@@ -7,6 +7,8 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ForgotPasswordInput } from './dto/forgot-pass.input';
 import { ResetPasswordInput } from './dto/reset-pass.input';
+import { LoginResponse } from './dto/login.response';
+import { RefreshTokenInput } from './dto/refresh-token.input';
 
 @Resolver()
 export class AuthResolver {
@@ -18,10 +20,15 @@ export class AuthResolver {
     return JSON.stringify(res);
   }
 
-  @Mutation(() => String)
-  async login(@Args('input') input: LoginInput) {
-    const res = await this.authService.login(input);
-    return JSON.stringify(res);
+  // @Mutation(() => String)
+  // async login(@Args('input') input: LoginInput) {
+  //   const res = await this.authService.login(input);
+  //   return JSON.stringify(res);
+  // }
+
+  @Mutation(() => LoginResponse)
+  async login(@Args('input') input: LoginInput): Promise<LoginResponse> {
+    return this.authService.login(input);
   }
 
   @Query(() => String)
@@ -43,5 +50,22 @@ export class AuthResolver {
   @Mutation(() => Boolean)
   async resetPassword(@Args('input') input: ResetPasswordInput): Promise<boolean> {
     return this.authService.resetPassword(input);
+  }
+
+  @Mutation(() => LoginResponse)
+  async refreshToken(@Args('input') input: RefreshTokenInput): Promise<LoginResponse> {
+    return this.authService.refreshToken(input);
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(JwtAuthGuard)
+  async logout(@Args('refreshToken') refreshToken: string): Promise<boolean> {
+    return this.authService.logout(refreshToken);
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(JwtAuthGuard)
+  async logoutAll(@CurrentUser() user: any): Promise<boolean> {
+    return this.authService.logoutAll(user.userId);
   }
 }
