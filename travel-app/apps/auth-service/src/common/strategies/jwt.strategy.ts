@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AccountRepository } from '../../auth/repository/account.repository';
+import { JwtType } from '../../auth/enums/jwt-type.enum';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -15,16 +16,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string; role: string; tokenVersion: number; sessionId?: string }) {
+  async validate(payload: { sub: string; email: string; role: string; tokenVersion: number; sessionId?: string ; type: JwtType}) {
     const account = await this.accountRepository.findById(payload.sub);
 
-    if (!account || account.status === 'BANNED' || account.status === 'LOCKED') {
+    if (!account || account.status === 'BANNED' || account.status === 'LOCKED') 
       throw new UnauthorizedException('Tài khoản không tồn tại hoặc đã bị khóa!');
-    }
     
-    if (account.tokenVersion !== payload.tokenVersion) {
+    if (payload.type !== JwtType.ACCESS) 
+      throw new UnauthorizedException('Access token không hợp lệ!');
+ 
+    if (account.tokenVersion !== payload.tokenVersion)
       throw new UnauthorizedException('Phiên đăng nhập đã hết hiệu lực do có thay đổi bảo mật!');
-    }
 
     return { 
       userId: account.id,

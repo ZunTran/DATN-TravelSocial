@@ -2,7 +2,13 @@ import { Injectable, BadRequestException, UnauthorizedException, ForbiddenExcept
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import { AccountStatus, Account } from '@prisma/client';
+import { JwtType } from './enums/jwt-type.enum';
 import { AccountRepository } from './repository/account.repository';
+import { RefreshTokenRepository } from './repository/refresh-token.repository';
+import { PasswordResetRepository } from './repository/password-reset.repository';
+import { LoginSessionRepository } from './repository/login-session.repository';
+import { AuthTransactionRepository } from './repository/auth-transaction.repository';
 import { RegisterInput } from './dto/register.input';
 import { LoginInput } from './dto/login.input';
 import { ForgotPasswordInput } from './dto/forgot-pass.input';
@@ -10,83 +16,96 @@ import { ResetPasswordInput } from './dto/reset-pass.input';
 import { RefreshTokenInput } from './dto/refresh-token.input';
 import { ChangePasswordInput } from './dto/change-pass.input';
 import { OauthLoginInput } from './dto/oauth.input';
-import { log } from 'console';
-import { AccountStatus } from '@prisma/client';
-
+import { ACCESS_TOKEN_EXPIRE, REFRESH_TOKEN_EXPIRE_MS, RESET_TOKEN_EXPIRE_MS, RESET_PASSWORD_INTERVAL_MINUTES } from './auth.constants';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly accountRepository: AccountRepository,
+    private readonly accountRepo: AccountRepository,
+    private readonly refreshTokenRepo: RefreshTokenRepository,
+    private readonly passwordResetRepo: PasswordResetRepository,
+    private readonly loginSessionRepo: LoginSessionRepository,
+    private readonly authTransactionRepo: AuthTransactionRepository,
     private readonly jwtService: JwtService,
   ) {}
 
+  private generateAccessToken(account: Account) {
+    return this.jwtService.sign(
+      {
+        sub: account.id,
+        email: account.email,
+        role: account.role,
+        tokenVersion: account.tokenVersion,
+        type: JwtType.ACCESS,
+      },
+      { expiresIn: ACCESS_TOKEN_EXPIRE }
+    );
+  }
+
+  private checkAccountStatus(account: Account) {
+    if (account.status === AccountStatus.BANNED) 
+      throw new ForbiddenException('Tài khoản đã bị cấm (banned)!');
+    if (account.status === AccountStatus.LOCKED) 
+      throw new ForbiddenException('Tài khoản đang bị khóa!');
+  }
+
   async register(input: RegisterInput) {
     const { email, password } = input;
-    const existing = await this.accountRepository.findByEmail(email);
+    const existing = await this.accountRepo.findByEmail(email);
     if (existing) throw new BadRequestException('Email này đã tồn tại!');
     
     const passwordHash = await bcrypt.hash(password, 10);
-    await this.accountRepository.createAccount({email,passwordHash,});
+    await this.accountRepo.createAccount({ email, passwordHash });
 
-    return {
-      message: 'Đăng ký tài khoản thành công! Hãy đăng nhập để tiếp tục.',
-    };
+    return { message: 'Đăng ký tài khoản thành công! Hãy đăng nhập để tiếp tục.' };
   }
 
-  async login(input: LoginInput) {
+  async login(input: LoginInput, meta?: { deviceName?: string; ipAddress?: string }) {
     const { email, password } = input;
-    const account = await this.accountRepository.findByEmail(email);
-    if (!account) throw new UnauthorizedException('Email hoặc mật khẩu không chính xác!');
+    const account = await this.accountRepo.findByEmail(email);
+    if (!account || !account.passwordHash) throw new UnauthorizedException('Email hoặc mật khẩu không chính xác!');
     
     const isMatch = await bcrypt.compare(password, account.passwordHash);
     if (!isMatch) throw new UnauthorizedException('Email hoặc mật khẩu không chính xác!');
 
-    if (account.status === AccountStatus.BANNED)
-    throw new ForbiddenException("Account has been banned");
-
-    if (account.status === AccountStatus.LOCKED)
-    throw new ForbiddenException("Account is locked");
-
-    await this.accountRepository.updateLastLogin(account.id);
-    const payload = { 
-      sub: account.id, 
-      email: account.email, 
-      role: account.role,
-      tokenVersion: account.tokenVersion
-    };
-    const accessToken = this.jwtService.sign(payload,{ expiresIn: '15m'});
+    this.checkAccountStatus(account);
 
     const refreshToken = crypto.randomBytes(40).toString('hex');
     const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-    const expiredAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    
-    await this.accountRepository.createRefreshToken(account.id, refreshTokenHash, expiredAt);
+    const expiredAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRE_MS);
 
-    return {
-      accessToken,
-      refreshToken,
-    };
+    await this.authTransactionRepo.loginTransaction(
+      account.id, 
+      refreshTokenHash, 
+      expiredAt, 
+      meta?.deviceName, 
+      meta?.ipAddress
+    );
+
+    const accessToken = this.generateAccessToken(account);
+
+    return { accessToken, refreshToken };
   }
 
-  async forgetPassword(input: ForgotPasswordInput):Promise<boolean> {
+  async forgetPassword(input: ForgotPasswordInput): Promise<boolean> {
     const { email } = input;
-    const account = await this.accountRepository.findByEmail(email);
+    const account = await this.accountRepo.findByEmail(email);
     if (!account) throw new BadRequestException('Email không tồn tại!');
     
-    const recentToken = await this.accountRepository.findRecentTokenByAccount(account.id);
+    const recentToken = await this.passwordResetRepo.findRecentTokenByAccount(account.id);
     if (recentToken) {
       const diffMinutes = (Date.now() - new Date(recentToken.createdAt).getTime()) / 1000 / 60;
-      if (diffMinutes < 2) {
-        throw new BadRequestException('Vui lòng đợi 2 phút trước khi yêu cầu gửi lại mã mới!');
+      if (diffMinutes < RESET_PASSWORD_INTERVAL_MINUTES) {
+        throw new BadRequestException(`Vui lòng đợi ${RESET_PASSWORD_INTERVAL_MINUTES} phút trước khi yêu cầu gửi lại mã mới!`);
       }
     }
-    await this.accountRepository.invalidateOldTokens(account.id);
-    const token= crypto.randomBytes(32).toString('hex');
+    
+    await this.passwordResetRepo.invalidateOldTokens(account.id);
+    const token = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    const expiredAt = new Date(Date.now() + 15 * 60 * 1000);
+    const expiredAt = new Date(Date.now() + RESET_TOKEN_EXPIRE_MS);
 
-    await this.accountRepository.createResetToken(account.id, hashedToken, expiredAt);
+    await this.passwordResetRepo.createResetToken(account.id, hashedToken, expiredAt);
     console.log(`[DEV ONLY] Reset Password Token cho ${email}: ${token}`);
 
     return true;
@@ -94,19 +113,13 @@ export class AuthService {
 
   async resetPassword(input: ResetPasswordInput): Promise<boolean> {
     const { token, password } = input;
-    const hashedToken = crypto
-    .createHash('sha256')
-    .update(token)
-    .digest('hex');
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    const resetToken = await this.accountRepository.findValidToken(hashedToken);
-    if (!resetToken) {
-      throw new BadRequestException('Token đặt lại mật khẩu không hợp lệ hoặc hết hạn!');
-    }
+    const resetToken = await this.passwordResetRepo.findValidToken(hashedToken);
+    if (!resetToken) throw new BadRequestException('Token đặt lại mật khẩu không hợp lệ hoặc hết hạn!');
 
-    const passwordHash = await bcrypt.hash(password,10);
-    await this.accountRepository.updatePassword(resetToken.accountId, passwordHash);
-    await this.accountRepository.markTokenAsUsed(resetToken.id);
+    const passwordHash = await bcrypt.hash(password, 10);
+    await this.authTransactionRepo.resetPasswordTransaction(resetToken.accountId, passwordHash, resetToken.id);
 
     return true;
   }
@@ -115,69 +128,51 @@ export class AuthService {
     const { refreshToken } = input;
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
-    // const token = await this.accountRepository.findRefreshToken(tokenHash);
-    // if (!token) 
-    //   throw new UnauthorizedException('Refresh token không hợp lệ hoặc hết hạn!');
-    
-    // const account = token.account;
-    // await this.accountRepository.revokeRefreshToken(tokenHash);
-
-    // const payload = { sub: account.id, email: account.email, role: account.role };
-    // const newAccessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-
     const newRefreshToken = crypto.randomBytes(40).toString('hex');
     const newRefreshTokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
-    const expiredAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiredAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRE_MS);
 
-    const account =await this.accountRepository.rotateRefreshToken(tokenHash,newRefreshTokenHash,expiredAt);
-    await this.accountRepository.createRefreshToken(account.id, newRefreshTokenHash, expiredAt);
+    const account = await this.authTransactionRepo.rotateRefreshTokenTransaction(tokenHash, newRefreshTokenHash, expiredAt);
+    const accessToken = this.generateAccessToken(account);
 
-     const payload = {
-        sub: account.id,
-        email: account.email,
-        role: account.role,
-        tokenVersion: account.tokenVersion,
-    };
-
-    const accessToken = this.jwtService.sign(payload, {expiresIn: '15m',});
-
-    return {
-      accessToken,
-      refreshToken: newRefreshToken,
-    };
+    return { accessToken, refreshToken: newRefreshToken };
   }
 
   async logout(refreshToken: string): Promise<boolean> {
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-    await this.accountRepository.revokeRefreshToken(tokenHash);
+    await this.refreshTokenRepo.revokeRefreshToken(tokenHash);
     return true;
   }
 
   async logoutAll(accountId: string): Promise<boolean> {
-    await this.accountRepository.logoutAllDevices(accountId);
-    await this.accountRepository.increaseTokenVersion(accountId);
+    await this.authTransactionRepo.logoutAllTransaction(accountId);
     return true;
   }
 
   async changePassword(accountId: string, input: ChangePasswordInput): Promise<boolean> {
     const { oldPassword, newPassword } = input;
-    const account = await this.accountRepository.findById(accountId);
-    if(!account) throw new BadRequestException('Tài khoản không tồn tại!');
+    const account = await this.accountRepo.findById(accountId);
+    if (!account) throw new BadRequestException('Tài khoản không tồn tại!');
     
+    if (!account.passwordHash) {
+      throw new BadRequestException('Tài khoản đăng nhập bằng mạng xã hội không hỗ trợ đổi mật khẩu!');
+    }
+
     const isMatch = await bcrypt.compare(oldPassword, account.passwordHash);
     if (!isMatch) throw new BadRequestException('Mật khẩu cũ không chính xác!');
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
-    await this.accountRepository.changePasswordTransaction(accountId,passwordHash);
+    await this.authTransactionRepo.changePasswordTransaction(accountId, passwordHash);
 
     return true;
   }
 
-  //  Verify Email 
   async verifyEmail(token: string): Promise<boolean> {
     try {
       const payload = this.jwtService.verify(token);
-      await this.accountRepository.markEmailVerified(payload.sub);
+      if (payload.type !== JwtType.VERIFY_EMAIL) throw new BadRequestException('Token xác thực email không hợp lệ!');
+
+      await this.accountRepo.markEmailVerified(payload.sub);
       return true;
     } catch {
       throw new BadRequestException('Link xác thực không hợp lệ hoặc đã hết hạn!');
@@ -185,55 +180,46 @@ export class AuthService {
   }
 
   async resendVerifyEmail(email: string): Promise<boolean> {
-    const account = await this.accountRepository.findByEmail(email);
+    const account = await this.accountRepo.findByEmail(email);
     if (!account) throw new BadRequestException('Email ko khả dụng');
 
-    const verifyToken = this.jwtService.sign({ sub: account.id, email }, { expiresIn: '1d' });
+    const verifyToken = this.jwtService.sign({ 
+      sub: account.id, 
+      email,
+      type: JwtType.VERIFY_EMAIL, 
+    }, { expiresIn: '1d' });
     console.log(`[DEV ONLY] Link Verify Email cho ${email}: https://app.com/verify?token=${verifyToken}`);
     return true;
   }
 
-  //  Session Management
   async getActiveSessions(accountId: string) {
-    return this.accountRepository.getActiveSessions(accountId);
+    return this.loginSessionRepo.getActiveSessions(accountId);
   }
 
   async terminateSession(sessionId: string, accountId: string): Promise<boolean> {
-    await this.accountRepository.terminateSession(sessionId, accountId);
+    await this.loginSessionRepo.terminateSession(sessionId, accountId);
     return true;
   }
 
-  //  OAuth Login
-  async oauthLogin(input: OauthLoginInput) {
+  async oauthLogin(input: OauthLoginInput, meta?: { deviceName?: string; ipAddress?: string }) {
     const { provider, providerUserId, email } = input;
-
-    let oauthRecord = await this.accountRepository.findOauthAccount(provider, providerUserId);
-    let account;
-
-    if (oauthRecord) {
-      account = oauthRecord.account;
-    } else {
-      account = await this.accountRepository.findByEmail(email);
-      if (account) {
-        await this.accountRepository.createOauthAccount(account.id, provider, providerUserId);
-      } else {
-        // Chưa có tài khoản nào -> Tạo mới account kèm OAuth
-        account = await this.accountRepository.createAccountWithOauth(email, provider, providerUserId);
-      }
-    }
-
-    const payload = { sub: account.id, email: account.email, role: account.role };
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
 
     const refreshTokenRaw = crypto.randomBytes(40).toString('hex');
     const refreshTokenHash = crypto.createHash('sha256').update(refreshTokenRaw).digest('hex');
-    const expiredAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiredAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRE_MS);
 
-    await this.accountRepository.createRefreshToken(account.id, refreshTokenHash, expiredAt);
+    const account = await this.authTransactionRepo.oauthLoginTransaction(
+      email, 
+      provider, 
+      providerUserId, 
+      refreshTokenHash, 
+      expiredAt, 
+      meta?.deviceName, 
+      meta?.ipAddress
+    );
 
-    return {
-      accessToken,
-      refreshToken: refreshTokenRaw,
-    };
+    this.checkAccountStatus(account);
+    const accessToken = this.generateAccessToken(account);
+    return { accessToken, refreshToken: refreshTokenRaw };
   }
 }

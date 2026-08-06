@@ -1,4 +1,4 @@
-import { Resolver, Mutation, Args, Query } from '@nestjs/graphql';
+import { Resolver, Mutation, Args, Query,Context } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { RegisterInput } from './dto/register.input';
 import { LoginInput } from './dto/login.input';
@@ -23,15 +23,16 @@ export class AuthResolver {
     return JSON.stringify(res);
   }
 
-  // @Mutation(() => String)
-  // async login(@Args('input') input: LoginInput) {
-  //   const res = await this.authService.login(input);
-  //   return JSON.stringify(res);
-  // }
 
   @Mutation(() => LoginResponse)
-  async login(@Args('input') input: LoginInput): Promise<LoginResponse> {
-    return this.authService.login(input);
+  async login(@Args('input') input: LoginInput,@Context() context: any): Promise<LoginResponse> {
+    const req = context.req;
+    
+    const meta = {
+      ipAddress: req?.ip || req?.connection?.remoteAddress || '127.0.0.1',
+      deviceName: req?.headers['user-agent'] || 'Unknown Device',
+    };
+    return this.authService.login(input,meta);
   }
 
   // @Query(() => String)
@@ -108,8 +109,14 @@ export class AuthResolver {
   }
 
   @Mutation(() => LoginResponse)
-  async oauthLogin(@Args('input') input: OauthLoginInput): Promise<LoginResponse> {
-    return this.authService.oauthLogin(input);
+  async oauthLogin(@Args('input') input: OauthLoginInput,@Context() context: any): Promise<LoginResponse> {
+    const req = context.req;
+    
+    const meta = {
+      ipAddress: req?.ip || req?.connection?.remoteAddress || '127.0.0.1',
+      deviceName: req?.headers['user-agent'] || 'OAuth Device',
+    };
+    return this.authService.oauthLogin(input,meta);
   }
 
 
