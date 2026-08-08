@@ -41,19 +41,23 @@ model RefreshToken {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  loginSession LoginSession?
   @@map("refresh_token")
 }
 
 model LoginSession {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   accountId    String   @map("account_id") @db.Uuid
+  refreshTokenId String?       @unique @map("refresh_token_id") @db.Uuid
   deviceName   String?  @map("device_name") @db.VarChar(255)
   browser      String?  @db.VarChar(255)
   os           String?  @db.VarChar(255)
   ipAddress    String?  @map("ip_address") @db.VarChar(100)
   lastActiveAt DateTime @default(now()) @map("last_active_at") @db.Timestamp(6)
   isActive     Boolean? @default(true) @map("is_active")
+
   account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  refreshToken RefreshToken? @relation(fields: [refreshTokenId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("login_session")
 }

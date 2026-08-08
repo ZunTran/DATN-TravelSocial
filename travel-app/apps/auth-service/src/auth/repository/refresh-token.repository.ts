@@ -14,7 +14,9 @@ export class RefreshTokenRepository {
   async findRefreshToken(tokenHash: string) {
     return this.prisma.refreshToken.findFirst({
       where: { tokenHash, revoked: false, expiredAt: { gte: new Date() } },
-      include: { account: true },
+      include: { 
+        account: true,
+       },
     });
   }
 

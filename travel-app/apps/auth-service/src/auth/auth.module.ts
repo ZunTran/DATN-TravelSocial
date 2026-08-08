@@ -11,6 +11,7 @@ import { OauthRepository } from './repository/oauth.repository';
 import { LoginSessionRepository } from './repository/login-session.repository';
 import { PasswordResetRepository } from './repository/password-reset.repository';
 import { RefreshTokenRepository } from './repository/refresh-token.repository';
+import { AuthTransactionRepository } from './repository/auth-transaction.repository';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { RefreshTokenRepository } from './repository/refresh-token.repository';
     PasswordResetRepository,
     LoginSessionRepository,
     OauthRepository,
+    AuthTransactionRepository,
   ],
   exports: [AuthService],
 })

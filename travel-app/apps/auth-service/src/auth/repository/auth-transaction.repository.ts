@@ -24,6 +24,7 @@ export class AuthTransactionRepository {
           deviceName: deviceName || 'Unknown Device',
           ipAddress: ipAddress || '127.0.0.1',
           isActive: true,
+          lastActiveAt: new Date(),
         },
       });
 
@@ -52,6 +53,30 @@ export class AuthTransactionRepository {
         where: { accountId, isActive: true },
         data: { isActive: false },
       });
+    });
+  }
+
+  async logoutTransaction(tokenHash: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const token = await tx.refreshToken.findFirst({
+        where: { tokenHash },
+      });
+
+      if (!token) throw new Error('Refresh TOKEN NOT FOUND!!!');
+
+      await tx.refreshToken.update({
+        where: { id: token.id },
+        data: { revoked: true },
+      });
+
+     await tx.loginSession.updateMany({
+        where: { refreshTokenId: token.id }, 
+        data: { 
+          isActive: false,
+          lastActiveAt: new Date(), },
+      });
+
+      return true;
     });
   }
 
@@ -95,22 +120,34 @@ export class AuthTransactionRepository {
 
   async rotateRefreshTokenTransaction(tokenHash: string, newRefreshTokenHash: string, expiredAt: Date) {
     return this.prisma.$transaction(async (tx) => {
-      const token = await tx.refreshToken.findFirst({
+      const oldToken = await tx.refreshToken.findFirst({
         where: { tokenHash, revoked: false, expiredAt: { gte: new Date() } },
-        include: { account: true },
+        include: { account: true,
+        loginSession: true,
+        },
       });
-      if (!token) throw new Error("Invalid token");
+      if (!oldToken) throw new Error("Invalid token");
 
       await tx.refreshToken.update({
-        where: { id: token.id },
+        where: { id: oldToken.id },
         data: { revoked: true },
       });
 
-      await tx.refreshToken.create({
-        data: { accountId: token.accountId, tokenHash: newRefreshTokenHash, expiredAt },
+      const newToken =await tx.refreshToken.create({
+        data: { accountId: oldToken.accountId, tokenHash: newRefreshTokenHash, expiredAt },
       });
 
-      return token.account;
+      if (oldToken.loginSession) {
+      await tx.loginSession.update({
+        where: {id: oldToken.loginSession.id,},
+        data: {
+          refreshTokenId: newToken.id,
+          lastActiveAt: new Date(),
+        },
+      });
+    }
+
+      return oldToken.account;
     });
   }
 

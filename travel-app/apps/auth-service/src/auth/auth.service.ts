@@ -140,7 +140,7 @@ export class AuthService {
 
   async logout(refreshToken: string): Promise<boolean> {
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-    await this.refreshTokenRepo.revokeRefreshToken(tokenHash);
+    await this.authTransactionRepo.logoutTransaction(tokenHash);
     return true;
   }
 

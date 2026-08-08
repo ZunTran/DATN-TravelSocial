@@ -17,14 +17,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: { sub: string; email: string; role: string; tokenVersion: number; sessionId?: string ; type: JwtType}) {
+    if (payload.type !== JwtType.ACCESS) 
+      throw new UnauthorizedException('Access token không hợp lệ!');
+ 
     const account = await this.accountRepository.findById(payload.sub);
 
     if (!account || account.status === 'BANNED' || account.status === 'LOCKED') 
       throw new UnauthorizedException('Tài khoản không tồn tại hoặc đã bị khóa!');
     
-    if (payload.type !== JwtType.ACCESS) 
-      throw new UnauthorizedException('Access token không hợp lệ!');
- 
     if (account.tokenVersion !== payload.tokenVersion)
       throw new UnauthorizedException('Phiên đăng nhập đã hết hiệu lực do có thay đổi bảo mật!');
 
