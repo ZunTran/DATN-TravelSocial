@@ -84,7 +84,6 @@
     }
   },
   "dependencies": {
-    "@apollo/server-plugin-landing-page-graphql-playground": "^4.0.1",
     "@nestjs/apollo": "^13.4.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.4",

@@ -608,3 +608,4 @@ enum user_privacy {
   PUBLIC
   PRIVATE
 }
+

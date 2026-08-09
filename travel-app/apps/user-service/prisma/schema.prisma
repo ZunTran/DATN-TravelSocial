@@ -1,0 +1,593 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model user_profile {
+  id                     String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id             String          @unique(map: "idx_user_profile_account_id") @db.Uuid
+  username               String          @unique @db.VarChar(50)
+  display_name           String          @db.VarChar(100)
+  avatar_url             String?
+  cover_url              String?
+  bio                    String?
+  gender                 gender_type?
+  birthday               DateTime?       @db.Date
+  location               String?         @db.VarChar(255)
+  privacy                user_privacy    @default(PUBLIC)
+  created_at             DateTime        @default(now()) @db.Timestamp(6)
+  updated_at             DateTime        @default(now()) @updatedAt @db.Timestamp(6)
+  blocked_users          block[]         @relation("user_blocked_by")
+  blockers               block[]         @relation("user_blocking")
+  following              follow[]        @relation("user_followers")
+  followers              follow[]        @relation("user_following")
+  notifications_received notification[]  @relation("notification_receiver")
+  notifications_sent     notification[]  @relation("notification_sender")
+  user_interests         user_interest[]
+  reports_received       user_report[]   @relation("user_reported")
+  reports_made           user_report[]   @relation("user_reporter")
+
+  @@index([username], map: "idx_user_profile_username")
+  @@map("user_profile")
+}
+
+model interest_tag {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String          @unique @db.VarChar(100)
+  icon_url       String?
+  created_at     DateTime        @default(now()) @db.Timestamp(6)
+  user_interests user_interest[]
+
+  @@map("interest_tag")
+}
+
+model user_interest {
+  user_id      String       @db.Uuid
+  interest_id  String       @db.Uuid
+  created_at   DateTime     @default(now()) @db.Timestamp(6)
+  interest_tag interest_tag @relation(fields: [interest_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_profile user_profile @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, interest_id])
+  @@index([interest_id], map: "idx_interest_user")
+  @@map("user_interest")
+}
+
+model follow {
+  follower_id  String       @db.Uuid
+  following_id String       @db.Uuid
+  created_at   DateTime     @default(now()) @db.Timestamp(6)
+  follower     user_profile @relation("user_followers", fields: [follower_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  following    user_profile @relation("user_following", fields: [following_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([follower_id, following_id])
+  @@index([follower_id], map: "idx_follow_follower")
+  @@index([following_id], map: "idx_follow_following")
+  @@index([following_id, follower_id], map: "idx_follow_graph")
+  @@map("follow")
+}
+
+model block {
+  blocker_id String       @db.Uuid
+  blocked_id String       @db.Uuid
+  reason     String?
+  created_at DateTime     @default(now()) @db.Timestamp(6)
+  blocked    user_profile @relation("user_blocked_by", fields: [blocked_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  blocker    user_profile @relation("user_blocking", fields: [blocker_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([blocker_id, blocked_id])
+  @@index([blocker_id], map: "idx_block_blocker")
+  @@map("block")
+}
+
+model notification {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  receiver_id String            @db.Uuid
+  sender_id   String?           @db.Uuid
+  type        notification_type
+  message     String
+  data        Json?
+  is_read     Boolean?          @default(false)
+  created_at  DateTime          @default(now()) @db.Timestamp(6)
+  receiver    user_profile      @relation("notification_receiver", fields: [receiver_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sender      user_profile?     @relation("notification_sender", fields: [sender_id], references: [id], onUpdate: NoAction)
+
+  @@index([receiver_id, is_read, created_at(sort: Desc)], map: "idx_notification_receiver_read_time")
+  @@map("notification")
+}
+
+model user_report {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporter_id      String       @db.Uuid
+  reported_user_id String       @db.Uuid
+  reason           String
+  status           String       @default("PENDING") @db.VarChar(50)
+  handled_by       String?      @db.Uuid
+  handled_at       DateTime?    @db.Timestamp(6)
+  created_at       DateTime     @default(now()) @db.Timestamp(6)
+  reported_user    user_profile @relation("user_reported", fields: [reported_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reporter         user_profile @relation("user_reporter", fields: [reporter_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([reporter_id, reported_user_id], map: "idx_unique_user_report", where: raw("((status)::text = 'PENDING'::text)"))
+  @@index([status], map: "idx_user_report_status")
+  @@map("user_report")
+}
+
+model account {
+  id                                          String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                                       String                 @unique @db.VarChar(255)
+  password_hash                               String                 @db.VarChar(255)
+  role                                        account_role
+  status                                      account_status
+  email_verified                              Boolean?               @default(false)
+  created_at                                  DateTime               @default(now()) @db.Timestamp(6)
+  updated_at                                  DateTime?              @default(now()) @db.Timestamp(6)
+  last_login_at                               DateTime?              @db.Timestamp(6)
+  tokenVersion                                Int                    @default(0)
+  ban_history_ban_history_account_idToaccount ban_history[]          @relation("ban_history_account_idToaccount")
+  ban_history_ban_history_admin_idToaccount   ban_history[]          @relation("ban_history_admin_idToaccount")
+  login_session                               login_session[]
+  oauth_account                               oauth_account[]
+  password_reset_token                        password_reset_token[]
+  refresh_token                               refresh_token[]
+
+  @@index([email], map: "idx_account_email")
+  @@index([role], map: "idx_account_role")
+  @@index([status], map: "idx_account_status")
+  @@index([tokenVersion], map: "idx_account_token_version")
+}
+
+model attachment {
+  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  message_id String          @db.Uuid
+  url        String
+  file_type  attachment_type
+  file_size  BigInt?
+  created_at DateTime        @default(now()) @db.Timestamp(6)
+  message    message         @relation(fields: [message_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([message_id], map: "idx_attachment_message")
+}
+
+model ban_history {
+  id                                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id                              String    @db.Uuid
+  admin_id                                String    @db.Uuid
+  reason                                  String
+  start_at                                DateTime  @default(now()) @db.Timestamp(6)
+  end_at                                  DateTime? @db.Timestamp(6)
+  created_at                              DateTime  @default(now()) @db.Timestamp(6)
+  account_ban_history_account_idToaccount account   @relation("ban_history_account_idToaccount", fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  account_ban_history_admin_idToaccount   account   @relation("ban_history_admin_idToaccount", fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model category {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String  @unique @db.VarChar(100)
+  description String?
+  post        post[]
+}
+
+model comment {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  post_id           String    @db.Uuid
+  author_id         String    @db.Uuid
+  parent_comment_id String?   @db.Uuid
+  content           String
+  created_at        DateTime  @default(now()) @db.Timestamp(6)
+  comment           comment?  @relation("commentTocomment", fields: [parent_comment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  other_comment     comment[] @relation("commentTocomment")
+  post              post      @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([parent_comment_id], map: "idx_comment_parent")
+  @@index([post_id, created_at], map: "idx_comment_post_time")
+}
+
+model conversation {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type                conversation_type     @default(ONE_TO_ONE)
+  created_at          DateTime              @default(now()) @db.Timestamp(6)
+  updated_at          DateTime              @default(now()) @db.Timestamp(6)
+  conversation_member conversation_member[]
+  message             message[]
+}
+
+model conversation_member {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversation_id String       @db.Uuid
+  user_id         String       @db.Uuid
+  joined_at       DateTime     @default(now()) @db.Timestamp(6)
+  last_read_at    DateTime?    @db.Timestamp(6)
+  conversation    conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([conversation_id, user_id], map: "idx_unique_dm")
+  @@index([conversation_id], map: "idx_member_conversation")
+  @@index([user_id], map: "idx_member_user")
+}
+
+model hashtag {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String         @unique @db.VarChar(100)
+  post_hashtag post_hashtag[]
+
+  @@index([name], map: "idx_hashtag_name")
+}
+
+model like {
+  post_id    String   @db.Uuid
+  user_id    String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  post       post     @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([post_id, user_id])
+  @@index([user_id], map: "idx_like_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model location {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(255)
+  address   String?
+  latitude  Decimal? @db.Decimal(9, 6)
+  longitude Decimal? @db.Decimal(9, 6)
+  province  String?  @db.VarChar(100)
+  post      post[]
+
+  @@index([name], map: "idx_location_name")
+  @@index([province], map: "idx_location_province")
+}
+
+model login_session {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id       String         @db.Uuid
+  device_name      String?        @db.VarChar(255)
+  browser          String?        @db.VarChar(255)
+  os               String?        @db.VarChar(255)
+  ip_address       String?        @db.VarChar(100)
+  last_active_at   DateTime       @default(now()) @db.Timestamp(6)
+  is_active        Boolean?       @default(true)
+  refresh_token_id String?        @unique @db.Uuid
+  account          account        @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  refresh_token    refresh_token? @relation(fields: [refresh_token_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model message {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversation_id String         @db.Uuid
+  sender_id       String         @db.Uuid
+  content         String
+  message_type    message_type   @default(TEXT)
+  status          message_status @default(SENT)
+  reply_to_id     String?        @db.Uuid
+  created_at      DateTime       @default(now()) @db.Timestamp(6)
+  updated_at      DateTime       @default(now()) @db.Timestamp(6)
+  attachment      attachment[]
+  conversation    conversation   @relation(fields: [conversation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  message         message?       @relation("messageTomessage", fields: [reply_to_id], references: [id], onUpdate: NoAction)
+  other_message   message[]      @relation("messageTomessage")
+
+  @@index([conversation_id, created_at(sort: Desc)], map: "idx_message_conversation_time")
+  @@index([reply_to_id], map: "idx_message_reply_to")
+  @@index([sender_id], map: "idx_message_sender")
+}
+
+model oauth_account {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id       String        @db.Uuid
+  provider         provider_type
+  provider_user_id String        @db.VarChar(255)
+  created_at       DateTime      @default(now()) @db.Timestamp(6)
+  account          account       @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([provider, provider_user_id], map: "uq_oauth_provider_user")
+}
+
+model password_reset_token {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id String   @db.Uuid
+  token_hash String
+  expired_at DateTime @db.Timestamp(6)
+  used       Boolean? @default(false)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  account    account  @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([account_id], map: "idx_password_reset_account")
+  @@index([expired_at], map: "idx_password_reset_expired")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model post {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  author_id     String         @db.Uuid
+  category_id   String?        @db.Uuid
+  location_id   String?        @db.Uuid
+  content       String
+  privacy       post_privacy   @default(PUBLIC)
+  status        post_status    @default(PUBLISHED)
+  created_at    DateTime       @default(now()) @db.Timestamp(6)
+  updated_at    DateTime       @default(now()) @db.Timestamp(6)
+  view_count    BigInt?        @default(0)
+  like_count    Int?           @default(0)
+  comment_count Int?           @default(0)
+  share_count   Int?           @default(0)
+  save_count    Int?           @default(0)
+  comment       comment[]
+  like          like[]
+  category      category?      @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  location      location?      @relation(fields: [location_id], references: [id], onUpdate: NoAction)
+  post_hashtag  post_hashtag[]
+  post_media    post_media[]
+  post_report   post_report[]
+  save_post     save_post[]
+  share         share[]
+
+  @@index([author_id, created_at(sort: Desc)], map: "idx_post_author_time")
+  @@index([category_id], map: "idx_post_category")
+  @@index([status, privacy, created_at(sort: Desc)], map: "idx_post_feed")
+  @@index([location_id], map: "idx_post_location")
+  @@index([status, privacy], map: "idx_post_status_privacy")
+}
+
+model post_hashtag {
+  post_id    String  @db.Uuid
+  hashtag_id String  @db.Uuid
+  hashtag    hashtag @relation(fields: [hashtag_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  post       post    @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([post_id, hashtag_id])
+  @@index([post_id], map: "idx_post_hashtag_post")
+  @@index([hashtag_id], map: "idx_post_hashtag_tag")
+}
+
+model post_media {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  post_id       String     @db.Uuid
+  media_url     String
+  media_type    media_type
+  display_order Int?       @default(0)
+  post          post       @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([post_id], map: "idx_post_media_post")
+}
+
+model post_report {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporter_id String    @db.Uuid
+  post_id     String    @db.Uuid
+  reason      String
+  status      String    @default("PENDING") @db.VarChar(50)
+  handled_by  String?   @db.Uuid
+  handled_at  DateTime? @db.Timestamp(6)
+  created_at  DateTime  @default(now()) @db.Timestamp(6)
+  post        post      @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([reporter_id, post_id], map: "idx_unique_post_report", where: raw("((status)::text = 'PENDING'::text)"))
+  @@index([status], map: "idx_post_report_status")
+}
+
+model recommendation_log {
+  id           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String              @db.Uuid
+  type         recommendation_type
+  reference_id String              @db.Uuid
+  score        Float?
+  created_at   DateTime            @default(now()) @db.Timestamp(6)
+
+  @@index([reference_id], map: "idx_recommend_reference")
+  @@index([user_id, created_at(sort: Desc)], map: "idx_recommend_user_time")
+  @@index([user_id, type], map: "idx_recommendation_user_type")
+}
+
+model refresh_token {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id    String         @db.Uuid
+  token_hash    String
+  expired_at    DateTime       @db.Timestamp(6)
+  revoked       Boolean?       @default(false)
+  created_at    DateTime       @default(now()) @db.Timestamp(6)
+  login_session login_session?
+  account       account        @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model save_post {
+  post_id  String   @db.Uuid
+  user_id  String   @db.Uuid
+  saved_at DateTime @default(now()) @db.Timestamp(6)
+  post     post     @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([post_id, user_id])
+  @@index([user_id], map: "idx_save_post_user")
+  @@index([user_id, saved_at(sort: Desc)], map: "idx_save_user_time")
+}
+
+model share {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  post_id    String   @db.Uuid
+  user_id    String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  post       post     @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([post_id], map: "idx_share_post")
+  @@index([user_id], map: "idx_share_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model story {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  author_id    String         @db.Uuid
+  media_url    String
+  caption      String?
+  privacy      post_privacy   @default(PUBLIC)
+  expires_at   DateTime       @db.Timestamp(6)
+  created_at   DateTime       @default(now()) @db.Timestamp(6)
+  view_count   Int?           @default(0)
+  story_viewer story_viewer[]
+
+  @@index([author_id, expires_at], map: "idx_story_active")
+  @@index([author_id, expires_at], map: "idx_story_author_expire")
+  @@index([expires_at, created_at(sort: Desc)], map: "idx_story_feed")
+}
+
+model story_viewer {
+  story_id  String   @db.Uuid
+  viewer_id String   @db.Uuid
+  viewed_at DateTime @default(now()) @db.Timestamp(6)
+  story     story    @relation(fields: [story_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([story_id, viewer_id])
+}
+
+model travel_plan {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id          String             @db.Uuid
+  title            String             @db.VarChar(255)
+  destination      String             @db.VarChar(255)
+  input            Json
+  content          String
+  status           travel_plan_status @default(ACTIVE)
+  created_at       DateTime           @default(now()) @db.Timestamp(6)
+  updated_at       DateTime           @default(now()) @db.Timestamp(6)
+  travel_plan_item travel_plan_item[]
+
+  @@index([user_id, created_at(sort: Desc)], map: "idx_plan_user_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model travel_plan_item {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  travel_plan_id String      @db.Uuid
+  day_index      Int
+  time_slot      String?     @db.VarChar(50)
+  activity_name  String      @db.VarChar(255)
+  location_id    String?     @db.Uuid
+  description    String?
+  cost_estimate  Decimal?    @db.Decimal(10, 2)
+  travel_plan    travel_plan @relation(fields: [travel_plan_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([travel_plan_id, day_index], map: "idx_plan_item_day")
+  @@index([travel_plan_id], map: "idx_travel_plan_item_plan")
+}
+
+enum user_privacy {
+  PUBLIC
+  PRIVATE
+}
+
+enum gender_type {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum notification_type {
+  NEW_FOLLOWER
+  POST_LIKED
+  POST_COMMENTED
+  COMMENT_REPLIED
+  POST_SHARED
+  STORY_VIEWED
+  MESSAGE_RECEIVED
+  TRAVEL_PLAN_CREATED
+  SYSTEM_NOTIFICATION
+}
+
+enum AccountRole {
+  USER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  BANNED
+  LOCKED
+}
+
+enum ProviderType {
+  LOCAL
+  GOOGLE
+  FACEBOOK
+  APPLE
+}
+
+enum account_role {
+  USER
+  ADMIN
+}
+
+enum account_status {
+  ACTIVE
+  BANNED
+  LOCKED
+}
+
+enum attachment_type {
+  IMAGE
+  VIDEO
+  FILE
+}
+
+enum conversation_type {
+  ONE_TO_ONE
+  GROUP
+}
+
+enum media_type {
+  IMAGE
+  VIDEO
+}
+
+enum message_status {
+  SENT
+  DELIVERED
+  SEEN
+  RECALLED
+}
+
+enum message_type {
+  TEXT
+  IMAGE
+  VIDEO
+  FILE
+  POST_SHARE
+  TRAVEL_PLAN_SHARE
+}
+
+enum post_privacy {
+  PUBLIC
+  PRIVATE
+  FRIENDS_ONLY
+}
+
+enum post_status {
+  PUBLISHED
+  DRAFT
+  DELETED
+}
+
+enum provider_type {
+  LOCAL
+  GOOGLE
+  FACEBOOK
+  APPLE
+}
+
+enum recommendation_type {
+  PLACE
+  HOTEL
+  RESTAURANT
+  POST
+  FRIEND
+}
+
+enum travel_plan_status {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+  DELETED
+}
