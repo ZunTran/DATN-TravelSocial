@@ -1,13 +1,30 @@
-import { InputType, Field } from '@nestjs/graphql';
-import { IsOptional, IsString, IsEnum, MaxLength } from 'class-validator';
-import { gender_type, user_privacy } from '@prisma/client';
+import { Field, InputType } from '@nestjs/graphql';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
+
+import {
+  gender_type,
+  user_privacy,
+} from '@prisma/client';
 
 @InputType()
 export class UpdateProfileInput {
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  @MaxLength(100, { message: 'Display name tối đa 100 ký tự' })
+  @MaxLength(50)
+  username?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100, {
+    message: 'Display name tối đa 100 ký tự',
+  })
   display_name?: string;
 
   @Field({ nullable: true })

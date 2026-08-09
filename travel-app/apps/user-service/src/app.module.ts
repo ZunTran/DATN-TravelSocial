@@ -5,13 +5,13 @@ import { UserModule } from './user/user.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
+import { UploadScalar } from './common/scalars/upload.scalar';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     
-    // 3. Cấu hình GraphQL
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
@@ -21,5 +21,6 @@ import { join } from 'path';
     
     UserModule,
   ],
+  
 })
 export class AppModule {}

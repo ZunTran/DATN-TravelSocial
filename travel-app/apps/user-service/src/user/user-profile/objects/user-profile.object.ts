@@ -1,16 +1,21 @@
-import { ObjectType, Field, ID, registerEnumType } from '@nestjs/graphql';
-import { gender_type, user_privacy } from '@prisma/client';
+import { Field, ID, ObjectType, registerEnumType } from '@nestjs/graphql';
+import {
+  gender_type,
+  user_privacy,
+} from '@prisma/client';
 
-registerEnumType(gender_type, { name: 'GenderType' });
-registerEnumType(user_privacy, { name: 'UserPrivacy' });
+registerEnumType(gender_type, {
+  name: 'GenderType', // Tên sẽ hiển thị trên GraphQL Schema
+});
 
-@ObjectType('UserProfile')
+registerEnumType(user_privacy, {
+  name: 'UserPrivacy',
+});
+@ObjectType()
 export class UserProfileObject {
   @Field(() => ID)
   id: string;
 
-  @Field()
-  account_id: string;
 
   @Field()
   username: string;

@@ -1,0 +1,89 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateProfileInput {
+  avatar_url: String
+  bio: String
+  birthday: DateTime
+  cover_url: String
+  display_name: String!
+  gender: GenderType
+  location: String
+  username: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+enum GenderType {
+  FEMALE
+  MALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+type Mutation {
+  createProfile(input: CreateProfileInput!): UserProfileObject!
+  updatePrivacy(privacy: String!): UserProfileObject!
+  updateProfile(input: UpdateProfileInput!): UserProfileObject!
+  updateProfileWithFiles(avatar: Upload, cover: Upload, input: UpdateProfileInput!): UserProfileObject!
+}
+
+type Query {
+  checkUsername(username: String!): Boolean!
+  myProfile: UserProfileObject!
+  searchUsers(input: SearchUserInput!): [UserProfilePageObject!]!
+  userProfile(id: String!): UserProfileObject!
+}
+
+input SearchUserInput {
+  keyword: String
+  limit: Int! = 20
+  page: Int! = 1
+}
+
+input UpdateProfileInput {
+  avatar_url: String
+  bio: String
+  birthday: DateTime
+  cover_url: String
+  display_name: String
+  gender: GenderType
+  location: String
+  privacy: UserPrivacy
+  username: String
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+enum UserPrivacy {
+  PRIVATE
+  PUBLIC
+}
+
+type UserProfileObject {
+  avatar_url: String
+  bio: String
+  birthday: DateTime
+  cover_url: String
+  created_at: DateTime!
+  display_name: String!
+  gender: GenderType
+  id: ID!
+  location: String
+  privacy: UserPrivacy!
+  updated_at: DateTime!
+  username: String!
+}
+
+type UserProfilePageObject {
+  data: [UserProfileObject!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+}

@@ -1,17 +1,21 @@
 import { Module } from '@nestjs/common';
-import { UserService } from './user-profile/user-profile.service';
-import { UserResolver } from './user-profile/user-profile.resolver';
 
-import { PrismaModule } from '../prisma/prisma.module';
-import { UserProfileRepository } from './user-profile/user-profile.repository';
+import { UserProfileModule } from './user-profile/user-profile.module';
+// import { InterestTagModule } from './interest-tag/interest-tag.module';
+import { CloudinaryModule } from '../common/cloudinary/cloudinary.module';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from '../common/auth/strategies/jwt.strategy';
 
 @Module({
-  imports: [PrismaModule],
-  providers: [
-    UserProfileRepository,
-    UserService,
-    UserResolver,
+  imports: [
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+    UserProfileModule,
+    // InterestTagModule,
+    CloudinaryModule,
   ],
-//   exports: [UserService], // Export UserService nếu sau này các service khác cần gọi nội bbộ?
+  providers: [
+    JwtStrategy, // 👈 Phải đưa JwtStrategy vào đây thì Passport mới biết strategy "jwt" là gì!
+  ],
+  
 })
 export class UserModule {}

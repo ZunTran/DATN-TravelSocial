@@ -1,27 +1,33 @@
 import { Injectable } from '@nestjs/common';
+
+import { Prisma } from '@prisma/client';
+import { SearchUserInput } from './dto/search-user.input';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateProfileInput } from './dto/create-profile.input';
-import { UpdateProfileInput } from './dto/update-profile.input';
 
 @Injectable()
 export class UserProfileRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {}
 
-  async create(accountId: string, data: CreateProfileInput) {
+  async create(
+    data: Prisma.user_profileCreateInput,
+  ) {
     return this.prisma.user_profile.create({
-      data: {
-        account_id: accountId,
-        username: data.username,
-        display_name: data.display_name,
-        avatar_url: data.avatar_url,
-      },
+      data,
     });
   }
 
-  async findByAccountId(accountId: string) {
+  async findById(id: string) {
     return this.prisma.user_profile.findUnique({
-      where: { account_id: accountId },
+      where: { id },
     });
+  }
+
+  async findByAccountId(account_id: string) {
+    return this.prisma.user_profile.findFirst({
+    where: { account_id }, 
+  });
   }
 
   async findByUsername(username: string) {
@@ -30,22 +36,62 @@ export class UserProfileRepository {
     });
   }
 
-  async updateByAccountId(accountId: string, data: UpdateProfileInput) {
+  async update(
+    id: string,
+    data: Prisma.user_profileUpdateInput,
+  ) {
     return this.prisma.user_profile.update({
-      where: { account_id: accountId },
+      where: { id },
       data,
     });
   }
 
-  async searchUsers(keyword: string) {
+  async search(username: string) {
     return this.prisma.user_profile.findMany({
       where: {
-        OR: [
-          { username: { contains: keyword, mode: 'insensitive' } },
-          { display_name: { contains: keyword, mode: 'insensitive' } },
-        ],
+        username: {
+          contains: username,
+          mode: 'insensitive',
+        },
       },
       take: 20,
+      orderBy: {
+        username: 'asc',
+      },
     });
   }
+
+  async searchUsers(input: SearchUserInput) {
+  const { keyword, page, limit } = input;
+  const skip = (page - 1) * limit;
+
+  // Nếu có keyword thì tìm theo username hoặc display_name, không thì lấy tất cả
+  const whereCondition = keyword
+    ? {
+        OR: [
+          { username: { contains: keyword, mode: 'insensitive' as const } },
+          { display_name: { contains: keyword, mode: 'insensitive' as const } },
+        ],
+      }
+    : {};
+
+  // Lấy danh sách kết quả và tổng số lượng (để frontend làm phân trang nếu cần)
+  const [data, total] = await Promise.all([
+    this.prisma.user_profile.findMany({
+      where: whereCondition,
+      skip,
+      take: limit,
+      orderBy: { created_at: 'desc' },
+    }),
+    this.prisma.user_profile.count({ where: whereCondition }),
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
+}
 }
