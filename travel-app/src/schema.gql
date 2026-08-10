@@ -27,7 +27,7 @@ enum GenderType {
 
 type Mutation {
   createProfile(input: CreateProfileInput!): UserProfileObject!
-  updatePrivacy(privacy: String!): UserProfileObject!
+  updatePrivacy(privacy: UserPrivacy!): UserProfileObject!
   updateProfile(input: UpdateProfileInput!): UserProfileObject!
   updateProfileWithFiles(avatar: Upload, cover: Upload, input: UpdateProfileInput!): UserProfileObject!
 }
@@ -35,7 +35,7 @@ type Mutation {
 type Query {
   checkUsername(username: String!): Boolean!
   myProfile: UserProfileObject!
-  searchUsers(input: SearchUserInput!): [UserProfilePageObject!]!
+  searchUsers(input: SearchUserInput!): UserProfilePageObject!
   userProfile(id: String!): UserProfileObject!
 }
 

@@ -1,48 +1,33 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
-
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
+import { ROLES_KEY } from '../decorators/roles.decorator';
+import { account_role } from '@prisma/client';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(
-    private readonly reflector: Reflector,
-  ) {}
+  constructor(private reflector: Reflector) {}
 
-  canActivate(
-    context: ExecutionContext,
-  ): boolean {
-    const roles =
-      this.reflector.get<string[]>(
-        'roles',
-        context.getHandler(),
-      );
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.getAllAndOverride<account_role[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
-    if (!roles || roles.length === 0) {
-      return true;
+    if (!requiredRoles) {
+      return true; 
     }
 
-    const ctx =
-      GqlExecutionContext.create(context);
+    const ctx = GqlExecutionContext.create(context);
+    const { user } = ctx.getContext().req; 
 
-    const user =
-      ctx.getContext().req.user;
-
-    if (!user) {
-      throw new ForbiddenException(
-        'Không xác định được user',
-      );
+    if (!user || !user.role) {
+      throw new ForbiddenException('Bạn chưa đăng nhập hoặc không có quyền truy cập!');
     }
 
-    if (!roles.includes(user.role)) {
-      throw new ForbiddenException(
-        'Bạn không có quyền thực hiện thao tác này',
-      );
+    const hasRole = requiredRoles.includes(user.role);
+    if (!hasRole) {
+      throw new ForbiddenException('Bạn không có quyền hạn (Admin) để thực hiện hành động này!');
     }
 
     return true;

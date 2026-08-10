@@ -1,0 +1,129 @@
+import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
+
+
+
+@Injectable()
+export class InterestTagRepository {
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {}
+
+
+  async findById(id: string) {
+    return this.prisma.interest_tag.findUnique({where: { id }});
+  }
+
+  async findByIds(ids: string[]) {
+  return this.prisma.interest_tag.findMany({where: {id: {in: ids}}});
+}
+
+  async findByName(name: string) {
+    return this.prisma.interest_tag.findUnique({where: { name }});
+  }
+
+  async createTag(data: Prisma.interest_tagCreateInput) {
+    return this.prisma.interest_tag.create({data});
+  }
+
+  async updateTag(id: string, data: Prisma.interest_tagUpdateInput) {
+    return this.prisma.interest_tag.update({
+      where: { id },
+      data
+    });
+  }
+
+  async deleteTag(id: string) {
+    return this.prisma.interest_tag.delete({where: { id }});
+  }
+
+    async findAll() {
+    return this.prisma.interest_tag.findMany({orderBy: { name: 'asc' }});
+  }
+
+  async findByProfileId(user_profile_id: string) {
+    const userInterests = await this.prisma.user_interest.findMany({
+      where: { user_id: user_profile_id },
+      include: { interest_tag: true },
+    });
+    return userInterests.map((item) => item.interest_tag);
+  }
+
+  async findByProfileIdPaginated(user_profile_id: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+
+    const [userInterests, total] = await Promise.all([
+      this.prisma.user_interest.findMany({
+        where: { user_id: user_profile_id },
+        include: { interest_tag: true },
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+      }),
+      this.prisma.user_interest.count({ where: { user_id: user_profile_id } })]);
+
+    return {
+      data: userInterests.map((item) => item.interest_tag),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)};
+  }
+
+  async updateUserInterests(user_profile_id: string, interestIds: string[]) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.user_interest.deleteMany({
+        where: { user_id: user_profile_id },
+      });
+
+      if (interestIds.length > 0) {
+        const dataToCreate = interestIds.map((interestId) => ({
+          user_id: user_profile_id,
+          interest_id: interestId,
+        }));
+        await tx.user_interest.createMany({
+          data: dataToCreate,
+          skipDuplicates: true,
+        });
+      }
+
+      const updated = await tx.user_interest.findMany({
+        where: { user_id: user_profile_id },
+        include: { interest_tag: true },
+      });
+      return updated.map((item) => item.interest_tag);
+    });
+  }
+  
+  async search(name: string) {
+    return this.prisma.interest_tag.findMany({
+      where: {
+        name: {
+          contains: name,
+          mode: 'insensitive'
+        }},
+      orderBy: {name: 'asc'},
+      take: 20 
+    });
+  }
+
+  // Tìm các profile khác có chung ít nhất 1 interest_tag vs user hiện tại
+  async findUsersWithCommonInterests(user_profile_id: string, interestIds: string[], limit: number = 10) {
+    if (interestIds.length === 0) return [];
+
+    const matches = await this.prisma.user_interest.findMany({
+      where: {interest_id: { in: interestIds },
+        user_id: { not: user_profile_id },
+      },
+      include: {
+        user_profile: true,
+        interest_tag: true,
+      },
+      take: limit,
+    });
+
+    return matches;
+  }
+
+}

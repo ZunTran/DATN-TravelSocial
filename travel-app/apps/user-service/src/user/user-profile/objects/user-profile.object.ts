@@ -1,7 +1,7 @@
 import { Field, ID, ObjectType, registerEnumType } from '@nestjs/graphql';
 import {
   gender_type,
-  user_privacy,
+  user_privacy
 } from '@prisma/client';
 
 registerEnumType(gender_type, {
@@ -11,6 +11,7 @@ registerEnumType(gender_type, {
 registerEnumType(user_privacy, {
   name: 'UserPrivacy',
 });
+
 @ObjectType()
 export class UserProfileObject {
   @Field(() => ID)

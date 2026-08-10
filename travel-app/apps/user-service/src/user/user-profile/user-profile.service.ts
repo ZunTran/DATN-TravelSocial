@@ -10,6 +10,8 @@ import { UpdateProfileInput } from './dto/update-profile.input';
 import { SearchUserInput } from './dto/search-user.input';
 import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
 import { FileUpload } from 'graphql-upload-ts';
+import { user_privacy } from '@prisma/client';
+
 
 @Injectable()
 export class UserProfileService {
@@ -104,19 +106,20 @@ export class UserProfileService {
         birthday: input.birthday,
         location: input.location,
         privacy: input.privacy,
+        updated_at: new Date(),
       },
     );
   }
 
-  async updatePrivacy(account_id: string,privacy: 'PUBLIC' | 'PRIVATE',) {
+  async updatePrivacy(account_id: string,privacy: user_privacy
+  ) {
     const profile =await this.repository.findByAccountId(account_id,);
 
     if (!profile) throw new NotFoundException('Không tìm thấy profile');
 
-    return this.repository.update(
-      profile.id,
-      { privacy },
-    );
+    return this.repository.update(profile.id, {
+    privacy,
+  });
   }
 
   async checkUsername(username: string) {
@@ -128,22 +131,12 @@ export class UserProfileService {
     return !profile;
   }
 
-  // async searchUsers(username: string) {
-  //   return this.repository.search(username);
-  // }
-
 
   async searchUsers(input: SearchUserInput) {
   return this.repository.searchUsers(input);
 }
 
-async uploadAndUpdateAvatar(account_id: string, file: Express.Multer.File) {
-    const uploadResult = await this.cloudinaryService.uploadImage(file, 'travel-social/avatars');
-    const secureUrl = (uploadResult as any).secure_url; 
-    const profile = await this.getMyProfile(account_id);
 
-    return this.repository.update(profile.id, {avatar_url: secureUrl,});
-  }
 
   private async convertUploadToBuffer(fileUpload: FileUpload): Promise<Express.Multer.File> {
     const { createReadStream, filename, mimetype } = fileUpload;
@@ -181,14 +174,12 @@ async uploadAndUpdateAvatar(account_id: string, file: Express.Multer.File) {
     let avatar_url = input.avatar_url;
     let cover_url = input.cover_url;
 
-    // if user gửi file Avatar lên
     if (avatarFile) {
       const multerFile = await this.convertUploadToBuffer(avatarFile);
       const uploadRes = await this.cloudinaryService.uploadImage(multerFile, 'travel-social/avatars');
       avatar_url = uploadRes.secure_url;
     }
 
-    // if user gửi file Cover lên
     if (coverFile) {
       const multerFile = await this.convertUploadToBuffer(coverFile);
       const uploadRes = await this.cloudinaryService.uploadImage(multerFile, 'travel-social/covers');
@@ -199,6 +190,7 @@ async uploadAndUpdateAvatar(account_id: string, file: Express.Multer.File) {
       ...input,
       avatar_url,
       cover_url,
+      updated_at: new Date(),
     });
   }
 

@@ -18,6 +18,8 @@ import { GraphQLUpload} from 'graphql-upload-ts';
 import type { FileUpload } from 'graphql-upload-ts';
 import { UserProfilePageObject } from './objects/user-profile-page.object';
 import type { ActiveUserData } from '../../common/auth/interfaces/user-data.interface';
+import { user_privacy } from '@prisma/client';
+// import { UserPrivacy } from './enums/user-privacy.enum';
 
 
 @Resolver(() => UserProfileObject)
@@ -71,8 +73,9 @@ export class UserProfileResolver {
   @Mutation(() => UserProfileObject)
   updatePrivacy(
     @CurrentUser() user: ActiveUserData,
-    @Args('privacy') privacy: 'PUBLIC' | 'PRIVATE',
-  ) {
+    @Args('privacy', { type: () => user_privacy })
+  privacy: user_privacy,
+) {
     return this.service.updatePrivacy(
       user.accountId,
       privacy,
@@ -86,7 +89,7 @@ export class UserProfileResolver {
     return this.service.checkUsername(username);
   }
 
- @Query(() => [UserProfilePageObject]) // Hoặc trả về kiểu Paginated Object tùy ông giáo thiết kế
+ @Query(() => UserProfilePageObject) 
 @UseGuards(JwtAuthGuard)
 async searchUsers(@Args('input') input: SearchUserInput) {
   return this.service.searchUsers(input);

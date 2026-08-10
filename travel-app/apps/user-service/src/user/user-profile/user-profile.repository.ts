@@ -46,26 +46,10 @@ export class UserProfileRepository {
     });
   }
 
-  async search(username: string) {
-    return this.prisma.user_profile.findMany({
-      where: {
-        username: {
-          contains: username,
-          mode: 'insensitive',
-        },
-      },
-      take: 20,
-      orderBy: {
-        username: 'asc',
-      },
-    });
-  }
-
   async searchUsers(input: SearchUserInput) {
   const { keyword, page, limit } = input;
   const skip = (page - 1) * limit;
 
-  // Nếu có keyword thì tìm theo username hoặc display_name, không thì lấy tất cả
   const whereCondition = keyword
     ? {
         OR: [
@@ -75,7 +59,7 @@ export class UserProfileRepository {
       }
     : {};
 
-  // Lấy danh sách kết quả và tổng số lượng (để frontend làm phân trang nếu cần)
+  // Lấy danh sách kết quả và tổng số lượng để frontend làm phân trang 
   const [data, total] = await Promise.all([
     this.prisma.user_profile.findMany({
       where: whereCondition,
