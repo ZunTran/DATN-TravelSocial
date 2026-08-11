@@ -497,23 +497,6 @@ enum notification_type {
   SYSTEM_NOTIFICATION
 }
 
-enum AccountRole {
-  USER
-  ADMIN
-}
-
-enum AccountStatus {
-  ACTIVE
-  BANNED
-  LOCKED
-}
-
-enum ProviderType {
-  LOCAL
-  GOOGLE
-  FACEBOOK
-  APPLE
-}
 
 enum account_role {
   USER

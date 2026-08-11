@@ -108,22 +108,23 @@ export class InterestTagRepository {
     });
   }
 
-  // Tìm các profile khác có chung ít nhất 1 interest_tag vs user hiện tại
-  async findUsersWithCommonInterests(user_profile_id: string, interestIds: string[], limit: number = 10) {
-    if (interestIds.length === 0) return [];
 
-    const matches = await this.prisma.user_interest.findMany({
-      where: {interest_id: { in: interestIds },
-        user_id: { not: user_profile_id },
-      },
-      include: {
-        user_profile: true,
-        interest_tag: true,
-      },
-      take: limit,
-    });
+async findUsersWithCommonInterests(
+  user_profile_id: string,interestIds: string[],limit: number = 10,
+) {
+  if (interestIds.length === 0) return [];
 
-    return matches;
-  }
+  const matches = await this.prisma.user_profile.findMany({
+    where: {
+      id: {not: user_profile_id,},
+      user_interests: {
+        some: {interest_id: {in: interestIds},},
+      }},
+    take: limit,
+    orderBy: {created_at: 'desc'},
+  });
+
+  return matches;
+}
 
 }

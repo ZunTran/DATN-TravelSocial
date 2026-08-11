@@ -5,16 +5,19 @@ import { UserProfileModule } from './user-profile/user-profile.module';
 import { CloudinaryModule } from '../common/cloudinary/cloudinary.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '../common/auth/strategies/jwt.strategy';
+import { AdminModule } from './admin/admin.module';
+import { InterestTagModule } from './interest/interest-tag.module';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     UserProfileModule,
-    // InterestTagModule,
+    AdminModule,
+    InterestTagModule,
     CloudinaryModule,
   ],
   providers: [
-    JwtStrategy, // 👈 Phải đưa JwtStrategy vào đây thì Passport mới biết strategy "jwt" là gì!
+    JwtStrategy, 
   ],
   
 })

@@ -1,9 +1,8 @@
-import {Args,ID,Mutation,Query,Resolver,} from '@nestjs/graphql';
-import {UseGuards,BadRequestException,} from '@nestjs/common';
+import {Args,ID,Mutation,Query,Resolver} from '@nestjs/graphql';
+import {UseGuards} from '@nestjs/common';
 import { InterestTagService } from './interest-tag.service';
 
 import { Roles } from '../../common/auth/decorators/roles.decorator';
-import { account_role } from '@prisma/client';
 import { InterestTagObject } from './objects/interest.object';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/auth/guards/roles.guard';
@@ -12,6 +11,8 @@ import { CurrentUser } from '../../common/auth/decorators/current-user.decorator
 import type { ActiveUserData } from '../../common/auth/interfaces/user-data.interface';
 import { UserInterestPageObject } from './objects/user-interest-page.object';
 import { GetUserInterestsInput } from './dto/get-user-interests.input';
+import { UserProfileObject } from '../user-profile/objects/user-profile.object';
+import { account_role } from '@prisma/client';
 
 @Resolver(() => InterestTagObject)
 export class InterestTagResolver {
@@ -19,7 +20,7 @@ export class InterestTagResolver {
     private readonly service: InterestTagService,
   ) {}
 
-   @Query(() => [InterestTagObject])getInterestTags() {
+  @Query(() => [InterestTagObject])getInterestTags() {
     return this.service.getAllTags();
   }
 
@@ -79,7 +80,7 @@ export class InterestTagResolver {
   }
 
   // Gợi ý những user khác có chung sở thích du lịch
-  @Query(() => [InterestTagObject]) // Hoặc trả về danh sách User Profile tùy theo thiết kế hiển thị
+  @Query(() => [UserProfileObject]) 
   @UseGuards(JwtAuthGuard)
   getSuggestedUsersByInterests(@CurrentUser() user: ActiveUserData) {
     return this.service.getSuggestedUsersByInterests(user.accountId);

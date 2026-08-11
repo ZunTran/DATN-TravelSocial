@@ -5,7 +5,7 @@ import { UserModule } from './user/user.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
-import { UploadScalar } from './common/scalars/upload.scalar';
+import { InterestTagModule } from './user/interest/interest-tag.module';
 
 @Module({
   imports: [
@@ -16,10 +16,11 @@ import { UploadScalar } from './common/scalars/upload.scalar';
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
-      playground: true, // Để test GraphQL Playground
+      playground: true, 
     }),
     
     UserModule,
+    InterestTagModule,
   ],
   
 })

@@ -68,10 +68,12 @@ export class InterestTagService {
     const profile = await this.userProfileRepository.findByAccountId(accountId);
     if (!profile) throw new NotFoundException('Không tìm thấy profile của tài khoản này');
 
-    const existingTags = await this.repository.findByIds(interestIds);
-    if (existingTags.length !== interestIds.length) throw new NotFoundException('Một hoặc nhiều interest tag không tồn tại');
+    const uniqueInterestIds = [...new Set(interestIds)];
 
-    return this.repository.updateUserInterests(profile.id, interestIds);
+    const existingTags =await this.repository.findByIds(uniqueInterestIds);
+    if (existingTags.length !== uniqueInterestIds.length) throw new NotFoundException('Một hoặc nhiều interest tag không tồn tại');
+
+    return this.repository.updateUserInterests(profile.id, uniqueInterestIds);
   }
 
 
