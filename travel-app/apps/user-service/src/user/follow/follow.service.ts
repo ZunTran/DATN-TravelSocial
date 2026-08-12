@@ -1,0 +1,90 @@
+import {ConflictException,Injectable,NotFoundException,} from '@nestjs/common';
+import { FollowRepository } from './follow.repository';
+import { UserProfileRepository } from '../user-profile/user-profile.repository';
+import { NotificationRepository } from '../notification/notification.repository';
+import { BlockRepository } from '../block/block.repository';
+import { notification_type } from '@prisma/client';
+@Injectable()
+export class FollowService {
+  constructor(
+    private readonly repository: FollowRepository,
+    private readonly userProfileRepository: UserProfileRepository,
+    private readonly blockRepository: BlockRepository,
+    private readonly notificationRepository: NotificationRepository,
+  ) {}
+
+  async follow(accountId: string, targetProfileId: string) {
+    const profile =await this.userProfileRepository.findByAccountId(accountId);
+    if (!profile) throw new NotFoundException('Không tìm thấy profile');
+    
+    if (profile.id === targetProfileId) throw new ConflictException('Không thể tự follow chính mình');
+
+    const target =await this.userProfileRepository.findById(targetProfileId);
+    if (!target) throw new NotFoundException('Không tìm thấy người dùng');
+    
+    const blocked =await this.blockRepository.isEitherBlocked(profile.id, targetProfileId);
+    if (blocked) throw new ConflictException('Không thể follow người dùng này');
+
+    const existed = await this.repository.find(profile.id,targetProfileId);
+    if (existed) throw new ConflictException('Đã follow người dùng này');
+    
+    const follow = await this.repository.create(profile.id,targetProfileId);
+
+    await this.notificationRepository.create({
+      receiver: {connect: {id: targetProfileId}},
+      sender: {connect: {id: profile.id}},
+      type: notification_type.NEW_FOLLOWER,
+      message: `${profile.display_name} đã follow bạn`,
+    });
+    return follow;
+  }
+
+  async unfollow(accountId: string, targetProfileId: string) {
+    const profile =await this.userProfileRepository.findByAccountId(accountId);
+    if (!profile)throw new NotFoundException('Không tìm thấy profile');
+
+    const existed = await this.repository.find(profile.id,targetProfileId);
+    if (!existed) throw new NotFoundException('Bạn chưa follow người dùng này');
+    
+    await this.repository.delete(profile.id,targetProfileId);
+    return true;
+  }
+
+  async isFollowing(accountId: string,targetProfileId: string) {
+    const profile =await this.userProfileRepository.findByAccountId(accountId);
+    if (!profile) throw new NotFoundException('Không tìm thấy profile');
+    
+    const follow = await this.repository.find(profile.id,targetProfileId);
+    return !!follow;
+  }
+
+  async getFollowers(accountId: string,page: number,limit: number,) {
+    const profile =await this.userProfileRepository.findByAccountId(accountId);
+    if (!profile) throw new NotFoundException('Không tìm thấy profile');
+
+    return this.repository.findFollowers(
+      profile.id,
+      page,
+      limit,
+    );
+  }
+
+  async getFollowing(accountId: string,page: number,limit: number) {
+    const profile =await this.userProfileRepository.findByAccountId(accountId);
+    if (!profile) throw new NotFoundException('Không tìm thấy profile');
+
+    return this.repository.findFollowing(
+      profile.id,
+      page,
+      limit
+    );
+  }
+
+  async countFollowers(profileId: string) {
+    return this.repository.countFollowers(profileId);
+  }
+
+  async countFollowing(profileId: string) {
+    return this.repository.countFollowing(profileId);
+  }
+}

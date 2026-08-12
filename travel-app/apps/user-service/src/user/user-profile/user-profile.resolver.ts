@@ -32,28 +32,21 @@ export class UserProfileResolver {
   @Mutation(() => UserProfileObject)
   createProfile(
     @CurrentUser() user: ActiveUserData,
-    @Args('input') input: CreateProfileInput,
-  ) {
+    @Args('input') input: CreateProfileInput) {
     return this.service.createProfile(
       user.accountId,
-      input,
+      input
     );
   }
 
   @UseGuards(JwtAuthGuard)
   @Query(() => UserProfileObject)
-  myProfile(
-    @CurrentUser() user: ActiveUserData,
-  ) {
-    return this.service.getMyProfile(
-      user.accountId,
-    );
+  myProfile(@CurrentUser() user: ActiveUserData) {
+    return this.service.getMyProfile(user.accountId);
   }
 
   @Query(() => UserProfileObject)
-  userProfile(
-    @Args('id') id: string,
-  ) {
+  userProfile(@Args('id') id: string) {
     return this.service.getUserProfile(id);
   }
 
@@ -61,12 +54,8 @@ export class UserProfileResolver {
   @Mutation(() => UserProfileObject)
   updateProfile(
     @CurrentUser() user: ActiveUserData,
-    @Args('input') input: UpdateProfileInput,
-  ) {
-    return this.service.updateProfile(
-      user.accountId,
-      input,
-    );
+    @Args('input') input: UpdateProfileInput,) {
+    return this.service.updateProfile(user.accountId,input);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -74,8 +63,7 @@ export class UserProfileResolver {
   updatePrivacy(
     @CurrentUser() user: ActiveUserData,
     @Args('privacy', { type: () => user_privacy })
-  privacy: user_privacy,
-) {
+  privacy: user_privacy) {
     return this.service.updatePrivacy(
       user.accountId,
       privacy,
@@ -83,9 +71,7 @@ export class UserProfileResolver {
   }
 
   @Query(() => Boolean)
-  checkUsername(
-    @Args('username') username: string,
-  ) {
+  checkUsername(@Args('username') username: string) {
     return this.service.checkUsername(username);
   }
 

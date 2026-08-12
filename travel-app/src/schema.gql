@@ -29,6 +29,20 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type FollowObject {
+  created_at: DateTime!
+  follower_id: ID!
+  following_id: ID!
+}
+
+type FollowPageObject {
+  data: [UserProfileObject!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+}
+
 enum GenderType {
   FEMALE
   MALE
@@ -52,7 +66,9 @@ type Mutation {
   createInterestTag(input: CreateInterestInput!): InterestTagObject!
   createProfile(input: CreateProfileInput!): UserProfileObject!
   deleteInterestTag(id: ID!): Boolean!
+  follow(profileId: ID!): FollowObject!
   seedDefaultAdmin: AdminResponseObject!
+  unfollow(profileId: ID!): Boolean!
   updateInterestTag(id: ID!, input: UpdateInterestInput!): InterestTagObject!
   updateMyInterests(interestIds: [ID!]!): [InterestTagObject!]!
   updatePrivacy(privacy: UserPrivacy!): UserProfileObject!
@@ -60,12 +76,22 @@ type Mutation {
   updateProfileWithFiles(avatar: Upload, cover: Upload, input: UpdateProfileInput!): UserProfileObject!
 }
 
+input PaginationInput {
+  limit: Int! = 20
+  page: Int! = 1
+}
+
 type Query {
   checkUsername(username: String!): Boolean!
+  followers(input: PaginationInput!): FollowPageObject!
+  followersCount(profileId: ID!): Int!
+  following(input: PaginationInput!): FollowPageObject!
+  followingCount(profileId: ID!): Int!
   getInterestTags: [InterestTagObject!]!
   getMyInterests: [InterestTagObject!]!
   getMyInterestsPaginated(input: GetUserInterestsInput!): UserInterestPageObject!
   getSuggestedUsersByInterests: [UserProfileObject!]!
+  isFollowing(profileId: ID!): Boolean!
   myProfile: UserProfileObject!
   searchInterestTags(name: String!): [InterestTagObject!]!
   searchUsers(input: SearchUserInput!): UserProfilePageObject!

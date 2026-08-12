@@ -7,6 +7,9 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '../common/auth/strategies/jwt.strategy';
 import { AdminModule } from './admin/admin.module';
 import { InterestTagModule } from './interest/interest-tag.module';
+import { FollowModule } from './follow/follow.module';
+import { BlockModule } from './block/block.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -15,6 +18,9 @@ import { InterestTagModule } from './interest/interest-tag.module';
     AdminModule,
     InterestTagModule,
     CloudinaryModule,
+    FollowModule,
+    BlockModule,
+    NotificationModule,
   ],
   providers: [
     JwtStrategy, 

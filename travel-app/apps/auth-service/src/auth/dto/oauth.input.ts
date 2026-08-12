@@ -3,7 +3,7 @@ import { IsNotEmpty } from 'class-validator';
 import { ProviderType } from '@prisma/client';
 
 registerEnumType(ProviderType, {
-  name: 'ProviderType', // Tên này sẽ hiển thị trên GraphQL Schema
+  name: 'ProviderType', // hiển thị trên GraphQL Schema
   description: 'Các nhà cung cấp đăng nhập mạng xã hội',
 });
 

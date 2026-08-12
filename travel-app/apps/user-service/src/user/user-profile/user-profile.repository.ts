@@ -10,40 +10,24 @@ export class UserProfileRepository {
     private readonly prisma: PrismaService,
   ) {}
 
-  async create(
-    data: Prisma.user_profileCreateInput,
-  ) {
-    return this.prisma.user_profile.create({
-      data,
-    });
+  async create(data: Prisma.user_profileCreateInput) {
+    return this.prisma.user_profile.create({data});
   }
 
   async findById(id: string) {
-    return this.prisma.user_profile.findUnique({
-      where: { id },
-    });
+    return this.prisma.user_profile.findUnique({where: { id }});
   }
 
   async findByAccountId(account_id: string) {
-    return this.prisma.user_profile.findFirst({
-    where: { account_id }, 
-  });
+    return this.prisma.user_profile.findFirst({where: { account_id }});
   }
 
   async findByUsername(username: string) {
-    return this.prisma.user_profile.findUnique({
-      where: { username },
-    });
+    return this.prisma.user_profile.findUnique({where: { username }});
   }
 
-  async update(
-    id: string,
-    data: Prisma.user_profileUpdateInput,
-  ) {
-    return this.prisma.user_profile.update({
-      where: { id },
-      data,
-    });
+  async update(id: string,data: Prisma.user_profileUpdateInput) {
+    return this.prisma.user_profile.update({where: { id },data});
   }
 
   async searchUsers(input: SearchUserInput) {
@@ -59,7 +43,6 @@ export class UserProfileRepository {
       }
     : {};
 
-  // Lấy danh sách kết quả và tổng số lượng để frontend làm phân trang 
   const [data, total] = await Promise.all([
     this.prisma.user_profile.findMany({
       where: whereCondition,
@@ -67,14 +50,13 @@ export class UserProfileRepository {
       take: limit,
       orderBy: { created_at: 'desc' },
     }),
-    this.prisma.user_profile.count({ where: whereCondition }),
+    
+    this.prisma.user_profile.count({ where: whereCondition })
   ]);
 
   return {
-    data,
-    total,
-    page,
-    limit,
+    data,total,
+    page,limit,
     totalPages: Math.ceil(total / limit),
   };
 }
