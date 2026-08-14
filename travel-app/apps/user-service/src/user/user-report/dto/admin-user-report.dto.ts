@@ -1,6 +1,20 @@
-import { IsEnum, IsOptional, Min } from 'class-validator';
+import {Field,
+  InputType,
+  Int,
+  registerEnumType,
+} from '@nestjs/graphql';
+
+import {
+  IsEnum,
+  IsOptional,
+  Min,
+} from 'class-validator';
+
 import { user_report_status } from '@prisma/client';
-import { Field, InputType, Int } from '@nestjs/graphql';
+
+registerEnumType(user_report_status, {
+  name: 'UserReportStatus',
+});
 
 @InputType()
 export class GetUserReportsInput {
@@ -16,7 +30,7 @@ export class GetUserReportsInput {
   @Min(1)
   limit: number;
 
-  @Field(() => String, {
+  @Field(() => user_report_status, {
     nullable: true,
   })
   @IsOptional()
