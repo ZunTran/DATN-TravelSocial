@@ -10,6 +10,7 @@ import { InterestTagModule } from './interest/interest-tag.module';
 import { FollowModule } from './follow/follow.module';
 import { BlockModule } from './block/block.module';
 import { NotificationModule } from './notification/notification.module';
+import { UserReportModule } from './user-report/user-report.module';
 
 @Module({
   imports: [
@@ -21,6 +22,8 @@ import { NotificationModule } from './notification/notification.module';
     FollowModule,
     BlockModule,
     NotificationModule,
+    UserReportModule
+
   ],
   providers: [
     JwtStrategy, 

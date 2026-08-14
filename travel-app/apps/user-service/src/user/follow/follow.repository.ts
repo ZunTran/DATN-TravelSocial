@@ -91,4 +91,12 @@ export class FollowRepository {
       totalPages: Math.ceil(total / limit),
     };
   }
+
+  async deleteIfExists(followerId: string,followingId: string,
+  tx?: Prisma.TransactionClient) {
+  return (tx ?? this.prisma).follow.deleteMany({where: {
+      follower_id: followerId,
+      following_id: followingId
+    }});
+}
 }

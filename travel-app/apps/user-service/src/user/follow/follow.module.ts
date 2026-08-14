@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 
 import { PrismaModule } from '../../prisma/prisma.module';
@@ -13,7 +13,7 @@ import { NotificationModule } from '../notification/notification.module';
   imports: [
     PrismaModule,
     UserProfileModule, 
-    BlockModule,
+    forwardRef(() => BlockModule),
     NotificationModule,
   ],
   providers: [
