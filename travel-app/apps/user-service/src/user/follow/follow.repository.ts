@@ -8,6 +8,10 @@ export class FollowRepository {
     private readonly prisma: PrismaService,
   ) {}
 
+  private client(tx?: Prisma.TransactionClient) {
+    return tx ?? this.prisma;
+  }
+
   async find(followerId: string, followingId: string) {
     return this.prisma.follow.findUnique({
       where: {follower_id_following_id: {
@@ -17,20 +21,19 @@ export class FollowRepository {
     });
   }
 
-   async create(followerId: string,followingId: string,tx?: Prisma.TransactionClient,) {
-    const db = tx ?? this.prisma;
-    return db.follow.create({
+  async create(followerId: string,followingId: string,
+    tx?: Prisma.TransactionClient) {
+    return this.client(tx).follow.create({
       data: {
         follower_id: followerId,
         following_id: followingId,
-      }
-    });
+      }});
   }
 
-  async delete(followerId: string,followingId: string) {
-    return this.prisma.follow.delete({
-      where: {follower_id_following_id: 
-        {
+  async delete(followerId: string,followingId: string,
+    tx?: Prisma.TransactionClient) {
+    return this.client(tx).follow.delete({
+      where: {follower_id_following_id: {
           follower_id: followerId,
           following_id: followingId,
         }},
@@ -58,8 +61,7 @@ export class FollowRepository {
       this.prisma.follow.count({where: {following_id: userId}}),
     ]);
 
-    return {
-      data: data.map((item) => item.follower),
+    return { data: data.map((item) => item.follower),
       total,
       page,
       limit,

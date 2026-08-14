@@ -3,7 +3,7 @@ import { FollowRepository } from './follow.repository';
 import { UserProfileRepository } from '../user-profile/user-profile.repository';
 import { NotificationRepository } from '../notification/notification.repository';
 import { BlockRepository } from '../block/block.repository';
-import { notification_type } from '@prisma/client';
+import { TransactionService } from '../../prisma/transaction.service';
 @Injectable()
 export class FollowService {
   constructor(
@@ -11,6 +11,7 @@ export class FollowService {
     private readonly userProfileRepository: UserProfileRepository,
     private readonly blockRepository: BlockRepository,
     private readonly notificationRepository: NotificationRepository,
+    private readonly transactionService: TransactionService,
   ) {}
 
   async follow(accountId: string, targetProfileId: string) {
@@ -28,15 +29,25 @@ export class FollowService {
     const existed = await this.repository.find(profile.id,targetProfileId);
     if (existed) throw new ConflictException('Đã follow người dùng này');
     
-    const follow = await this.repository.create(profile.id,targetProfileId);
+     return this.transactionService.run(async (tx) => {
 
-    await this.notificationRepository.create({
-      receiver: {connect: {id: targetProfileId}},
-      sender: {connect: {id: profile.id}},
-      type: notification_type.NEW_FOLLOWER,
-      message: `${profile.display_name} đã follow bạn`,
-    });
+      const follow =await this.repository.create(
+        profile.id,
+        targetProfileId,
+        tx,
+      );
+
+      await this.notificationRepository.create({
+        receiver: {connect: {id: targetProfileId}},
+        sender: {connect: {id: profile.id}},
+        type: 'NEW_FOLLOWER',
+        message: `${profile.display_name} đã follow bạn`
+      },
+      tx,
+    );
+
     return follow;
+    });
   }
 
   async unfollow(accountId: string, targetProfileId: string) {

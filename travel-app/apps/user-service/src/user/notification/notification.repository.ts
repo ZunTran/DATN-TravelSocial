@@ -8,10 +8,12 @@ export class NotificationRepository {
     private readonly prisma: PrismaService,
   ) {}
 
-  async create(data: Prisma.notificationCreateInput,tx?: Prisma.TransactionClient,) {
-    const db = tx ?? this.prisma;
-    return db.notification.create({data});
-  }
+  async create(data: Prisma.notificationCreateInput,
+    tx?: Prisma.TransactionClient,) {
+
+    const client = tx ?? this.prisma;
+    return client.notification.create({data});
+}
 
   async findById(id: string) {
     return this.prisma.notification.findUnique({where: { id },});
