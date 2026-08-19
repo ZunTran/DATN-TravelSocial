@@ -1,0 +1,266 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PostStatus {
+  PUBLISHED
+  DRAFT
+  DELETED
+  @@map("post_status")
+}
+
+enum PostPrivacy {
+  PUBLIC
+  PRIVATE
+  FRIENDS_ONLY
+  @@map("post_privacy")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  @@map("media_type")
+}
+
+
+enum PostReportStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  REJECTED
+  @@map("post_report_status")
+}
+
+
+model category {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String  @unique @db.VarChar(100)
+  description String?
+
+  posts post[]
+
+  @@map("category")
+}
+
+
+model location {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(255)
+  address   String?
+  latitude  Decimal? @db.Decimal(9, 6)
+  longitude Decimal? @db.Decimal(9, 6)
+  province  String?  @db.VarChar(100)
+
+  posts post[]
+
+  @@index([province], map: "idx_location_province")
+  @@index([name], map: "idx_location_name")
+  @@map("location")
+}
+
+
+model post {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  author_id   String      @db.Uuid
+  category_id String?     @db.Uuid
+  location_id String?     @db.Uuid
+  content     String
+  privacy     PostPrivacy @default(PUBLIC)
+  status      PostStatus  @default(PUBLISHED)
+
+  view_count    BigInt @default(0)
+  like_count    Int    @default(0)
+  comment_count Int    @default(0)
+  share_count   Int    @default(0)
+  save_count    Int    @default(0)
+
+  author_username String  @db.VarChar(50)
+  author_avatar   String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  category category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  location location? @relation(fields: [location_id], references: [id], onDelete: SetNull)
+
+  media     post_media[]
+  comments  comment[]
+  likes     post_like[]
+  saves     save_post[]
+  shares    share[]
+  hashtags  post_hashtag[]
+  reports   post_report[]
+
+  @@index([author_id, created_at(sort: Desc)], map: "idx_post_author_time")
+  @@index([category_id], map: "idx_post_category")
+  @@index([location_id], map: "idx_post_location")
+  @@index([status, privacy], map: "idx_post_status_privacy")
+  @@index([status, privacy, created_at(sort: Desc)], map: "idx_post_feed")
+
+  @@map("post")
+}
+
+
+model post_media {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  post_id      String    @db.Uuid
+  media_url    String
+  media_type   MediaType
+  display_order Int      @default(0)
+
+  post post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+
+  @@index([post_id], map: "idx_post_media_post")
+
+  @@map("post_media")
+}
+
+
+model post_like {
+  post_id    String   @db.Uuid
+  user_id    String   @db.Uuid
+  created_at DateTime @default(now())
+
+  post post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+
+  @@id([post_id, user_id])
+
+  @@index([user_id], map: "idx_like_user")
+
+  @@map("like")
+}
+
+
+model save_post {
+  post_id  String   @db.Uuid
+  user_id  String   @db.Uuid
+  saved_at DateTime @default(now())
+
+  post post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+
+  @@id([post_id, user_id])
+
+  @@index([user_id], map: "idx_save_post_user")
+  @@index([user_id, saved_at(sort: Desc)], map: "idx_save_user_time")
+
+  @@map("save_post")
+}
+
+
+model share {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  post_id    String   @db.Uuid
+  user_id    String   @db.Uuid
+  created_at DateTime @default(now())
+
+  post post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+
+  @@index([post_id], map: "idx_share_post")
+  @@index([user_id], map: "idx_share_user")
+
+  @@map("share")
+}
+
+
+model comment {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  post_id           String    @db.Uuid
+  author_id         String    @db.Uuid
+  parent_comment_id String?   @db.Uuid
+  content           String
+  created_at        DateTime  @default(now())
+
+  post post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+
+  parent   comment?  @relation("CommentReplies", fields: [parent_comment_id], references: [id], onDelete: Cascade)
+  replies  comment[] @relation("CommentReplies")
+
+  @@index([post_id, created_at(sort: Asc)], map: "idx_comment_post_time")
+  @@index([parent_comment_id], map: "idx_comment_parent")
+
+  @@map("comment")
+}
+
+
+model hashtag {
+  id   String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name String @unique @db.VarChar(100)
+
+  posts post_hashtag[]
+
+  @@index([name], map: "idx_hashtag_name")
+
+  @@map("hashtag")
+}
+
+
+model post_hashtag {
+  post_id    String @db.Uuid
+  hashtag_id String @db.Uuid
+
+  post    post    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  hashtag hashtag @relation(fields: [hashtag_id], references: [id], onDelete: Cascade)
+
+  @@id([post_id, hashtag_id])
+
+  @@index([post_id], map: "idx_post_hashtag_post")
+  @@index([hashtag_id], map: "idx_post_hashtag_tag")
+
+  @@map("post_hashtag")
+}
+
+
+model story {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  author_id  String      @db.Uuid
+  media_url  String
+  caption    String?
+  privacy    PostPrivacy @default(PUBLIC)
+  expires_at DateTime
+  created_at DateTime    @default(now())
+
+  view_count Int @default(0)
+
+  viewers story_viewer[]
+
+  @@index([author_id, expires_at], map: "idx_story_author_expire")
+  @@index([expires_at, created_at(sort: Desc)], map: "idx_story_feed")
+  @@map("story")
+}
+
+
+model story_viewer {
+  story_id  String   @db.Uuid
+  viewer_id String   @db.Uuid
+  viewed_at DateTime @default(now())
+
+  story story @relation(fields: [story_id], references: [id], onDelete: Cascade)
+
+  @@id([story_id, viewer_id])
+  @@map("story_viewer")
+}
+
+
+
+model post_report {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporter_id      String           @db.Uuid
+  post_id          String           @db.Uuid
+  reason           String
+  status           PostReportStatus @default(PENDING)
+  handled_by       String?          @db.Uuid
+  handled_at       DateTime?
+  created_at       DateTime         @default(now())
+
+  post post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  @@index([status], map: "idx_post_report_status")
+  @@map("post_report")
+}
+
+
+

@@ -22,6 +22,7 @@ export class UserProfileRepository {
     return this.prisma.user_profile.findFirst({where: { account_id }});
   }
 
+
   async findByUsername(username: string) {
     return this.prisma.user_profile.findUnique({where: { username }});
   }
@@ -60,4 +61,19 @@ export class UserProfileRepository {
     totalPages: Math.ceil(total / limit),
   };
 }
+
+  async findInternalByAccountId(accountId: string) {
+  return this.prisma.user_profile.findUnique({
+    where: {
+      account_id: accountId,
+    },
+    select: {
+      id: true,
+      account_id: true,
+      username: true,
+      avatar_url: true,
+    },
+  });
+}
+
 }

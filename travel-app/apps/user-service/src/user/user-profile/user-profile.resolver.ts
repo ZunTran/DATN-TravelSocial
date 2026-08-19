@@ -1,14 +1,8 @@
-import {
-  Args,
-  Mutation,
-  Query,
-  Resolver,
-} from '@nestjs/graphql';
+import {Args,Mutation,Query,Resolver} from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 
 import { UserProfileObject } from './objects/user-profile.object';
 import { UserProfileService } from './user-profile.service';
-
 import { CreateProfileInput } from './dto/create-profile.input';
 import { UpdateProfileInput } from './dto/update-profile.input';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
@@ -19,8 +13,6 @@ import type { FileUpload } from 'graphql-upload-ts';
 import { UserProfilePageObject } from './objects/user-profile-page.object';
 import type { ActiveUserData } from '../../common/auth/interfaces/user-data.interface';
 import { user_privacy } from '@prisma/client';
-// import { UserPrivacy } from './enums/user-privacy.enum';
-
 
 @Resolver(() => UserProfileObject)
 export class UserProfileResolver {

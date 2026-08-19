@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-
+import {ConflictException,Injectable,NotFoundException} from '@nestjs/common';
 import { UserProfileRepository } from './user-profile.repository';
 import { CreateProfileInput } from './dto/create-profile.input';
 import { UpdateProfileInput } from './dto/update-profile.input';
@@ -11,7 +6,7 @@ import { SearchUserInput } from './dto/search-user.input';
 import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
 import { FileUpload } from 'graphql-upload-ts';
 import { user_privacy } from '@prisma/client';
-
+import { InternalUserProfileResponse } from './response/internal-uprofile.response';
 
 @Injectable()
 export class UserProfileService {
@@ -144,6 +139,19 @@ export class UserProfileService {
       updated_at: new Date(),
     });
   }
+
+  async getInternalUProfileByAccountId(accountId: string): Promise<InternalUserProfileResponse> {
+  const profile =await this.repository.findInternalByAccountId(accountId);
+  if (!profile) 
+    throw new NotFoundException('User profile not found');
+
+  return {
+    profileId: profile.id,
+    accountId: profile.account_id,
+    username: profile.username,
+    avatarUrl: profile.avatar_url,
+  };
+}
 
 }
 

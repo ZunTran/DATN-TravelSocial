@@ -7,7 +7,6 @@ import { graphqlUploadExpress } from 'graphql-upload-ts';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Setup Validation cho DTO (cái này cực quan trọng)
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   app.use(graphqlUploadExpress({ maxFileSize: 10 * 1024 * 1024, maxFiles: 5 }));
