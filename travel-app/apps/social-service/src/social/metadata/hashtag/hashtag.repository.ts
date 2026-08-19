@@ -14,6 +14,68 @@ export class HashtagRepository {
     });
   }
 
+   async findAll(
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.hashtag.findMany({
+      orderBy: {
+        name: 'asc',
+      },
+    });
+  }
+
+  async findById(
+    tx: Prisma.TransactionClient,
+    id: string,
+  ) {
+    return tx.hashtag.findUnique({
+      where: { id },
+    });
+  }
+
+  async findByName(
+    tx: Prisma.TransactionClient,
+    name: string,
+  ) {
+    return tx.hashtag.findUnique({
+      where: { name },
+    });
+  }
+
+  async create(
+    tx: Prisma.TransactionClient,
+    name: string,
+  ) {
+    return tx.hashtag.create({
+      data: {
+        name,
+      },
+    });
+  }
+
+  async update(
+    tx: Prisma.TransactionClient,
+    id: string,
+    name: string,
+  ) {
+    return tx.hashtag.update({
+      where: { id },
+      data: {
+        name,
+      },
+    });
+  }
+
+  async delete(
+    tx: Prisma.TransactionClient,
+    id: string,
+  ) {
+    return tx.hashtag.delete({
+      where: { id },
+    });
+  }
+
+
   async deletePostHashtags(
     tx: Prisma.TransactionClient,
     postId: string) {
@@ -26,11 +88,12 @@ export class HashtagRepository {
     tx: Prisma.TransactionClient,
     postId: string,
     hashtagIds: string[],) {
-    return tx.post_hashtag.createMany({
+     return tx.post_hashtag.createMany({
       data: hashtagIds.map((hashtagId) => ({
         post_id: postId,
         hashtag_id: hashtagId,
       })),
+      skipDuplicates: true,
     });
   }
 }
