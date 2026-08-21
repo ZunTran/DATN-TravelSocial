@@ -5,6 +5,6 @@ export const CurrentUser = createParamDecorator(
   (data: unknown, context: ExecutionContext) => {
     const ctx = GqlExecutionContext.create(context);
     const request = ctx.getContext().req;
-    return request.user; // Trả về object { accountId, email, role } đã định nghĩa jwt.strategy.ts
+    return request.user; 
   },
 );

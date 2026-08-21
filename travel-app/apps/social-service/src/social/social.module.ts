@@ -8,6 +8,7 @@ import { AdminModule } from './admin/admin.module';
 import { UserProfileClientModule } from '../common/clients/user-profile/user-profile.module';
 import { PostModule } from './post/post.module';
 import { MetadataModule } from './metadata/metadata.module';
+import { InteractionModule } from './interaction/interaction.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MetadataModule } from './metadata/metadata.module';
     CloudinaryModule,
     PostModule,
     MetadataModule,
+    InteractionModule
   ],
   providers: [
     JwtStrategy, 
