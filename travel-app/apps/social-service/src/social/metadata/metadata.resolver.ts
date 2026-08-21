@@ -94,7 +94,6 @@ export class MetadataResolver {
 
   @Mutation(() => Boolean)
     @UseGuards(JwtAuthGuard,RolesGuard)
-
   @Roles('ADMIN')
   async deleteLocation(
     @Args('id', { type: () => ID }) id: string,
@@ -108,8 +107,7 @@ export class MetadataResolver {
   }
 
   @Mutation(() => HashtagObject)
-    @UseGuards(JwtAuthGuard,RolesGuard)
-
+  @UseGuards(JwtAuthGuard,RolesGuard)
   @Roles('ADMIN')
   async createHashtag(
     @Args('input') input: CreateHashtagInput,
