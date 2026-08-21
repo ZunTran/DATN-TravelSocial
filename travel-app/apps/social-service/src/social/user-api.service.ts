@@ -9,9 +9,7 @@ export class UserClientService {
 
   constructor(private readonly httpService: HttpService) {}
 
-  /**
-   * Gọi User Service để lấy thông tin user -lúc tạo post
-   */
+
   async getAuthorProfile(authorId: string) {
     try {
       const url = `${this.userServiceUrl}/api/internal/users/${authorId}`;
@@ -26,10 +24,9 @@ export class UserClientService {
         }),
       );
 
-      return response.data; //  name, avatar 
+      return response.data;
     } catch (error) {
       console.error(`[UserClient] Không thể lấy thông tin user ${authorId}:`);
-      // Fallback mặc định nếu user-service lỗi
       return {
         name: 'Người dùng ẩn danh',
         avatar: null,
