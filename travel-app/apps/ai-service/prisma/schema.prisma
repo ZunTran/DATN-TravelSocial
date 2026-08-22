@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum TravelPlanStatus {
@@ -11,6 +12,8 @@ enum TravelPlanStatus {
   COMPLETED
   ARCHIVED
   DELETED
+
+  @@map("travel_plan_status")
 }
 
 enum RecommendationType {
@@ -19,6 +22,8 @@ enum RecommendationType {
   RESTAURANT
   POST
   FRIEND
+
+  @@map("recommendation_type")
 }
 
 model travel_plan {

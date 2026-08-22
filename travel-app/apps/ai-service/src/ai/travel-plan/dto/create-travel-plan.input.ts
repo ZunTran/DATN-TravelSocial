@@ -8,7 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 
-import { CreateTravelPlanItemInput } from '../../travel-plan-item/dto/create-travel-plan-item.input';
+import { CreateTravelPlanItemInlineInput } from '../../travel-plan-item/dto/create-travel-plan-item-inline.input';
 
 @InputType()
 export class CreateTravelPlanInput {
@@ -32,8 +32,8 @@ export class CreateTravelPlanInput {
   @IsNotEmpty()
   content: string;
 
-  @Field(() => [CreateTravelPlanItemInput], {
+  @Field(() => [CreateTravelPlanItemInlineInput], {
     nullable: true,
   })
-  items?: CreateTravelPlanItemInput[];
+  items?: CreateTravelPlanItemInlineInput[];
 }
