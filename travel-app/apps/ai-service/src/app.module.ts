@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { AIlModule } from './ai/ai.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -17,7 +17,7 @@ import { AIlModule } from './ai/ai.module';
       csrfPrevention: true,
     }),
 
-    AIlModule,
+    AiModule,
   ],
 })
 export class AppModule {}
