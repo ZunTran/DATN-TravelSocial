@@ -4,7 +4,6 @@ import { FollowService } from './follow.service';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import type { ActiveUserData } from '../../common/auth/interfaces/user-data.interface';
-
 import { FollowObject } from './objects/follow.object';
 import { FollowPageObject } from './objects/follow-page.object';
 import { PaginationInput } from '../../common/dto/pagination.input';

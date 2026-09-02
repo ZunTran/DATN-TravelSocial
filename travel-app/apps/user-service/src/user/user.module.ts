@@ -10,6 +10,7 @@ import { FollowModule } from './follow/follow.module';
 import { BlockModule } from './block/block.module';
 import { NotificationModule } from './notification/notification.module';
 import { UserReportModule } from './user-report/user-report.module';
+import { UserRegisteredConsumer } from '../common/events/user-registered.consumer';
 
 @Module({
   imports: [
@@ -23,6 +24,9 @@ import { UserReportModule } from './user-report/user-report.module';
     NotificationModule,
     UserReportModule
 
+  ],
+  controllers: [
+    UserRegisteredConsumer,
   ],
   providers: [
     JwtStrategy, 

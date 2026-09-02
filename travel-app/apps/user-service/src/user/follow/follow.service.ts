@@ -98,4 +98,21 @@ export class FollowService {
   async countFollowing(profileId: string) {
     return this.repository.countFollowing(profileId);
   }
+
+ async getFollowingProfileIds(
+  accountId: string,
+): Promise<string[]> {
+  const profile= await this.userProfileRepository.findByAccountId(accountId);
+  if(!profile) throw new NotFoundException('Không tìm thấy profile');
+
+  const profileId= profile.id
+  const follows = await this.repository.findFollowingIds(
+    profileId,
+  );
+
+  return follows.map(
+    (follow) => follow.following_id,
+  );
+}
+
 }

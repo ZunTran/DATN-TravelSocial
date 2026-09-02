@@ -99,4 +99,18 @@ export class FollowRepository {
       following_id: followingId
     }});
 }
+
+  async findFollowingIds(profileId: string) {
+    return this.prisma.follow.findMany({
+      where: {
+        follower_id: profileId,
+      },
+      select: {
+        following_id: true,
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+  }
 }

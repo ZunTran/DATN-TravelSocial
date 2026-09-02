@@ -72,6 +72,33 @@ export class UserProfileService {
       });
   }
 
+  async createDefaultProfile( accountId: string, email: string) {
+  const existed = await this.repository.findByAccountId( accountId);
+
+  if (existed)  
+    return existed;
+  
+  const emailPrefix =email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 20);
+  let username = emailPrefix || `user_${accountId.slice(0, 8)}`;
+  const usernameExists = await this.repository.findByUsername( username );
+
+  if (usernameExists) {
+    username = `${username}_${accountId.slice(0, 8)}`;
+  }
+
+  return this.repository.create({
+    account_id: accountId,
+    username,
+    display_name: emailPrefix || 'Traveler',
+    avatar_url: null,
+    cover_url: null,
+    bio: null,
+    gender: null,
+    birthday: null,
+    location: null,
+  });
+}
+
   async updatePrivacy(account_id: string,privacy: user_privacy) {
     const profile =await this.repository.findByAccountId(account_id,);
     if (!profile) throw new NotFoundException('Không tìm thấy profile');
@@ -153,5 +180,6 @@ export class UserProfileService {
   };
 }
 
+  
 }
 

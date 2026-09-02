@@ -4,13 +4,17 @@ import { UserProfileResolver } from './user-profile.resolver';
 import { UserProfileService } from './user-profile.service';
 import { UserProfileRepository } from './user-profile.repository';
 import { InternalUProfileController } from './internal-uprofile.controller';
+import { UserRegisteredConsumer } from '../../common/events/user-registered.consumer';
+// import { FollowModule } from '../follow/follow.module';
 
 @Module({
-  controllers:[InternalUProfileController],
+  controllers:[InternalUProfileController  ],
+
   providers: [
     UserProfileResolver,
     UserProfileService,
     UserProfileRepository,
+    UserRegisteredConsumer
     
   ],
   exports: [

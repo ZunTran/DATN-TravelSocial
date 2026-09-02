@@ -11,4 +11,10 @@ export class InternalUProfileController {
   async getByAccountId(@Param('accountId') accountId: string) {
     return this.userProfileService.getInternalUProfileByAccountId(accountId);
   }
+
+    @Get('account/:accountId')
+  async getFollowingByAccountId(@Param('accountId') accountId: string) {
+    return this.userProfileService.getInternalUProfileByAccountId(accountId);
+  }
+
 }

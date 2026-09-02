@@ -8,8 +8,12 @@ import { FollowRepository } from './follow.repository';
 import { UserProfileModule } from '../user-profile/user-profile.module';
 import { BlockModule } from '../block/block.module';
 import { NotificationModule } from '../notification/notification.module';
+import { InternalFollowController } from './internal-follow.controller';
 
 @Module({
+  controllers: [
+  InternalFollowController, 
+],
   imports: [
     PrismaModule,
     UserProfileModule, 
