@@ -1,0 +1,233 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AdminResponseObject {
+  email: String
+  message: String!
+  username: String
+}
+
+input BlockInput {
+  profileId: ID!
+  reason: String
+}
+
+type BlockObject {
+  blocked_id: ID!
+  blocker_id: ID!
+  created_at: DateTime!
+  reason: String
+}
+
+type BlockPageObject {
+  data: [UserProfileObject!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+input CreateInterestInput {
+  icon_url: String
+  name: String!
+}
+
+input CreateProfileInput {
+  avatar_url: String
+  bio: String
+  birthday: DateTime
+  cover_url: String
+  display_name: String!
+  gender: GenderType
+  location: String
+  username: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type FollowObject {
+  created_at: DateTime!
+  follower_id: ID!
+  following_id: ID!
+}
+
+type FollowPageObject {
+  data: [UserProfileObject!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+enum GenderType {
+  FEMALE
+  MALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+input GetUserInterestsInput {
+  limit: Int! = 20
+  page: Int! = 1
+}
+
+input GetUserReportsInput {
+  limit: Int! = 20
+  page: Int! = 1
+  status: UserReportStatus
+}
+
+type InterestTagObject {
+  created_at: DateTime!
+  icon_url: String
+  id: ID!
+  name: String!
+}
+
+type Mutation {
+  block(input: BlockInput!): BlockObject!
+  createInterestTag(input: CreateInterestInput!): InterestTagObject!
+  createProfile(input: CreateProfileInput!): UserProfileObject!
+  deleteInterestTag(id: ID!): Boolean!
+  follow(profileId: ID!): FollowObject!
+  reportUser(input: UserReportInput!): UserReportObject!
+  seedDefaultAdmin: AdminResponseObject!
+  unblock(profileId: ID!): Boolean!
+  unfollow(profileId: ID!): Boolean!
+  updateInterestTag(id: ID!, input: UpdateInterestInput!): InterestTagObject!
+  updateMyInterests(interestIds: [ID!]!): [InterestTagObject!]!
+  updatePrivacy(privacy: UserPrivacy!): UserProfileObject!
+  updateProfile(input: UpdateProfileInput!): UserProfileObject!
+  updateProfileWithFiles(avatar: Upload, cover: Upload, input: UpdateProfileInput!): UserProfileObject!
+  updateUserReportStatus(input: UpdateReportStatusInput!, reportId: ID!): UserReportObject!
+}
+
+input PaginationInput {
+  limit: Int! = 20
+  page: Int! = 1
+}
+
+type Query {
+  adminUserReport(id: ID!): UserReportObject!
+  adminUserReports(input: GetUserReportsInput!): UserReportPageObject!
+  blockedUsers(input: PaginationInput!): BlockPageObject!
+  checkUsername(username: String!): Boolean!
+  followers(input: PaginationInput!): FollowPageObject!
+  followersCount(profileId: ID!): Int!
+  following(input: PaginationInput!): FollowPageObject!
+  followingCount(profileId: ID!): Int!
+  getInterestTags: [InterestTagObject!]!
+  getMyInterests: [InterestTagObject!]!
+  getMyInterestsPaginated(input: GetUserInterestsInput!): UserInterestPageObject!
+  getSuggestedUsersByInterests: [UserProfileObject!]!
+  isBlocked(profileId: ID!): Boolean!
+  isFollowing(profileId: ID!): Boolean!
+  myProfile: UserProfileObject!
+  myReports(input: PaginationInput!): UserReportPageObject!
+  searchInterestTags(name: String!): [InterestTagObject!]!
+  searchUsers(input: SearchUserInput!): UserProfilePageObject!
+  userProfile(id: String!): UserProfileObject!
+}
+
+input SearchUserInput {
+  keyword: String
+  limit: Int! = 20
+  page: Int! = 1
+}
+
+input UpdateInterestInput {
+  icon_url: String
+  name: String
+}
+
+input UpdateProfileInput {
+  avatar_url: String
+  bio: String
+  birthday: DateTime
+  cover_url: String
+  display_name: String
+  gender: GenderType
+  location: String
+  privacy: UserPrivacy
+  username: String
+}
+
+input UpdateReportStatusInput {
+  status: UserReportStatus!
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+type UserInterestPageObject {
+  data: [InterestTagObject!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+enum UserPrivacy {
+  PRIVATE
+  PUBLIC
+}
+
+type UserProfileObject {
+  avatar_url: String
+  bio: String
+  birthday: DateTime
+  cover_url: String
+  created_at: DateTime!
+  display_name: String!
+  gender: GenderType
+  id: ID!
+  location: String
+  privacy: UserPrivacy!
+  updated_at: DateTime!
+  username: String!
+}
+
+type UserProfilePageObject {
+  data: [UserProfileObject!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+input UserReportInput {
+  reason: String!
+  reportedUserId: ID!
+}
+
+type UserReportObject {
+  created_at: DateTime!
+  handled_at: DateTime
+  handled_by: ID
+  id: ID!
+  reason: String!
+  reported_user: UserProfileObject
+  reported_user_id: ID!
+  reporter: UserProfileObject
+  reporter_id: ID!
+  status: String!
+}
+
+type UserReportPageObject {
+  data: [UserReportObject!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+enum UserReportStatus {
+  PENDING
+  REJECTED
+  RESOLVED
+  REVIEWING
+}

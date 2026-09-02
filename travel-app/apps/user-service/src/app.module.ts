@@ -6,6 +6,8 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { InterestTagModule } from './user/interest/interest-tag.module';
+import { EventsModule } from './common/events/event.module';
+import { UserRegisteredConsumer } from './common/events/user-registered.consumer';
 
 @Module({
   imports: [
@@ -21,7 +23,7 @@ import { InterestTagModule } from './user/interest/interest-tag.module';
     
     UserModule,
     InterestTagModule,
+    EventsModule
   ],
-  
 })
 export class AppModule {}

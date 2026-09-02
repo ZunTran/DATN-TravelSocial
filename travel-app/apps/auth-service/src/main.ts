@@ -4,8 +4,6 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
-  // Kích hoạt Validation toàn cục cho DTO (class-validator)
   app.useGlobalPipes(new ValidationPipe());
 
   const port = process.env.PORT || 3001;
