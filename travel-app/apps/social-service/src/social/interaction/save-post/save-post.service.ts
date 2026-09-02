@@ -107,4 +107,30 @@ export class SavePostService {
 
     return !!saved;
   }
+
+
+
+  async getSavedPostIds(
+    accountId: string,
+    postIds: string[],
+  ): Promise<Set<string>> {
+    if (postIds.length === 0) {
+      return new Set<string>();
+    }
+
+    const profile =
+      await this.userProfileClient.getByAccountId(accountId);
+
+    const saves =
+      await this.repository.findByProfileAndPostIds(
+        profile.profileId,
+        postIds,
+      );
+
+    return new Set(
+      saves.map((save) => save.post_id),
+    );
+  }
+
+
 }

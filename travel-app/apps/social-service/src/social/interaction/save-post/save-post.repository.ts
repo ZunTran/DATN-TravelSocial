@@ -1,8 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class SavePostRepository {
+    constructor(
+      private readonly prisma: PrismaService,
+    ) {}
+
   async find(
     tx: Prisma.TransactionClient,
     postId: string,
@@ -45,4 +50,28 @@ export class SavePostRepository {
       },
     });
   }
+
+
+  async findByProfileAndPostIds(
+    profileId: string,
+    postIds: string[],
+  ) {
+    if (postIds.length === 0) {
+      return [];
+    }
+
+    return this.prisma.save_post.findMany({
+      where: {
+        user_id: profileId,
+        post_id: {
+          in: postIds,
+        },
+      },
+      select: {
+        post_id: true,
+      },
+    });
+  }
+
+
 }

@@ -149,4 +149,18 @@ export class LikeService {
       totalPages: Math.ceil(total / limit),
     };
   }
+
+  async getLikedPostIds( accountId: string, postIds: string[]): Promise<Set<string>> {
+    if (postIds.length === 0) {
+      return new Set<string>();
+    }
+
+    const profile = await this.userProfileClient.getByAccountId(accountId);
+
+    const likes = await this.likeRepository.findByProfileAndPostIds( profile.profileId, postIds);
+
+    return new Set( likes.map((like) => like.post_id));
+  }
+
+
 }

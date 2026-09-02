@@ -67,4 +67,28 @@ export class LikeRepository {
       where: { post_id: postId},
     });
   }
+
+
+async findByProfileAndPostIds(
+  profileId: string,
+  postIds: string[],
+) {
+  if (postIds.length === 0) {
+    return [];
+  }
+
+  return this.prisma.post_like.findMany({
+    where: {
+      user_id: profileId,
+      post_id: {
+        in: postIds,
+      },
+    },
+    select: {
+      post_id: true,
+    },
+  });
+}
+
+
 }

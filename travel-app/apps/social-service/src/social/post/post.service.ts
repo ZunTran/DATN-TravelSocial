@@ -11,6 +11,9 @@ import { LocationRepository } from '../metadata/location/location.repository';
 import { HashtagRepository } from '../metadata/hashtag/hashtag.repository';
 import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
 import type { FileUpload } from 'graphql-upload-ts';
+import { FollowClient } from '../../common/clients/follow/follow.client';
+import { LikeService } from '../interaction/like/like.service';
+import { SavePostService } from '../interaction/save-post/save-post.service';
 
 @Injectable()
 export class PostService {
@@ -26,6 +29,10 @@ export class PostService {
     private readonly locationRepository: LocationRepository,
     private readonly hashtagRepository: HashtagRepository,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly followClient: FollowClient,
+    private readonly likeService: LikeService,
+    private readonly savePostService: SavePostService,
+
   ) {}
 
 async createPostWithFiles(accountId: string,input: CreatePostInput,
@@ -222,39 +229,101 @@ async createPostWithFiles(accountId: string,input: CreatePostInput,
     return post;
   }
 
-  async getPosts(filter: PostFilterInput, page: number, limit: number) {
+  // async getPosts(filter: PostFilterInput, page: number, limit: number) {
+  //   const where: Prisma.postWhereInput = {
+  //     status: PostStatus.PUBLISHED,
+  //     privacy: PostPrivacy.PUBLIC,
+  //     ...(filter.authorId && { author_id: filter.authorId }),
+  //     ...(filter.categoryId && { category_id: filter.categoryId }),
+  //     ...(filter.locationId && { location_id: filter.locationId }),
+  //   };
+
+  //   const skip = (page - 1) * limit;
+  //   const [items, total] = await Promise.all([
+  //     this.postRepository.findMany(where, skip, limit),
+  //     this.postRepository.count(where),
+  //   ]);
+
+  //   return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+  // }
+
+    async getPosts(
+    accountId: string,
+    filter: PostFilterInput,
+    page: number,
+    limit: number,
+  ) {
     const where: Prisma.postWhereInput = {
       status: PostStatus.PUBLISHED,
       privacy: PostPrivacy.PUBLIC,
-      ...(filter.authorId && { author_id: filter.authorId }),
-      ...(filter.categoryId && { category_id: filter.categoryId }),
-      ...(filter.locationId && { location_id: filter.locationId }),
+
+      ...(filter.authorId && {
+        author_id: filter.authorId,
+      }),
+
+      ...(filter.categoryId && {
+        category_id: filter.categoryId,
+      }),
+
+      ...(filter.locationId && {
+        location_id: filter.locationId,
+      }),
     };
 
     const skip = (page - 1) * limit;
+
     const [items, total] = await Promise.all([
-      this.postRepository.findMany(where, skip, limit),
+      this.postRepository.findMany(
+        where,
+        skip,
+        limit,
+      ),
       this.postRepository.count(where),
     ]);
 
-    return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+    const postsWithInteraction = await this.attachInteractionStatus( accountId, items);
+
+
+    console.log('===== GET POSTS =====');
+console.log('accountId:', accountId);
+console.log(
+  'items:',
+  items.map((p) => ({
+    id: p.id,
+    author_id: p.authorId,
+    authorId: p.authorId,
+  })),
+);
+console.log(
+  'postsWithInteraction:',
+  postsWithInteraction.map((p) => ({
+    id: p.id,
+    isPostLiked: p.isPostLiked,
+    isPostSaved: p.isPostSaved,
+  })),
+);
+
+
+    return {
+      items: postsWithInteraction,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
  async incrementView(postId: string) {
-    const post = await this.postRepository.findById(postId);
+ const post = await this.postRepository.findById(postId);
 
-  if (!post) {
+  if (!post) 
     throw new NotFoundException('Post not found');
-  }
-
+  
   if (post.status !== PostStatus.PUBLISHED) {
-    throw new BadRequestException(
-      'Only published posts can be viewed',
-    );
+    throw new BadRequestException('Only published posts can be viewed');
   }
 
   await this.postRepository.addView(postId);
-
   return this.postRepository.findById(postId);
 }
 
@@ -410,6 +479,52 @@ async changePostStatus(accountId: string, postId: string, newStatus: PostStatus)
     }, {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     });
+  }
+
+  async getFeed( accountId: string, cursor?: string, limit = 10) {
+  if (limit < 1 || limit > 50) 
+    throw new BadRequestException(' Feed limit must be between 1 and 50');
+  
+  const followingProfileIds = await this.followClient.getFollowingProfileIds( accountId);
+  const feed = await this.postRepository.findFeed( followingProfileIds, cursor, limit, ); 
+  const items = await this.attachInteractionStatus( accountId, feed.items, );
+
+  // return this.postRepository.findFeed(
+  //   followingProfileIds,
+  //   cursor,
+  //   limit,
+  // );
+
+  return { ...feed, items, };
+  }
+
+
+  private async attachInteractionStatus(
+    accountId: string,
+    posts: any[],
+  ) {
+    if (posts.length === 0) {
+      return posts;
+    }
+
+    const postIds = posts.map((post) => post.id);
+
+    const [likedPostIds, savedPostIds] = await Promise.all([
+      this.likeService.getLikedPostIds(
+        accountId,
+        postIds,
+      ),
+      this.savePostService.getSavedPostIds(
+        accountId,
+        postIds,
+      ),
+    ]);
+
+    return posts.map((post) => ({
+      ...post,
+      isPostLiked: likedPostIds.has(post.id),
+      isPostSaved: savedPostIds.has(post.id),
+    }));
   }
 
 }

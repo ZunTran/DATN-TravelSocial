@@ -1,4 +1,4 @@
-import { Args,ID,Mutation,Query,Resolver,} from '@nestjs/graphql';
+import { Args,ID,Mutation,Parent,Query,ResolveField,Resolver,} from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
@@ -44,13 +44,13 @@ export class InteractionResolver {
       return this.likeService.unlike( postId, user.accountId);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Query(() => Boolean)
-  async isPostLiked(
-    @CurrentUser() user: ActiveUserData,
-    @Args('postId', { type: () => ID }) postId: string) {
-      return this.likeService.isLiked( postId, user.accountId);
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Query(() => Boolean)
+  // async isPostLiked(
+  //   @CurrentUser() user: ActiveUserData,
+  //   @Args('postId', { type: () => ID }) postId: string) {
+  //     return this.likeService.isLiked( postId, user.accountId);
+  // }
 
   @UseGuards(JwtAuthGuard)
   @Mutation(() => CommentObject)
@@ -109,13 +109,13 @@ export class InteractionResolver {
       return this.savePostService.unsave(postId, user.accountId);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Query(() => Boolean)
-  async isPostSaved(
-    @CurrentUser() user: ActiveUserData,
-    @Args('postId', { type: () => ID }) postId: string) {
-      return this.savePostService.isSaved(postId, user.accountId);
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Query(() => Boolean)
+  // async isPostSaved(
+  //   @CurrentUser() user: ActiveUserData,
+  //   @Args('postId', { type: () => ID }) postId: string) {
+  //     return this.savePostService.isSaved(postId, user.accountId);
+  // }
 
 
   @UseGuards(JwtAuthGuard)

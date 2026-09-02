@@ -60,6 +60,13 @@ export class PostObject {
   @Field(() => Int)
   saveCount!: number;
 
+   @Field(() => Boolean)
+  isPostLiked!: boolean;
+
+  @Field(() => Boolean)
+  isPostSaved!: boolean;
+  
+
   @Field(() => [PostMediaObject])
   media!: PostMediaObject[];
 

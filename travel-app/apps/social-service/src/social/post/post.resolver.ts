@@ -1,11 +1,10 @@
-import {  Args,  ID,  Mutation,  Query,  Resolver} from '@nestjs/graphql';
+import {  Args,  Context,  ID,  Mutation,  Parent,  Query,  ResolveField,  Resolver} from '@nestjs/graphql';
 import { PostService } from './post.service';
 import { PostObject } from './objects/post.object';
 import { PostListObject } from './objects/post-list.object';
 import { CreatePostInput } from './dto/create-post.input';
 import { UpdatePostInput } from './dto/update-post.input';
 import { PostFilterInput } from './dto/post-filter.input';
-
 import { PaginationInput } from '../../common/dto/pagination.input';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import type { ActiveUserData } from '../../common/auth/interfaces/user-data.interface';
@@ -13,6 +12,8 @@ import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { PostPrivacy, PostStatus } from '@prisma/client';
+import { FeedPageObject } from './objects/feed-page.object';
+import { FeedInput } from './dto/feed.input';
 
 @Resolver(() => PostObject)
 export class PostResolver {
@@ -21,6 +22,8 @@ export class PostResolver {
   ) {}
 
   
+ 
+
   @UseGuards(JwtAuthGuard)
   @Mutation(() => PostObject)
   async createPost(@CurrentUser() user: ActiveUserData,
@@ -49,14 +52,39 @@ export class PostResolver {
     return this.postService.getPost(postId,user.accountId);
   }
 
+  // @Query(() => PostListObject)
+  // async posts(
+  //   @Args('filter', {type: () => PostFilterInput, nullable: true}) 
+  //   filter?: PostFilterInput,
+
+  //   @Args('pagination', {type: () => PaginationInput,nullable: true})
+  //   pagination?: PaginationInput) {
+  //   return this.postService.getPosts(
+  //     filter ?? {},
+  //     pagination?.page ?? 1,
+  //     pagination?.limit ?? 20,
+  //   );
+  // }
+
+  @UseGuards(JwtAuthGuard)
   @Query(() => PostListObject)
   async posts(
-    @Args('filter', {type: () => PostFilterInput, nullable: true}) 
+    @CurrentUser() user: ActiveUserData,
+
+    @Args('filter', {
+      type: () => PostFilterInput,
+      nullable: true,
+    })
     filter?: PostFilterInput,
 
-    @Args('pagination', {type: () => PaginationInput,nullable: true})
-    pagination?: PaginationInput) {
+    @Args('pagination', {
+      type: () => PaginationInput,
+      nullable: true,
+    })
+    pagination?: PaginationInput,
+  ) {
     return this.postService.getPosts(
+      user.accountId,
       filter ?? {},
       pagination?.page ?? 1,
       pagination?.limit ?? 20,
@@ -110,4 +138,17 @@ export class PostResolver {
       newPrivacy,
     );
   }
+
+  @Query(() => FeedPageObject)
+  @UseGuards(JwtAuthGuard)
+  async feed( @CurrentUser() user: ActiveUserData,
+    @Args('input', { type: () => FeedInput }) input: FeedInput) {
+    return this.postService.getFeed(
+      user.accountId,
+      input.cursor,
+      input.limit,
+    );
+  }
+
+  
 }
