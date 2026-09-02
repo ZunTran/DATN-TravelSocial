@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountRole, AccountStatus, ProviderType } from '@prisma/client';
 
@@ -120,13 +120,55 @@ export class AuthTransactionRepository {
 
   async rotateRefreshTokenTransaction(tokenHash: string, newRefreshTokenHash: string, expiredAt: Date) {
     return this.prisma.$transaction(async (tx) => {
+      // const oldToken = await tx.refreshToken.findFirst({
+      //   where: { tokenHash, revoked: false, expiredAt: { gte: new Date() } },
+      //   include: { account: true,
+      //   loginSession: true,
+      //   },
+      // });
+      // if (!oldToken) 
+      //   throw new UnauthorizedException('Refresh token không tồn tại hoặc đã hết hạn/revoked');
+
       const oldToken = await tx.refreshToken.findFirst({
-        where: { tokenHash, revoked: false, expiredAt: { gte: new Date() } },
-        include: { account: true,
-        loginSession: true,
-        },
-      });
-      if (!oldToken) throw new Error("Invalid token");
+  where: {
+    tokenHash,
+  },
+  include: {
+    account: true,
+    loginSession: true,
+  },
+});
+
+console.log('[Auth DB] Token exists:', !!oldToken);
+
+if (!oldToken) {
+  throw new UnauthorizedException(
+    'REFRESH TOKEN NOT FOUND',
+  );
+}
+
+console.log('[Auth DB] Token revoked:', oldToken.revoked);
+console.log(
+  '[Auth DB] Token expiredAt:',
+  oldToken.expiredAt,
+);
+console.log(
+  '[Auth DB] Token expired:',
+  oldToken.expiredAt < new Date(),
+);
+
+if (oldToken.revoked) {
+  throw new UnauthorizedException(
+    'REFRESH TOKEN ALREADY REVOKED',
+  );
+}
+
+if (oldToken.expiredAt < new Date()) {
+  throw new UnauthorizedException(
+    'REFRESH TOKEN EXPIRED',
+  );
+}
+
 
       await tx.refreshToken.update({
         where: { id: oldToken.id },

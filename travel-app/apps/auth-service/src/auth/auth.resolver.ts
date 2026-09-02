@@ -17,11 +17,35 @@ import { LoginSession } from './dto/login-session.object';
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}
 
-  @Mutation(() => String)
-  async register(@Args('input') input: RegisterInput) {
-    const res = await this.authService.register(input);
-    return JSON.stringify(res);
-  }
+  // @Mutation(() => String)
+  // async register(@Args('input') input: RegisterInput) {
+  //   const res = await this.authService.register(input);
+  //   return JSON.stringify(res);
+  // }
+
+  @Mutation(() => LoginResponse)
+async register(
+  @Args('input') input: RegisterInput,
+  @Context() context: any,
+): Promise<LoginResponse> {
+  const req = context.req;
+
+  const meta = {
+    ipAddress:
+      req?.ip ||
+      req?.connection?.remoteAddress ||
+      '127.0.0.1',
+
+    deviceName:
+      req?.headers['user-agent'] ||
+      'Unknown Device',
+  };
+
+  return this.authService.register(
+    input,
+    meta,
+  );
+}
 
 
   @Mutation(() => LoginResponse)
@@ -35,10 +59,7 @@ export class AuthResolver {
     return this.authService.login(input,meta);
   }
 
-  // @Query(() => String)
-  // hello(): string {
-  //   return 'Hello from Auth Service';
-  // }
+
 
   @Mutation(() => Boolean)
   async forgotPassword(@Args('input') input: ForgotPasswordInput): Promise<boolean> {

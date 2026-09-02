@@ -17,6 +17,7 @@ import { RefreshTokenInput } from './dto/refresh-token.input';
 import { ChangePasswordInput } from './dto/change-pass.input';
 import { OauthLoginInput } from './dto/oauth.input';
 import { ACCESS_TOKEN_EXPIRE, REFRESH_TOKEN_EXPIRE_MS, RESET_TOKEN_EXPIRE_MS, RESET_PASSWORD_INTERVAL_MINUTES } from './auth.constants';
+import { EventsService } from '../common/events/event.service';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +28,8 @@ export class AuthService {
     private readonly loginSessionRepo: LoginSessionRepository,
     private readonly authTransactionRepo: AuthTransactionRepository,
     private readonly jwtService: JwtService,
+      private readonly eventsService: EventsService,
+
   ) {}
 
   private generateAccessToken(account: Account) {
@@ -49,15 +52,56 @@ export class AuthService {
       throw new ForbiddenException('Tài khoản đang bị khóa!');
   }
 
-  async register(input: RegisterInput) {
+  async register(input: RegisterInput,
+    meta?: {
+    deviceName?: string;
+    ipAddress?: string;
+  },
+  ) {
     const { email, password } = input;
     const existing = await this.accountRepo.findByEmail(email);
     if (existing) throw new BadRequestException('Email này đã tồn tại!');
     
     const passwordHash = await bcrypt.hash(password, 10);
-    await this.accountRepo.createAccount({ email, passwordHash });
+    const account=await this.accountRepo.createAccount({ email, passwordHash });
 
-    return { message: 'Đăng ký tài khoản thành công! Hãy đăng nhập để tiếp tục.' };
+    this.eventsService.publishUserRegistered({
+      accountId: account.id,
+      email: account.email
+    });
+
+    const refreshTokenRaw = crypto.randomBytes(40).toString('hex');
+    const refreshTokenHash =crypto.createHash('sha256').update(refreshTokenRaw).digest('hex');
+
+    console.log(
+  '[AUTH REGISTER] generated token:',
+  refreshTokenRaw.slice(0, 10),
+  'length:',
+  refreshTokenRaw.length,
+);
+
+console.log(
+  '[AUTH REGISTER] hash:',
+  refreshTokenHash,
+);
+
+
+    const expiredAt =new Date(Date.now() +REFRESH_TOKEN_EXPIRE_MS);
+
+    await this.authTransactionRepo.loginTransaction(
+      account.id,
+      refreshTokenHash,
+      expiredAt,
+      meta?.deviceName,
+      meta?.ipAddress,
+    );
+
+    const accessToken = this.generateAccessToken(account);
+
+    return {
+      accessToken,
+      refreshToken: refreshTokenRaw,
+    };
   }
 
   async login(input: LoginInput, meta?: { deviceName?: string; ipAddress?: string }) {
@@ -126,7 +170,23 @@ export class AuthService {
 
   async refreshToken(input: RefreshTokenInput) {
     const { refreshToken } = input;
+
+    console.log(
+    '[AUTH REFRESH] received token:',
+    refreshToken?.slice(0, 10),
+    'length:',
+    refreshToken?.length,
+  );
+
+
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+
+
+    console.log(
+    '[AUTH REFRESH] hash:',
+    tokenHash,
+  );
+
 
     const newRefreshToken = crypto.randomBytes(40).toString('hex');
     const newRefreshTokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');

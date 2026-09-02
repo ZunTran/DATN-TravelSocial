@@ -12,6 +12,7 @@ import { LoginSessionRepository } from './repository/login-session.repository';
 import { PasswordResetRepository } from './repository/password-reset.repository';
 import { RefreshTokenRepository } from './repository/refresh-token.repository';
 import { AuthTransactionRepository } from './repository/auth-transaction.repository';
+import { EventsModule } from '../common/events/event.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AuthTransactionRepository } from './repository/auth-transaction.reposit
       secret: process.env.JWT_SECRET || 'GRADUATION_SUPER_SECRET_KEY',
       signOptions: { expiresIn: '1d' },
     }),
+    EventsModule,
   ],
   providers: [
     AuthService,
