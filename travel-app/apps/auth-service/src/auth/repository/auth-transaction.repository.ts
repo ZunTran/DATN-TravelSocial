@@ -17,6 +17,12 @@ export class AuthTransactionRepository {
         data: { accountId, tokenHash: refreshTokenHash, expiredAt },
       });
 
+      console.log(
+  '[Auth DB] LOGIN TOKEN CREATED - refreshTokenHash:',
+  token.id,
+  token.tokenHash.slice(0, 10),
+);
+
       await tx.loginSession.create({
         data: {
           accountId,
@@ -62,7 +68,7 @@ export class AuthTransactionRepository {
         where: { tokenHash },
       });
 
-      if (!token) throw new Error('Refresh TOKEN NOT FOUND!!!');
+      if (!token) return ;
 
       await tx.refreshToken.update({
         where: { id: token.id },
@@ -120,55 +126,31 @@ export class AuthTransactionRepository {
 
   async rotateRefreshTokenTransaction(tokenHash: string, newRefreshTokenHash: string, expiredAt: Date) {
     return this.prisma.$transaction(async (tx) => {
-      // const oldToken = await tx.refreshToken.findFirst({
-      //   where: { tokenHash, revoked: false, expiredAt: { gte: new Date() } },
-      //   include: { account: true,
-      //   loginSession: true,
-      //   },
-      // });
-      // if (!oldToken) 
-      //   throw new UnauthorizedException('Refresh token không tồn tại hoặc đã hết hạn/revoked');
-
       const oldToken = await tx.refreshToken.findFirst({
-  where: {
-    tokenHash,
-  },
-  include: {
-    account: true,
-    loginSession: true,
-  },
-});
+        where: { tokenHash, revoked: false, expiredAt: { gte: new Date() } },
+        include: { account: true,
+        loginSession: true,
+        },
+      });
+      
+  console.log( '[Auth DB] FIND TOKEN:', tokenHash.slice(0, 10));
+  console.log('[Auth DB] TOKEN EXISTS:', !!oldToken);
 
-console.log('[Auth DB] Token exists:', !!oldToken);
+  if (!oldToken) {
+    throw new UnauthorizedException('REFRESH TOKEN NOT FOUND' );
+  }
 
-if (!oldToken) {
-  throw new UnauthorizedException(
-    'REFRESH TOKEN NOT FOUND',
-  );
-}
+  console.log('[Auth DB] Token revoked:', oldToken.revoked);
+  console.log('[Auth DB] Token expiredAt:',oldToken.expiredAt);
+  console.log('[Auth DB] Token expired:',oldToken.expiredAt < new Date());
 
-console.log('[Auth DB] Token revoked:', oldToken.revoked);
-console.log(
-  '[Auth DB] Token expiredAt:',
-  oldToken.expiredAt,
-);
-console.log(
-  '[Auth DB] Token expired:',
-  oldToken.expiredAt < new Date(),
-);
+  if (oldToken.revoked) {
+    throw new UnauthorizedException( 'REFRESH TOKEN ALREADY REVOKED');
+  }
 
-if (oldToken.revoked) {
-  throw new UnauthorizedException(
-    'REFRESH TOKEN ALREADY REVOKED',
-  );
-}
-
-if (oldToken.expiredAt < new Date()) {
-  throw new UnauthorizedException(
-    'REFRESH TOKEN EXPIRED',
-  );
-}
-
+  if (oldToken.expiredAt < new Date()) {
+    throw new UnauthorizedException( 'REFRESH TOKEN EXPIRED');
+  }
 
       await tx.refreshToken.update({
         where: { id: oldToken.id },
@@ -178,6 +160,8 @@ if (oldToken.expiredAt < new Date()) {
       const newToken =await tx.refreshToken.create({
         data: { accountId: oldToken.accountId, tokenHash: newRefreshTokenHash, expiredAt },
       });
+
+      console.log('[Auth DB] NEW TOKEN CREATED:', newToken.id,newToken.tokenHash);
 
       if (oldToken.loginSession) {
       await tx.loginSession.update({

@@ -14,6 +14,8 @@ import {
 } from "@/services/auth/token-store";
 
 import { useAuth } from "../hooks/use-auth";
+import { apolloClient } from "@/services/graphql/client";
+import { usePathname } from "next/navigation";
 
 type AuthContextType = {
   accessToken: string | null;
@@ -40,16 +42,19 @@ type AuthContextType = {
 
 
 
-const AuthContext =
-  createContext<AuthContextType | undefined>(
-    undefined,
-  );
+const AuthContext =createContext<AuthContextType | undefined>(undefined,);
 
 export function AuthProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
+
+  const pathname = usePathname();
+
+const isAdminRoute =
+  pathname.startsWith("/admin");
+  
   const {
     login: loginMutation,
     register: registerMutation,
@@ -59,44 +64,33 @@ export function AuthProvider({
     logoutAll: logoutAllMutation,
   } = useAuth();
 
-  const [accessToken, setAccessToken] =
-    useState<string | null>(null);
-
-  const [isLoading, setIsLoading] =
-    useState(true);
-
-  // Dùng để tránh restore session 2 lần
-  // trong React Strict Mode ở development.
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] =useState(true);
   const hasRestoredSession = useRef(false);
+  const refreshPromiseRef =useRef<Promise<string> | null>(null);
+  const refreshSession = async () : Promise<string> => {
+    if (refreshPromiseRef.current) {
+    console.log(
+      "[Auth] Refresh already running, waiting...",
+    );
 
-  // ============================================================
-  // REFRESH SESSION
-  // ============================================================
+    return refreshPromiseRef.current;
+  }
 
-  const refreshSession = async () => {
+  const refreshPromise = (async () => {
     try {
-      console.log(
-        "[Auth] Refreshing session...",
-      );
-
-      const result =
-        await refreshToken();
-
-      const newAccessToken =
-        result.accessToken;
+      console.log( "[Auth] Refreshing session..." );
+      const result = await refreshToken();
+      const newAccessToken =  result.accessToken;
 
       if (!newAccessToken) {
-        throw new Error(
-          "Không nhận được access token",
-        );
+        throw new Error( "Không nhận được access token" );
       }
 
-      // Update React state
       setAccessToken(
         newAccessToken,
       );
 
-      // Update memory token-store
       setStoredAccessToken(
         newAccessToken,
       );
@@ -117,13 +111,21 @@ export function AuthProvider({
 
       throw error;
     }
+    finally {
+      refreshPromiseRef.current = null;
+    }
+  })();
+
+    refreshPromiseRef.current = refreshPromise;
+    return refreshPromise;
   };
 
-  // ============================================================
-  // RESTORE SESSION
-  // ============================================================
 
   useEffect(() => {
+    if (isAdminRoute) {
+    setIsLoading(false);
+    return;
+  }
     if (hasRestoredSession.current) {
       return;
     }
@@ -146,9 +148,6 @@ export function AuthProvider({
           "[Auth] No valid session",
         );
       } finally {
-        // QUAN TRỌNG:
-        // chỉ cho app chạy tiếp sau khi
-        // refreshSession() đã hoàn thành.
         setIsLoading(false);
 
         console.log(
@@ -160,11 +159,11 @@ export function AuthProvider({
     restoreSession();
   }, []);
 
-  // ============================================================
-  // AUTO REFRESH
-  // ============================================================
 
   useEffect(() => {
+    if (isAdminRoute) {
+    return;
+  }
     if (!accessToken) {
       return;
     }
@@ -177,15 +176,9 @@ export function AuthProvider({
           ),
         );
 
-        const expiresAt =
-          payload.exp * 1000;
-
-        const now =
-          Date.now();
-
-        // Refresh trước khi token hết hạn 1 phút
-        const refreshBefore =
-          60 * 1000;
+        const expiresAt =payload.exp * 1000;
+        const now =Date.now();
+        const refreshBefore =60 * 1000;
 
         const delay =
           Math.max(
@@ -235,7 +228,7 @@ export function AuthProvider({
         );
       }
     };
-  }, [accessToken]);
+  }, [accessToken,isAdminRoute]);
 
 
 
@@ -303,6 +296,7 @@ export function AuthProvider({
     } finally {
       setAccessToken(null);
       clearAccessToken();
+      await apolloClient.clearStore();
     }
   };
 
@@ -313,6 +307,7 @@ export function AuthProvider({
     } finally {
       setAccessToken(null);
       clearAccessToken();
+      await apolloClient.clearStore();
     }
   };
 
@@ -321,20 +316,13 @@ export function AuthProvider({
     <AuthContext.Provider
   value={{
     accessToken,
-
-    isAuthenticated:
-      !!accessToken,
+    isAuthenticated: !!accessToken,
 
     isLoading,
-
     login,
-
     register,
-
     refreshSession,
-
     logout,
-
     logoutAll,
   }}
 >

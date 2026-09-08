@@ -78,29 +78,9 @@ export class AuthGatewayResolver {
     private readonly authGatewayService: AuthGatewayService,
   ) {}
 
-  // ============================================================
-  // REGISTER
-  // ============================================================
-
-  // @Mutation(() => String)
-  // register(
-  //   @Args('input') input: GatewayRegisterInput,
-  // ) {
-  //   return this.authGatewayService.register(input);
-  // }
-
   @Mutation(() => GatewayLoginResponse)
-async register(
-  @Args('input')
-  input: GatewayRegisterInput,
-
-  @Context()
-  context: any,
-) {
-  const result =
-    await this.authGatewayService.register(
-      input,
-    );
+async register(@Args('input') input: GatewayRegisterInput, @Context() context: any) {
+  const result = await this.authGatewayService.register( input);
 
   context.res.cookie(
     'refresh_token',
@@ -108,24 +88,20 @@ async register(
     getRefreshCookieOptions(),
   );
 
-  return {
-    accessToken:
-      result.accessToken,
-  };
+  return { accessToken:result.accessToken };
 }
-
-
-  // ============================================================
-  // LOGIN
-  // ============================================================
 
   @Mutation(() => GatewayLoginResponse)
   async login(
     @Args('input') input: GatewayLoginInput,
     @Context() context: any,
   ) {
-    const result =
-      await this.authGatewayService.login(input);
+    const result = await this.authGatewayService.login(input);
+
+    console.log(
+    '[Gateway LOGIN] refresh token:',
+    result.refreshToken?.slice(0, 10),
+  );
 
     context.res.cookie(
       'refresh_token',
@@ -133,14 +109,14 @@ async register(
       getRefreshCookieOptions(),
     );
 
+    console.log(
+    '[Gateway LOGIN] refresh cookie SET',
+  );
+
     return {
       accessToken: result.accessToken,
     };
   }
-
-  // ============================================================
-  // REFRESH
-  // ============================================================
 
   @Mutation(() => GatewayLoginResponse)
   async refreshToken(
@@ -148,32 +124,32 @@ async register(
   ) {
     const refreshToken =context.req.cookies?.refresh_token;
 
-    console.log('[Gateway] refresh cookie:', !!refreshToken);
+    console.log('[Gateway REFRESH] cookie:',
+  refreshToken?.slice(0, 10),
+);
+
     if (!refreshToken) {
       throw new Error('Refresh token không tồn tại');
     }
 
     const result = await this.authGatewayService.refreshToken(refreshToken);
-
+    console.log( '[Gateway REFRESH] new cookie:',  result.refreshToken?.slice(0, 10));
+  
     context.res.cookie(
       'refresh_token',
       result.refreshToken,
       getRefreshCookieOptions(),
     );
 
+    console.log( '[Gateway REFRESH] cookie UPDATED' );
+
     return {
       accessToken: result.accessToken,
     };
   }
 
-  // ============================================================
-  // LOGOUT
-  // ============================================================
-
   @Mutation(() => Boolean)
-  async logout(
-    @Context() context: any,
-  ) {
+  async logout(@Context() context: any) {
     const refreshToken =
       context.req.cookies?.refresh_token;
 
@@ -192,9 +168,6 @@ async register(
     return true;
   }
 
-  // ============================================================
-  // LOGOUT ALL
-  // ============================================================
 
   @Mutation(() => Boolean)
   async logoutAll(
@@ -212,10 +185,6 @@ async register(
     return true;
   }
 
-  // ============================================================
-  // FORGOT PASSWORD
-  // ============================================================
-
   @Mutation(() => String)
   forgotPassword(
     @Args('input') input: GatewayForgotPasswordInput,
@@ -223,9 +192,6 @@ async register(
     return this.authGatewayService.forgotPassword(input);
   }
 
-  // ============================================================
-  // RESET PASSWORD
-  // ============================================================
 
   @Mutation(() => String)
   resetPassword(
@@ -234,31 +200,16 @@ async register(
     return this.authGatewayService.resetPassword(input);
   }
 
-  // ============================================================
-  // VERIFY EMAIL
-  // ============================================================
 
   @Mutation(() => Boolean)
-  verifyEmail(
-    @Args('token') token: string,
-  ) {
+  verifyEmail( @Args('token') token: string) {
     return this.authGatewayService.verifyEmail(token);
   }
 
-  // ============================================================
-  // RESEND VERIFY EMAIL
-  // ============================================================
-
   @Mutation(() => Boolean)
-  resendVerifyEmail(
-    @Args('email') email: string,
-  ) {
+  resendVerifyEmail(@Args('email') email: string) {
     return this.authGatewayService.resendVerifyEmail(email);
   }
-
-  // ============================================================
-  // OAUTH
-  // ============================================================
 
 // async oauthLogin(
 //   input: any,
@@ -287,9 +238,6 @@ async register(
 //   return result.oauthLogin;
 // }
 
-  // ============================================================
-  // PROFILE
-  // ============================================================
 
   @Query(() => String)
   getMyProfile(
@@ -299,10 +247,6 @@ async register(
       context.req?.headers?.authorization,
     );
   }
-
-  // ============================================================
-  // CHANGE PASSWORD
-  // ============================================================
 
   @Mutation(() => Boolean)
   changePassword(
@@ -315,10 +259,6 @@ async register(
     );
   }
 
-  // ============================================================
-  // ACTIVE SESSIONS
-  // ============================================================
-
   @Query(() => [GatewayLoginSession])
   getActiveSessions(
     @Context() context: any,
@@ -327,10 +267,6 @@ async register(
       context.req?.headers?.authorization,
     );
   }
-
-  // ============================================================
-  // TERMINATE SESSION
-  // ============================================================
 
   @Mutation(() => Boolean)
   terminateSession(

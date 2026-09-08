@@ -17,12 +17,6 @@ import { LoginSession } from './dto/login-session.object';
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}
 
-  // @Mutation(() => String)
-  // async register(@Args('input') input: RegisterInput) {
-  //   const res = await this.authService.register(input);
-  //   return JSON.stringify(res);
-  // }
-
   @Mutation(() => LoginResponse)
 async register(
   @Args('input') input: RegisterInput,

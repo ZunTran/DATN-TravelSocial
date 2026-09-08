@@ -118,6 +118,11 @@ console.log(
     const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     const expiredAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRE_MS);
 
+
+    console.log( '[AUTH LOGIN] refresh token:', refreshToken.slice(0, 10));
+
+  console.log('[AUTH LOGIN] refresh hash:', refreshTokenHash.slice(0, 10),);
+
     await this.authTransactionRepo.loginTransaction(
       account.id, 
       refreshTokenHash, 
@@ -126,7 +131,12 @@ console.log(
       meta?.ipAddress
     );
 
+    console.log('[AUTH LOGIN] refresh token saved',
+  );
+
     const accessToken = this.generateAccessToken(account);
+
+    console.log('[AUTH LOGIN] access token expires:',ACCESS_TOKEN_EXPIRE);
 
     return { accessToken, refreshToken };
   }
@@ -172,27 +182,26 @@ console.log(
     const { refreshToken } = input;
 
     console.log(
-    '[AUTH REFRESH] received token:',
+    '[AUTH REFRESH] received:',
     refreshToken?.slice(0, 10),
-    'length:',
-    refreshToken?.length,
   );
-
 
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-
-
-    console.log(
-    '[AUTH REFRESH] hash:',
-    tokenHash,
-  );
-
+    console.log('[AUTH REFRESH] hash:',tokenHash);
 
     const newRefreshToken = crypto.randomBytes(40).toString('hex');
     const newRefreshTokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
+
+     console.log(
+    '[AUTH REFRESH] new token:',
+    newRefreshToken.slice(0, 10),
+  );
+
     const expiredAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRE_MS);
 
     const account = await this.authTransactionRepo.rotateRefreshTokenTransaction(tokenHash, newRefreshTokenHash, expiredAt);
+    
+    console.log(  '[AUTH REFRESH] rotation successful');
     const accessToken = this.generateAccessToken(account);
 
     return { accessToken, refreshToken: newRefreshToken };

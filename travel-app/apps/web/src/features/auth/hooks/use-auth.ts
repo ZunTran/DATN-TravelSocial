@@ -36,9 +36,7 @@ interface LogoutAllMutationData {
 }
 
 interface RefreshTokenMutationData {
-  refreshToken: {
-    accessToken: string;
-  };
+  refreshToken: { accessToken: string;};
 }
 
 export function useAuth() {
@@ -79,10 +77,6 @@ export function useAuth() {
     REFRESH_TOKEN_MUTATION,
   );
 
-  // ============================================================
-  // LOGIN
-  // ============================================================
-
   const login = async (
     email: string,
     password: string,
@@ -106,9 +100,6 @@ export function useAuth() {
     return data.login;
   };
 
-  // ============================================================
-  // REGISTER
-  // ============================================================
 
   const register = async (
     email: string,
@@ -131,9 +122,6 @@ export function useAuth() {
     return data.register;
   };
 
-  // ============================================================
-  // REFRESH
-  // ============================================================
 
   const refreshToken = async () => {
     const { data } =
@@ -148,17 +136,10 @@ export function useAuth() {
     return data.refreshToken;
   };
 
-  // ============================================================
-  // LOGOUT
-  // ============================================================
-
   const logout = async () => {
     await logoutMutation();
   };
 
-  // ============================================================
-  // LOGOUT ALL
-  // ============================================================
 
   const logoutAll = async () => {
     await logoutAllMutation();
