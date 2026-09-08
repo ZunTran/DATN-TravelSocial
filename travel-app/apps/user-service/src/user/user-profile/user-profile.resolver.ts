@@ -84,4 +84,20 @@ async searchUsers(@Args('input') input: SearchUserInput) {
     return this.service.updateProfileWithFiles(user.accountId, input, avatar, cover);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => UserProfileObject)
+  async updateAvatar(
+    @CurrentUser() user: ActiveUserData,
+    @Args({ name: 'avatar', type: () => GraphQLUpload})
+    avatar: FileUpload,
+  ) {
+    return this.service.updateAvatar( user.accountId, avatar);
+  }
+
+  @Query(() => UserProfileObject, { nullable: true })
+  profileByUsername(@Args('username') username: string) {
+    return this.service.getProfileByUsername(username);
+  }
+
+
 }

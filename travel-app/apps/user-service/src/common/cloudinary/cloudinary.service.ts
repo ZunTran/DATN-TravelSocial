@@ -8,7 +8,7 @@ export class CloudinaryService {
     return new Promise((resolve, reject) => {
       const upload = cloudinary.uploader.upload_stream(
         {
-          folder: folderName, // Thư mục lưu trên Cloudinary (ví dụ: avatar, cover)
+          folder: folderName,
         },
         (error, result) => {
           if (error) return reject(error);
@@ -17,7 +17,6 @@ export class CloudinaryService {
         },
       );
 
-      // Chuyển buffer của file thành stream để đẩy lên Cloudinary
       if (file && file.buffer) {
         toStream.createReadStream(file.buffer).pipe(upload);
       } else {

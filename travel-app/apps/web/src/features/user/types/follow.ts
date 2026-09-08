@@ -15,3 +15,26 @@ export interface UnfollowData {
 export interface IsFollowingData {
   isFollowing: boolean;
 }
+
+export interface FollowUser {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url?: string | null;
+}
+
+export interface FollowPage {
+  data: FollowUser[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface FollowersData {
+  followers: FollowPage;
+}
+
+export interface FollowingData {
+  following: FollowPage;
+}

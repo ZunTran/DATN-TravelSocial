@@ -1,33 +1,29 @@
 'use client';
 
 import { useQuery } from '@apollo/client/react';
-import { FOLLOWERS_COUNT_QUERY, FOLLOWING_COUNT_QUERY } from '../api/follow.queries';
+import { FOLLOW_STATS_QUERY } from '../api/follow.queries';
 
-interface FollowersCountData {
+interface FollowStatsData {
   followersCount: number;
-}
-
-interface FollowingCountData {
   followingCount: number;
 }
 
-interface FollowCountVariables {
+interface FollowStatsVariables {
   profileId: string;
 }
 
 export function useFollowCounts( profileId: string, options?: { skip?: boolean; }) {
   const skip = options?.skip ?? !profileId;
-
   const {
     data: followersData,
-    loading: followersLoading,
-    error: followersError,
-    refetch: refetchFollowersCount,
+    loading,
+    error,
+    refetch
   } = useQuery<
-    FollowersCountData,
-    FollowCountVariables
+    FollowStatsData,
+    FollowStatsVariables
   >(
-    FOLLOWERS_COUNT_QUERY,
+    FOLLOW_STATS_QUERY,
     {
       variables: { profileId },
       skip,
@@ -35,34 +31,12 @@ export function useFollowCounts( profileId: string, options?: { skip?: boolean; 
     },
   );
 
-  const {
-    data: followingData,
-    loading: followingLoading,
-    error: followingError,
-    refetch: refetchFollowingCount,
-  } = useQuery<
-    FollowingCountData,
-    FollowCountVariables
-  >(
-    FOLLOWING_COUNT_QUERY,
-    {
-      variables: {
-        profileId,
-      },
-      skip,
-      fetchPolicy: 'cache-and-network',
-    },
-  );
-
   return {
     followerCount: followersData?.followersCount ?? 0,
-    followingCount: followingData?.followingCount ?? 0,
-    loading: followersLoading || followingLoading,
+    followingCount: followersData?.followingCount ?? 0,
 
-    followersError,
-    followingError,
-
-    refetchFollowersCount,
-    refetchFollowingCount,
+    loading,
+    error,
+    refetch,
   };
 }

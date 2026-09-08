@@ -35,24 +35,43 @@ export class FollowResolver {
     return this.service.isFollowing(user.accountId,profileId);
   }
 
-  @Query(() => FollowPageObject)
-  @UseGuards(JwtAuthGuard)
-  followers(@CurrentUser() user: ActiveUserData,@Args('input') input: PaginationInput) {
-    return this.service.getFollowers(
-      user.accountId,
-      input.page,
-      input.limit);
-  }
 
   @Query(() => FollowPageObject)
-  @UseGuards(JwtAuthGuard)
-  following(@CurrentUser() user: ActiveUserData,@Args('input') input: PaginationInput) {
-    return this.service.getFollowing(
-      user.accountId,
-      input.page,
-      input.limit,
-    );
-  }
+@UseGuards(JwtAuthGuard)
+followers(
+  @Args('profileId', {
+    type: () => ID,
+  })
+  profileId: string,
+
+  @Args('input')
+  input: PaginationInput,
+) {
+  return this.service.getFollowers(
+    profileId,
+    input.page,
+    input.limit,
+  );
+}
+
+@Query(() => FollowPageObject)
+@UseGuards(JwtAuthGuard)
+following(
+  @Args('profileId', {
+    type: () => ID,
+  })
+  profileId: string,
+
+  @Args('input')
+  input: PaginationInput,
+) {
+  return this.service.getFollowing(
+    profileId,
+    input.page,
+    input.limit,
+  );
+}
+
 
   @Query(() => Int)
   @UseGuards(JwtAuthGuard)

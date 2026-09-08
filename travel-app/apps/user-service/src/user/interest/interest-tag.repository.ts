@@ -109,22 +109,51 @@ export class InterestTagRepository {
   }
 
 
-async findUsersWithCommonInterests(
-  user_profile_id: string,interestIds: string[],limit: number = 10,
-) {
-  if (interestIds.length === 0) return [];
+  async findUsersWithCommonInterests(
+    user_profile_id: string,interestIds: string[],limit: number = 10,
+  ) {
+    if (interestIds.length === 0) return [];
 
-  const matches = await this.prisma.user_profile.findMany({
-    where: {
-      id: {not: user_profile_id,},
-      user_interests: {
-        some: {interest_id: {in: interestIds},},
-      }},
-    take: limit,
-    orderBy: {created_at: 'desc'},
-  });
+    const matches = await this.prisma.user_profile.findMany({
+      where: {
+        id: {not: user_profile_id,},
+        user_interests: {
+          some: {interest_id: {in: interestIds},},
+        }},
+      take: limit,
+      orderBy: {created_at: 'desc'},
+    });
 
-  return matches;
-}
+    return matches;
+  }
+
+  async findAllPaginated( page: number, limit: number, search?: string) {
+    const skip = (page - 1) * limit;
+    const where = search?.trim()
+      ? { name: {
+            contains: search.trim(),
+            mode: 'insensitive' as const,
+          }}
+      : {};
+
+    const [data, total] = await Promise.all([
+        this.prisma.interest_tag.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { created_at: 'desc' },
+        }),
+
+        this.prisma.interest_tag.count({ where }),
+      ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 
 }

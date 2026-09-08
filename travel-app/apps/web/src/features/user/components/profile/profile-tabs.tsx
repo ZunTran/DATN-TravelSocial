@@ -19,7 +19,7 @@ import ProfilePersonalInfo from './profile-personal-info';
 import ProfileEdit from './profile-edit';
 
 import type { UserProfile } from '../../types/profile';
-import type { Post } from '@/features/social/types/post.types';
+import type { Post } from '@/features/social/post/types/post.types';
 
 interface ProfileTabsProps {
   isOwnProfile: boolean;
@@ -28,7 +28,7 @@ interface ProfileTabsProps {
 
   posts: Post[];
 
-   postsLoading?: boolean;
+  postsLoading?: boolean;
 
   postsLoadingMore?: boolean;
 
@@ -47,6 +47,7 @@ interface ProfileTabsProps {
   onProfileUpdated?: (
     profile: UserProfile,
   ) => void;
+  onPostCreated?: (post: Post) => void;
 }
 
 export default function ProfileTabs({
@@ -66,6 +67,7 @@ export default function ProfileTabs({
   onEditProfile,
   onCancelEdit,
   onProfileUpdated,
+  onPostCreated,
 }: ProfileTabsProps) {
   if (!isOwnProfile) {
     return (

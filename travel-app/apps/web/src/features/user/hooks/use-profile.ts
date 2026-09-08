@@ -1,179 +1,9 @@
-
-
-// 'use client';
-
-// import {
-//   useCallback,
-// } from 'react';
-
-// import {
-//   useMutation,
-//   useQuery,
-// } from '@apollo/client/react';
-
-// import {
-//   MY_PROFILE_QUERY,
-//   UPDATE_MY_PROFILE_MUTATION,
-// } from '../api/profile.queries';
-
-// import type {
-//   MyProfileData,
-//   UpdateProfileData,
-//   UpdateProfileInput,
-// } from '../types/profile';
-
-// import {
-//   useAuthContext,
-// } from '@/features/auth/context/auth-context';
-
-// interface UseProfileOptions {
-//   waitForProfile?: boolean;
-// }
-
-// const PROFILE_RETRY_COUNT = 10;
-// const PROFILE_RETRY_DELAY = 500;
-
-// function sleep(ms: number) {
-//   return new Promise<void>((resolve) => {
-//     setTimeout(resolve, ms);
-//   });
-// }
-
-// export function useProfile(
-//   options: UseProfileOptions = {},
-// ) {
-//   const {
-//     waitForProfile = false,
-//   } = options;
-
-//   const {
-//     isLoading: authLoading,
-//     isAuthenticated,
-//   } = useAuthContext();
-
-//   const {
-//     data,
-//     loading,
-//     error,
-//     refetch,
-//   } = useQuery<MyProfileData>(
-//     MY_PROFILE_QUERY,
-//     {
-//       skip:
-//         authLoading ||
-//         !isAuthenticated ||
-//         waitForProfile,
-
-//       fetchPolicy: 'network-only',
-//     },
-//   );
-
-//   const [
-//     updateProfileMutation,
-//     {
-//       loading: updateProfileLoading,
-//       error: updateProfileError,
-//     },
-//   ] = useMutation<UpdateProfileData>(
-//     UPDATE_MY_PROFILE_MUTATION,
-//   );
-
-//   const updateProfile = async (
-//     input: UpdateProfileInput,
-//   ) => {
-//     const { data } =
-//       await updateProfileMutation({
-//         variables: {
-//           input,
-//         },
-//       });
-
-//     if (!data?.updateProfile) {
-//       throw new Error(
-//         'Không thể cập nhật profile.',
-//       );
-//     }
-
-//     return data.updateProfile;
-//   };
-
-//   const loadProfileWithRetry =
-//     useCallback(async () => {
-//       if (
-//         authLoading ||
-//         !isAuthenticated
-//       ) {
-//         return null;
-//       }
-
-//       for (
-//         let attempt = 0;
-//         attempt < PROFILE_RETRY_COUNT;
-//         attempt++
-//       ) {
-//         try {
-//           const result =
-//             await refetch();
-
-//           const profile =
-//             result.data?.myProfile;
-
-//           if (profile) {
-//             return profile;
-//           }
-//         } catch {
-//           // User Service có thể
-//           // chưa xử lý event user.registered
-//         }
-
-//         if (
-//           attempt <
-//           PROFILE_RETRY_COUNT - 1
-//         ) {
-//           await sleep(
-//             PROFILE_RETRY_DELAY,
-//           );
-//         }
-//       }
-
-//       return null;
-//     }, [
-//       authLoading,
-//       isAuthenticated,
-//       refetch,
-//     ]);
-
-//   return {
-//     profile:
-//       data?.myProfile ?? null,
-
-//     loading:
-//       authLoading || loading,
-
-//     error,
-
-//     refetch,
-
-//     updateProfile,
-
-//     updateProfileLoading,
-
-//     updateProfileError,
-
-//     loadProfileWithRetry,
-
-//     authLoading,
-
-//     isAuthenticated,
-
-//     waitForProfile,
-//   };
-// }
-
 "use client";
 
 import {
-  useCallback,
+  // useCallback,
+  useEffect,
+  useState,
 } from "react";
 
 import {
@@ -183,26 +13,84 @@ import {
 
 import {
   MY_PROFILE_QUERY,
+  PROFILE_BY_USERNAME_QUERY,
   UPDATE_MY_PROFILE_MUTATION,
 } from "../api/profile.queries";
 
 import type {
   MyProfileData,
+  ProfileByUsernameData,
+  ProfileByUsernameVariables,
   UpdateProfileData,
   UpdateProfileInput,
+  UserProfile,
 } from "../types/profile";
 
 import {
   useAuthContext,
 } from "@/features/auth/context/auth-context";
 
-const PROFILE_RETRY_COUNT = 6;
-const PROFILE_RETRY_DELAY = 1000;
+export const PROFILE_STORAGE_KEY = "current-profile";
+// const PROFILE_RETRY_COUNT = 6;
+// const PROFILE_RETRY_DELAY = 1000;
 
-function sleep(ms: number) {
-  return new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  });
+// function sleep(ms: number) {
+//   return new Promise<void>((resolve) => {
+//     setTimeout(resolve, ms);
+//   });
+// }
+
+function getStoredProfile() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const stored =
+      window.localStorage.getItem(
+        PROFILE_STORAGE_KEY,
+      );
+
+    if (!stored) {
+      return null;
+    }
+
+    return JSON.parse(stored);
+  } catch (error) {
+    console.error("Failed to read stored profile:",error);
+
+    return null;
+  }
+}
+
+function saveStoredProfile(
+  profile: MyProfileData["myProfile"],
+) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      PROFILE_STORAGE_KEY,
+      JSON.stringify(profile),
+    );
+  } catch (error) {
+    console.error(
+      "Failed to save profile:",
+      error,
+    );
+  }
+}
+
+function removeStoredProfile() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(
+    PROFILE_STORAGE_KEY,
+  );
 }
 
 export function useProfile() {
@@ -211,13 +99,21 @@ export function useProfile() {
     isAuthenticated,
   } = useAuthContext();
 
-  /*
-   * ============================================================
-   * GET MY PROFILE
-   * ============================================================
-   *
-   * Chỉ tự gọi khi đã authenticated.
-   */
+  const [ storedProfile, setStoredProfile ] = useState<MyProfileData["myProfile"] | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setStoredProfile(null);
+      return;
+    }
+
+    const profile = getStoredProfile();
+
+    if (profile) {
+      setStoredProfile(profile);
+    }
+  }, [isAuthenticated]);
+
   const {
     data,
     loading,
@@ -226,109 +122,83 @@ export function useProfile() {
   } = useQuery<MyProfileData>(
     MY_PROFILE_QUERY,
     {
-      skip:
-        authLoading ||
-        !isAuthenticated,
-
+      skip: authLoading || !isAuthenticated,
       fetchPolicy: "cache-and-network",
-
-      /*
-       * Không throw GraphQL error ra ngoài
-       * làm React query loop.
-       */
       errorPolicy: "all",
     },
   );
 
-  /*
-   * ============================================================
-   * UPDATE PROFILE
-   * ============================================================
-   */
+
+  const serverProfile = data?.myProfile ?? null;
+  const profile = serverProfile ?? storedProfile;
+
+  useEffect(() => {
+    if (!serverProfile) 
+      return;
+    
+    saveStoredProfile( serverProfile);
+    setStoredProfile(serverProfile);
+  }, [serverProfile]);
 
   const [
     updateProfileMutation,
     {
-      loading:
-        updateProfileLoading,
-
-      error:
-        updateProfileError,
+      loading: updateProfileLoading,
+      error: updateProfileError,
     },
   ] =
-    useMutation<UpdateProfileData>(
-      UPDATE_MY_PROFILE_MUTATION,
-    );
+    useMutation<UpdateProfileData>( UPDATE_MY_PROFILE_MUTATION,
+      {
+    update(cache, { data }) {
+      const updatedProfile = data?.updateProfile;
 
-  const updateProfile = async (
-    input: UpdateProfileInput,
-  ) => {
-    const { data } =
-      await updateProfileMutation({
-        variables: {
-          input,
+      if (!updatedProfile) {
+        return;
+      }
+
+      cache.writeQuery<MyProfileData>({
+        query: MY_PROFILE_QUERY,
+        data: {
+          myProfile: updatedProfile,
         },
       });
+    },
+  },
+    );
 
-    if (!data?.updateProfile) {
-      throw new Error(
-        "Không thể cập nhật profile.",
-      );
+  const updateProfile =
+    async (
+      input: UpdateProfileInput,
+    ) => {
+      const { data } = await updateProfileMutation({ variables: { input } });
+
+      if (!data?.updateProfile) {
+        throw new Error("Không thể cập nhật profile.");
+      }
+
+      const updatedProfile = data.updateProfile;
+      saveStoredProfile( updatedProfile);
+      setStoredProfile( updatedProfile);
+
+      return updatedProfile;
+    };
+
+  useEffect(() => {
+    if (
+      !authLoading &&
+      !isAuthenticated
+    ) {
+      removeStoredProfile();
+      setStoredProfile(null);
     }
+  }, [
+    authLoading,
+    isAuthenticated,
+  ]);
 
-    return data.updateProfile;
-  };
-
-  /*
-   * ============================================================
-   * RETRY LOAD PROFILE
-   * ============================================================
-   */
-
-  const loadProfileWithRetry =
-    useCallback(async () => {
-      if (!isAuthenticated) {
-        return null;
-      }
-
-      for (
-        let attempt = 0;
-        attempt < PROFILE_RETRY_COUNT;
-        attempt++
-      ) {
-        try {
-          const result =
-            await refetch();
-
-          const profile =
-            result.data?.myProfile;
-
-          if (profile) {
-            return profile;
-          }
-        } catch {
-          /*
-           * Profile chưa được User Service
-           * tạo xong.
-           */
-        }
-
-        if (
-          attempt <
-          PROFILE_RETRY_COUNT - 1
-        ) {
-          await sleep(
-            PROFILE_RETRY_DELAY,
-          );
-        }
-      }
-
-      return null;
-    }, [isAuthenticated, refetch]);
 
   return {
-    profile:
-      data?.myProfile ?? null,
+    profile,
 
     loading:
       authLoading || loading,
@@ -336,17 +206,33 @@ export function useProfile() {
     error,
 
     refetch,
-
     updateProfile,
-
     updateProfileLoading,
-
     updateProfileError,
-
-    loadProfileWithRetry,
 
     authLoading,
 
     isAuthenticated,
   };
+}
+
+
+export function useProfileByUsername(username?: string) {
+  const { data, loading, error, refetch } = useQuery<
+    ProfileByUsernameData, ProfileByUsernameVariables
+  >(PROFILE_BY_USERNAME_QUERY, {
+    variables: {
+      username: username ?? "",
+    },
+    skip: !username,
+    fetchPolicy: "cache-and-network",
+  });
+
+  return {
+    profile: data?.profileByUsername ?? null,
+    loading,
+    error,
+    refetch,
+  };
+
 }

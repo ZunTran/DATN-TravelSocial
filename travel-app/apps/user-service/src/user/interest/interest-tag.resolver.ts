@@ -6,13 +6,17 @@ import { Roles } from '../../common/auth/decorators/roles.decorator';
 import { InterestTagObject } from './objects/interest.object';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/auth/guards/roles.guard';
-import { CreateInterestInput, UpdateInterestInput } from './dto/create-interest.input.ts';
+import { CreateInterestInput, UpdateInterestInput } from './dto/create-interest.input';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import type { ActiveUserData } from '../../common/auth/interfaces/user-data.interface';
 import { UserInterestPageObject } from './objects/user-interest-page.object';
 import { GetUserInterestsInput } from './dto/get-user-interests.input';
 import { UserProfileObject } from '../user-profile/objects/user-profile.object';
 import { account_role } from '@prisma/client';
+import { InterestPageObject } from './objects/interest-page.object';
+import { GetInterestsInput } from './dto/get-interests.input';
+import {  GraphQLUpload } from 'graphql-upload-ts';
+import type { FileUpload } from 'graphql-upload-ts';
 
 @Resolver(() => InterestTagObject)
 export class InterestTagResolver {
@@ -29,19 +33,36 @@ export class InterestTagResolver {
     return this.service.search(name);
   }
 
+@Mutation(() => InterestTagObject)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(account_role.ADMIN)
+createInterestTag(
+  @Args('input', {
+    type: () => CreateInterestInput,
+  })
+  input: CreateInterestInput,
+  @Args('icon', {
+    type: () => GraphQLUpload,
+    nullable: true,
+  })
+  icon?: FileUpload,
+) {
+  console.log('========== USER RESOLVER ==========');
+  console.log('INPUT:', input);
+  console.log('INPUT NAME:', input?.name);
+  console.log('ICON:', icon?.filename);
+  console.log('===================================');
+
+  return this.service.createTag(input, icon);
+}
 
   @Mutation(() => InterestTagObject)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(account_role.ADMIN)
-  createInterestTag(@Args('input') input: CreateInterestInput) {
-    return this.service.createTag(input);
-  }
-
-  @Mutation(() => InterestTagObject)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(account_role.ADMIN)
-  updateInterestTag(@Args('id', { type: () => ID }) id: string,@Args('input') input: UpdateInterestInput,) {
-    return this.service.updateTag(id, input);
+  updateInterestTag(@Args('id', { type: () => ID }) id: string, @Args('input', { type: () => UpdateInterestInput })
+  input: UpdateInterestInput,
+    @Args('icon', {type: () => GraphQLUpload, nullable: true }) icon?: FileUpload) {
+    return this.service.updateTag(id, input, icon);
   }
 
   @Mutation(() => Boolean)
@@ -69,6 +90,13 @@ export class InterestTagResolver {
   }
 
 
+@Query(() => [InterestTagObject])
+getUserInterests(
+  @Args('profileId', { type: () => ID }) profileId: string,
+) {
+  return this.service.getUserInterestsByProfileId(profileId);
+}
+
   
   @Query(() => UserInterestPageObject)
   @UseGuards(JwtAuthGuard)
@@ -86,5 +114,16 @@ export class InterestTagResolver {
     return this.service.getSuggestedUsersByInterests(user.accountId);
   }
 
+  @Query(() => InterestPageObject)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(account_role.ADMIN)
+  getInterestTagsPaginated(
+    @Args('input') input: GetInterestsInput) {
+    return this.service.getAllTagsPaginated(
+      input.page,
+      input.limit,
+      input.search,
+    );
+  }
 
 }

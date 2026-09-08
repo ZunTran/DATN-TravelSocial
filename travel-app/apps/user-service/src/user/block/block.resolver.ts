@@ -3,7 +3,6 @@ import { UseGuards } from '@nestjs/common';
 import { BlockService } from './block.service';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
-
 import type { ActiveUserData } from '../../common/auth/interfaces/user-data.interface';
 import { PaginationInput } from '../../common/dto/pagination.input';
 import { BlockObject } from './objects/block.object';

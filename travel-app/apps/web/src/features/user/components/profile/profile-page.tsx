@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect,useState } from 'react';
+import { 
+  useEffect,
+  useState } from 'react';
 
 import ProfileHeader from './profile-header';
 import ProfileStats from './profile-stats';
@@ -11,7 +13,9 @@ import ProfileFollowDialog from './profile-follow-dialog';
 
 import type { UserProfile } from '../../types/profile';
 import type { InterestTag } from '../../types/interest';
-import type { Post } from '@/features/social/types/post.types';
+import type { Post } from '@/features/social/post/types/post.types';
+import type { FollowUser } from '../../types/follow';
+import { CreatePostCard } from '@/features/social/components';
 
 interface Story {
   id: string;
@@ -20,28 +24,27 @@ interface Story {
   expiresAt: string;
 }
 
-interface FollowUser {
-  id: string;
-  username: string;
-  displayName?: string | null;
-  avatarUrl?: string | null;
-}
 
 interface ProfilePageProps {
   profile: UserProfile;
 
   isOwnProfile: boolean;
   isFollowing?: boolean;
+  onFollow?: () => void;
 
   postCount: number;
   followerCount: number;
   followingCount: number;
+
+  followLoading?: boolean;
+  onUnfollow?: () => void;
 
   interests: InterestTag[];
   stories: Story[];
 
   posts: Post[];
   savedPosts?: Post[];
+  onPostCreated?: (post: Post) => void;
 
   postsLoading?: boolean;
   postsLoadingMore?: boolean;
@@ -50,7 +53,6 @@ interface ProfilePageProps {
 
   followers?: FollowUser[];
   following?: FollowUser[];
-
   followersLoading?: boolean;
   followingLoading?: boolean;
 
@@ -58,8 +60,18 @@ interface ProfilePageProps {
   onFollowingClick?: () => void;
 
   onEditProfile?: () => void;
-  onEditAvatar?: () => void;
+  onEditAvatar?: (file: File) => Promise<UserProfile>;
   onEditCover?: () => void;
+
+  followersLoadingMore?: boolean;
+  followingLoadingMore?: boolean;
+  followersHasMore?: boolean;
+  followingHasMore?: boolean;
+  onLoadMoreFollowers?: () => void;
+  onLoadMoreFollowing?: () => void;
+
+  onUserClick?: (user: FollowUser) => void;
+
 }
 
 export function ProfilePage({
@@ -67,6 +79,10 @@ export function ProfilePage({
 
   isOwnProfile,
   isFollowing = false,
+
+  onFollow,
+  followLoading = false,
+  onUnfollow,
 
   postCount,
   followerCount,
@@ -77,6 +93,7 @@ export function ProfilePage({
 
   posts,
   savedPosts = [],
+  onPostCreated,
 
   postsLoading = false,
   postsLoadingMore = false,
@@ -96,6 +113,16 @@ export function ProfilePage({
   onEditProfile,
   onEditAvatar,
   onEditCover,
+
+  followersLoadingMore = false,
+  followingLoadingMore = false,
+  followersHasMore = false,
+  followingHasMore = false,
+
+  onLoadMoreFollowers,
+  onLoadMoreFollowing,
+  onUserClick,
+  
 }: ProfilePageProps) {
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
   
@@ -143,14 +170,24 @@ export function ProfilePage({
     <>
       <div className="space-y-6">
 
-
         <ProfileHeader
           profile={profile}
           isOwnProfile={isOwnProfile}
           isFollowing={isFollowing}
+          onFollow={onFollow}
+          onUnfollow={onUnfollow}
+          followLoading={followLoading}
           onEditAvatar={onEditAvatar}
           onEditCover={onEditCover}
         />
+
+{isOwnProfile && (
+  <CreatePostCard
+    onCreated={(post) => {
+      onPostCreated?.(post);
+    }}
+  />
+)}
 
 
         <ProfileStats
@@ -163,6 +200,8 @@ export function ProfilePage({
 
         <ProfileInterests
           interests={interests}
+          isOwnProfile={isOwnProfile}
+
         />
 
 
@@ -176,6 +215,8 @@ export function ProfilePage({
           profile={profile}
           posts={posts}
           savedPosts={savedPosts}
+
+          onPostCreated={onPostCreated}
 
           postsLoading={postsLoading}
   postsLoadingMore={postsLoadingMore}
@@ -264,6 +305,25 @@ export function ProfilePage({
             ? followingLoading
             : followersLoading
         }
+        loadingMore={
+    followDialog === 'following'
+      ? followingLoadingMore
+      : followersLoadingMore
+  }
+
+        hasMore={
+          followDialog === "following"
+            ? followingHasMore
+            : followersHasMore
+        }
+        onLoadMore={
+          followDialog === "following"
+            ? onLoadMoreFollowing
+            : onLoadMoreFollowers
+        }
+
+        onUserClick={onUserClick}
+
       />
     </>
   );

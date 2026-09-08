@@ -8,6 +8,7 @@ import {
 import {
   GET_INTEREST_TAGS,
   GET_MY_INTERESTS,
+  GET_USER_INTERESTS_QUERY,
   UPDATE_MY_INTERESTS,
 } from "../api/interest.queries";
 
@@ -17,7 +18,10 @@ import type {
   GetInterestTagsData,
   GetMyInterestsData,
   UpdateMyInterestsData,
+  UserInterestsData,
+  UserInterestsVariables,
 } from "../types/interest";
+
 
 export function useInterests() {
   const {
@@ -31,18 +35,23 @@ export function useInterests() {
     error: tagsError,
   } = useQuery<GetInterestTagsData>(
     GET_INTEREST_TAGS,
+     {
+      fetchPolicy: "cache-first",
+    },
   );
 
   const {
     data: myInterestsData,
     loading: myInterestsLoading,
     error: myInterestsError,
+    refetch: refetchMyInterests,
   } = useQuery<GetMyInterestsData>(
     GET_MY_INTERESTS,
     {
       skip:
         authLoading ||
         !isAuthenticated,
+        fetchPolicy: "cache-first",
     },
   );
 
@@ -66,6 +75,7 @@ export function useInterests() {
         },
       ],
     },
+    
   );
 
   const saveInterests = async (
@@ -107,5 +117,24 @@ export function useInterests() {
     saveError,
 
     saveInterests,
+    refetchMyInterests
+  };
+}
+
+export function useUserInterests(profileId?: string) {
+  const { data, loading, error, refetch } = useQuery<
+    UserInterestsData,
+    UserInterestsVariables
+  >(GET_USER_INTERESTS_QUERY, {
+    variables: { profileId: profileId ?? ""},
+    skip: !profileId,
+    fetchPolicy: "cache-and-network",
+  });
+
+  return {
+    interests: data?.getUserInterests ?? [],
+    loading,
+    error,
+    refetch,
   };
 }

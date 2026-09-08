@@ -61,4 +61,5 @@ export class UpdateProfileInput {
   @IsOptional()
   @IsEnum(user_privacy)
   privacy?: user_privacy;
+
 }

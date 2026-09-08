@@ -20,3 +20,11 @@ export interface UpdateMyInterestsData {
 export interface UpdateMyInterestsVariables {
   interestIds: string[];
 }
+
+export interface UserInterestsData {
+  getUserInterests: InterestTag[];
+}
+
+export interface UserInterestsVariables {
+  profileId: string;
+}

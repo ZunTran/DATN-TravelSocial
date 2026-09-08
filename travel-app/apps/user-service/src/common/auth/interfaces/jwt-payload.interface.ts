@@ -3,5 +3,5 @@ export interface JwtPayload {
   email: string;
   role: string;
   tokenVersion: number;
-  type: string;      // Phải là 'ACCESS'
+  type: string;     
 }

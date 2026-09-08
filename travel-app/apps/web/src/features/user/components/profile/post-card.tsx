@@ -1,244 +1,214 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-
+import Link from "next/link";
 import {
-  Bookmark,
-  CalendarDays,
   Eye,
-  Heart,
-  MapPin,
-  MessageCircle,
   MoreHorizontal,
-  Share2,
   Tag,
-} from 'lucide-react';
+} from "lucide-react";
 
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from '@/components/ui/avatar';
+} from "@/components/ui/avatar";
 
-import { Card } from '@/components/ui/card';
+import { Button } from "@/components/ui/button";
 
-import type { Post } from '../../../social/types/post.types';
+
+
+import { useEffect, useState } from "react";
+import { Post } from "@/features/social/post/types/post.types";
+import { PostActions, PostLocation, PostMedia } from "@/features/social/components";
 
 interface PostCardProps {
   post: Post;
 }
 
-export default function PostCard({
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+function getInitials(
+  username?: string | null,
+) {
+  if (!username) {
+    return "US";
+  }
+
+  return username
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+export function PostCard({
   post,
 }: PostCardProps) {
-  const authorName =
-    post.authorUsername || 'User';
+  const [currentIsLiked, setCurrentIsLiked] =
+    useState<boolean>(post.isPostLiked);
 
-  const sortedMedia = [...post.media].sort(
-    (a, b) =>
-      a.displayOrder - b.displayOrder,
-  );
+  const [currentLikeCount, setCurrentLikeCount] =
+    useState<number>(post.likeCount);
 
-  const formattedDate = new Date(
-    post.createdAt,
-  ).toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
+  useEffect(() => {
+    setCurrentIsLiked(post.isPostLiked);
+    setCurrentLikeCount(post.likeCount);
+  }, [
+    post.isPostLiked,
+    post.likeCount,
+  ]);
+
+  const authorUsername =
+    post.authorUsername;
 
   return (
-    <Card className="overflow-hidden rounded-2xl">
-      {/* HEADER */}
-      <div className="flex items-center justify-between px-4 py-4 sm:px-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage
-              src={post.authorAvatar ?? undefined}
-              alt={authorName}
-            />
+    <article className="overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-md">
 
-            <AvatarFallback>
-              {authorName
-                .slice(0, 2)
-                .toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+      <div className="flex items-start gap-3 p-4">
 
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">
-              {authorName}
-            </p>
+        <Avatar className="size-11 shrink-0">
+          <AvatarImage
+            src={
+              post.authorAvatar ??
+              undefined
+            }
+            alt={
+              authorUsername ??
+              "User"
+            }
+          />
 
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <span>@{authorName}</span>
+          <AvatarFallback>
+            {getInitials(
+              authorUsername,
+            )}
+          </AvatarFallback>
+        </Avatar>
 
-              <span>·</span>
+        <div className="min-w-0 flex-1">
 
-              <CalendarDays className="h-3 w-3" />
+          <div className="flex items-center gap-2">
+            {authorUsername ? (
+              <Link
+                href={`/profile/${encodeURIComponent(
+                  authorUsername,
+                )}`}
+                className="truncate text-sm font-semibold hover:underline"
+              >
+                {authorUsername}
+              </Link>
+            ) : (
+              <span className="truncate text-sm font-semibold">
+                Unknown user
+              </span>
+            )}
 
-              <span>{formattedDate}</span>
-            </div>
+            {post.status ===
+              "PUBLISHED" && (
+              <span className="shrink-0 rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-600">
+                Published
+              </span>
+            )}
           </div>
+
+          <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+            <span>
+              {formatDate(
+                post.createdAt,
+              )}
+            </span>
+
+            <span>·</span>
+
+            <span>
+              {post.privacy}
+            </span>
+          </div>
+
         </div>
 
-        <button
+        <Button
           type="button"
-          className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="Post menu"
+          variant="ghost"
+          size="icon"
+          className="size-8 shrink-0"
         >
-          <MoreHorizontal className="h-5 w-5" />
-        </button>
+          <MoreHorizontal className="size-5" />
+        </Button>
+
       </div>
 
-      {/* CONTENT */}
-      {post.content && (
-        <div className="px-4 pb-4 sm:px-5">
+      <div className="px-4 pb-4">
+
+        {post.content && (
           <p className="whitespace-pre-wrap text-sm leading-6">
             {post.content}
           </p>
-        </div>
-      )}
+        )}
 
-      {/* CATEGORY + LOCATION */}
-      {(post.category || post.location) && (
-        <div className="flex flex-wrap gap-2 px-4 pb-4 sm:px-5">
-          {post.category && (
-            <div className="inline-flex items-center gap-1.5 rounded-full border bg-muted/40 px-3 py-1.5 text-xs">
-              <Tag className="h-3.5 w-3.5" />
+        {post.category && (
+          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <Tag className="size-3.5" />
 
-              <span className="font-medium">
-                {post.category.name}
-              </span>
-            </div>
-          )}
+            <span>
+              {post.category.name}
+            </span>
+          </div>
+        )}
 
-          {post.location && (
-            <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full border bg-muted/40 px-3 py-1.5 text-xs">
-              <MapPin className="h-3.5 w-3.5 shrink-0" />
+        <PostLocation
+          location={post.location}
+        />
 
-              <span className="truncate font-medium">
-                {post.location.name}
-              </span>
-
-              {post.location.province && (
-                <span className="text-muted-foreground">
-                  · {post.location.province}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* MEDIA */}
-      {sortedMedia.length > 0 && (
-        <div
-          className={
-            sortedMedia.length === 1
-              ? 'overflow-hidden'
-              : 'grid gap-1 sm:grid-cols-2'
-          }
-        >
-          {sortedMedia.map((media) => {
-            if (media.mediaType === 'VIDEO') {
-              return (
-                <video
-                  key={media.id}
-                  src={media.mediaUrl}
-                  controls
-                  preload="metadata"
-                  className="max-h-[600px] w-full bg-black object-contain"
-                />
-              );
-            }
-
-            return (
-              <div
-                key={media.id}
-                className="relative aspect-square w-full overflow-hidden bg-muted sm:aspect-[4/3]"
-              >
-                <Image
-                  src={media.mediaUrl}
-                  alt="Post media"
-                  fill
-                  className="object-cover transition-transform duration-300 hover:scale-[1.02]"
-                />
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* META */}
-      <div className="flex items-center justify-between border-t px-4 py-3 text-xs text-muted-foreground sm:px-5">
-        <div className="flex items-center gap-1">
-          <Eye className="h-3.5 w-3.5" />
-          <span>{post.viewCount}</span>
-          <span>views</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span>{post.likeCount} likes</span>
-          <span>{post.commentCount} comments</span>
-        </div>
       </div>
 
-      {/* ACTIONS */}
-      <div className="grid grid-cols-4 border-t">
-        <PostAction
-          icon={<Heart className="h-4 w-4" />}
-          label="Like"
-          count={post.likeCount}
-        />
+      <PostMedia
+        media={post.media ?? []}
+      />
 
-        <PostAction
-          icon={<MessageCircle className="h-4 w-4" />}
-          label="Comment"
-          count={post.commentCount}
-        />
+      <PostActions
+        postId={post.id}
+        likeCount={currentLikeCount}
+        commentCount={post.commentCount}
+        shareCount={post.shareCount}
+        saveCount={post.saveCount}
+        isLiked={currentIsLiked}
+        isSaved={post.isPostSaved}
+        onLikeChange={(
+          nextIsLiked,
+          nextLikeCount,
+        ) => {
+          setCurrentIsLiked(
+            nextIsLiked,
+          );
 
-        <PostAction
-          icon={<Share2 className="h-4 w-4" />}
-          label="Share"
-          count={post.shareCount}
-        />
+          setCurrentLikeCount(
+            nextLikeCount,
+          );
+        }}
+      />
 
-        <PostAction
-          icon={<Bookmark className="h-4 w-4" />}
-          label="Save"
-          count={post.saveCount}
-        />
+      <div className="flex items-center gap-1 px-4 pb-3 text-[11px] text-muted-foreground">
+        <Eye className="size-3" />
+
+        <span>
+          {post.viewCount} views
+        </span>
       </div>
-    </Card>
+
+    </article>
   );
 }
 
-interface PostActionProps {
-  icon: React.ReactNode;
-  label: string;
-  count: number;
-}
+export default PostCard;
 
-function PostAction({
-  icon,
-  label,
-  count,
-}: PostActionProps) {
-  return (
-    <button
-      type="button"
-      className="flex items-center justify-center gap-1.5 px-2 py-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-    >
-      {icon}
-
-      <span className="hidden sm:inline">
-        {label}
-      </span>
-
-      <span>
-        {count}
-      </span>
-    </button>
-  );
-}

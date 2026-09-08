@@ -46,6 +46,9 @@ export class UserProfileObject {
   privacy: user_privacy;
 
   @Field()
+  isCompleted: boolean;
+
+  @Field()
   created_at: Date;
 
   @Field()

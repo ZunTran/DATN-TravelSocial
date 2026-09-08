@@ -32,3 +32,14 @@ export const UPDATE_MY_INTERESTS = gql`
     }
   }
 `;
+
+export const GET_USER_INTERESTS_QUERY = gql`
+  query GetUserInterests($profileId: ID!) {
+    getUserInterests(profileId: $profileId) {
+      id
+      name
+      icon_url
+      created_at
+    }
+  }
+`;

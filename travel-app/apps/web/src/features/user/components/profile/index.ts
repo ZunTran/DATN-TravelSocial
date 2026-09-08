@@ -8,3 +8,4 @@ export { ProfileInterests } from './profile-interests';
 export { ProfilePage } from './profile-page';
 export { default as ProfileSetup } from "./profile-setup";
 export { default as ProfileFollowDialog } from "./profile-follow-dialog";
+export { ProfileInitializer } from "./profile-initializer";

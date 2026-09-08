@@ -1,11 +1,13 @@
-import type { InterestTag } from '../../types/interest';
+import type { InterestTag } from "../../types/interest";
 
 interface ProfileInterestsProps {
   interests: InterestTag[];
+  isOwnProfile: boolean;
 }
 
 export function ProfileInterests({
   interests,
+  isOwnProfile,
 }: ProfileInterestsProps) {
   if (interests.length === 0) {
     return (
@@ -16,7 +18,9 @@ export function ProfileInterests({
           </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            You haven't selected any interests yet.
+            {isOwnProfile
+              ? "You haven't selected any interests yet."
+              : "This user hasn't selected any interests yet."}
           </p>
         </div>
       </section>

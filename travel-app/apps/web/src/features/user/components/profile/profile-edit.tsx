@@ -97,9 +97,7 @@ export default function ProfileEdit({
     },
   });
 
-  // ============================================================
-  // SYNC PROFILE -> FORM
-  // ============================================================
+
 
   useEffect(() => {
     reset({
@@ -131,9 +129,6 @@ export default function ProfileEdit({
   const gender = watch('gender');
   const privacy = watch('privacy');
 
-  // ============================================================
-  // SUBMIT
-  // ============================================================
 
   const onSubmit = async (
     values: ProfileEditFormValues,
@@ -195,13 +190,13 @@ export default function ProfileEdit({
         </Button>
       </CardHeader>
 
-      {/* FORM */}
+
       <CardContent>
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="space-y-6"
         >
-          {/* USERNAME */}
+
           <div className="space-y-2">
             <label
               htmlFor="username"
@@ -218,7 +213,7 @@ export default function ProfileEdit({
             />
           </div>
 
-          {/* DISPLAY NAME */}
+
           <div className="space-y-2">
             <label
               htmlFor="display_name"
@@ -235,7 +230,7 @@ export default function ProfileEdit({
             />
           </div>
 
-          {/* BIO */}
+
           <div className="space-y-2">
             <label
               htmlFor="bio"
@@ -253,7 +248,6 @@ export default function ProfileEdit({
             />
           </div>
 
-          {/* GENDER */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
               Gender
@@ -286,7 +280,7 @@ export default function ProfileEdit({
             </Select>
           </div>
 
-          {/* BIRTHDAY */}
+
           <div className="space-y-2">
             <label
               htmlFor="birthday"
@@ -303,7 +297,7 @@ export default function ProfileEdit({
             />
           </div>
 
-          {/* LOCATION */}
+
           <div className="space-y-2">
             <label
               htmlFor="location"
@@ -349,7 +343,7 @@ export default function ProfileEdit({
             </Select>
           </div>
 
-          {/* ERROR */}
+
           {error && (
             <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
               <p className="text-sm text-destructive">
@@ -358,7 +352,7 @@ export default function ProfileEdit({
             </div>
           )}
 
-          {/* ACTIONS */}
+
           <div className="flex justify-end gap-3 border-t pt-5">
             <Button
               type="button"

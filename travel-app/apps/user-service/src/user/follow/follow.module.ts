@@ -1,6 +1,4 @@
 import { forwardRef, Module } from '@nestjs/common';
-
-
 import { PrismaModule } from '../../prisma/prisma.module';
 import { FollowResolver } from './follow.resolver';
 import { FollowService } from './follow.service';

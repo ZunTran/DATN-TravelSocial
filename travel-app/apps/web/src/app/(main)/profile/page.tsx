@@ -1,459 +1,4 @@
-// 'use client';
-
-// import { ProfilePage } from '@/features/user/components/profile/profile-page';
-
-// import { useProfile } from '@/features/user/hooks/use-profile';
-// import { useMyInterests } from '@/features/user/hooks/use-my-interests';
-// import { usePosts } from '@/features/social/hooks/use-posts';
-// import { useAuthContext } from '@/features/auth/context/auth-context';
-// import { useFollowCounts } from '@/features/user/hooks/use-follow-counts';
-
-// import ProfilePageSkeleton from '@/features/social/components/post-grid-skeleton';
-
-// export default function ProfileRoute() {
-//   const {
-//     isLoading: authLoading,
-//     isAuthenticated,
-//   } = useAuthContext();
-
-//   const {
-//     profile,
-//     loading: profileLoading,
-//     error: profileError,
-//   } = useProfile();
-
-//   const {
-//     followerCount,
-//     followingCount,
-//     loading: followCountsLoading,
-//   } = useFollowCounts(
-//     profile?.id ?? '',
-//     {
-//       skip: !profile,
-//     },
-//   );
-
-//   const {
-//     interests,
-//     loading: interestsLoading,
-//     error: interestsError,
-//   } = useMyInterests();
-
-//   const {
-//     posts,
-//     total: postTotal,
-//     loading: postsLoading,
-//     loadingMore: postsLoadingMore,
-//     hasMore,
-//     loadMore,
-//   } = usePosts(
-//     1,
-//     3,
-//     profile
-//       ? {
-//           authorId: profile.id,
-//         }
-//       : undefined,
-//   );
-
-//   /**
-//    * Auth đang restore session
-//    */
-//   if (authLoading) {
-//     return <ProfilePageSkeleton />;
-//   }
-
-//   /**
-//    * Chưa login
-//    */
-//   if (!isAuthenticated) {
-//     return (
-//       <div className="mx-auto max-w-5xl p-6">
-//         Please login to view your profile.
-//       </div>
-//     );
-//   }
-
-//   /**
-//    * Chỉ profile là critical
-//    *
-//    * Không block page vì:
-//    * interests
-//    * posts
-//    * counts
-//    */
-//   if (profileLoading) {
-//     return <ProfilePageSkeleton />;
-//   }
-
-//   if (profileError) {
-//     return (
-//       <div className="mx-auto max-w-5xl p-6">
-//         <p className="text-destructive">
-//           Failed to load profile.
-//         </p>
-
-//         <p className="mt-2 text-sm text-muted-foreground">
-//           {profileError.message}
-//         </p>
-//       </div>
-//     );
-//   }
-
-//   if (!profile) {
-//     return (
-//       <div className="mx-auto max-w-5xl p-6">
-//         Profile not found.
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="mx-auto max-w-5xl p-6">
-//       <ProfilePage
-//         profile={profile}
-//         isOwnProfile={true}
-//         isFollowing={false}
-
-//         postCount={
-//           postTotal ??
-//           posts.length
-//         }
-
-//         followerCount={
-//           followerCount
-//         }
-
-//         followingCount={
-//           followingCount
-//         }
-
-//         interests={
-//           interests ?? []
-//         }
-
-//         stories={[]}
-
-//         posts={posts}
-
-//         postsLoading={
-//           postsLoading &&
-//           posts.length === 0
-//         }
-
-//         postsLoadingMore={
-//           postsLoadingMore
-//         }
-
-//         hasMorePosts={
-//           hasMore
-//         }
-
-//         onLoadMorePosts={
-//           loadMore
-//         }
-
-//         savedPosts={[]}
-//       />
-//     </div>
-//   );
-// }
-
-
-
-
-
-
-
-// 'use client';
-
-// import {
-//   useEffect,
-//   useState,
-// } from 'react';
-
-// import {
-//   ProfilePage,
-// } from '@/features/user/components/profile/profile-page';
-
-// import {
-//   useProfile,
-// } from '@/features/user/hooks/use-profile';
-
-// import {
-//   useMyInterests,
-// } from '@/features/user/hooks/use-my-interests';
-
-// import {
-//   usePosts,
-// } from '@/features/social/hooks/use-posts';
-
-// import {
-//   useAuthContext,
-// } from '@/features/auth/context/auth-context';
-
-// import {
-//   useFollowCounts,
-// } from '@/features/user/hooks/use-follow-counts';
-
-// export default function ProfileRoute() {
-//   const {
-//     isLoading: authLoading,
-//     isAuthenticated,
-//   } = useAuthContext();
-
-//   const {
-//     profile,
-//     loading: profileLoading,
-//     error: profileError,
-//     loadProfileWithRetry,
-//   } = useProfile({
-//     waitForProfile: true,
-//   });
-
-//   const [
-//     waitingForProfile,
-//     setWaitingForProfile,
-//   ] = useState(true);
-
-//   const [
-//     profileLoadFailed,
-//     setProfileLoadFailed,
-//   ] = useState(false);
-
-//   /*
-//    * ============================================================
-//    * WAIT FOR PROFILE CREATED BY USER SERVICE
-//    * ============================================================
-//    */
-
-//   useEffect(() => {
-//     if (
-//       authLoading ||
-//       !isAuthenticated
-//     ) {
-//       return;
-//     }
-
-//     let cancelled = false;
-
-//     const loadProfile = async () => {
-//       setWaitingForProfile(true);
-//       setProfileLoadFailed(false);
-
-//       const result =
-//         await loadProfileWithRetry();
-
-//       if (cancelled) {
-//         return;
-//       }
-
-//       if (!result) {
-//         setProfileLoadFailed(true);
-//       }
-
-//       setWaitingForProfile(false);
-//     };
-
-//     loadProfile();
-
-//     return () => {
-//       cancelled = true;
-//     };
-//   }, [
-//     authLoading,
-//     isAuthenticated,
-//     loadProfileWithRetry,
-//   ]);
-
-//   /*
-//    * ============================================================
-//    * INTERESTS
-//    * ============================================================
-//    */
-
-//   const {
-//     interests,
-//     loading: interestsLoading,
-//   } = useMyInterests();
-
-//   /*
-//    * ============================================================
-//    * FOLLOW COUNTS
-//    * ============================================================
-//    */
-
-//   const {
-//     followerCount,
-//     followingCount,
-//     loading: followCountsLoading,
-//   } = useFollowCounts(
-//     profile?.id ?? '',
-//     {
-//       skip: !profile,
-//     },
-//   );
-
-//   /*
-//    * ============================================================
-//    * POSTS
-//    * ============================================================
-//    */
-
-//   const {
-//     posts,
-//     total: postTotal,
-//     loading: postsLoading,
-//   } = usePosts(
-//     1,
-//     3,
-//     profile
-//       ? {
-//           authorId: profile.id,
-//         }
-//       : undefined,
-//   );
-
-//   /*
-//    * ============================================================
-//    * AUTH LOADING
-//    * ============================================================
-//    */
-
-//   if (authLoading) {
-//     return (
-//       <div className="mx-auto max-w-5xl p-6">
-//         Loading session...
-//       </div>
-//     );
-//   }
-
-//   /*
-//    * ============================================================
-//    * NOT AUTHENTICATED
-//    * ============================================================
-//    */
-
-//   if (!isAuthenticated) {
-//     return (
-//       <div className="mx-auto max-w-5xl p-6">
-//         Please login to view your profile.
-//       </div>
-//     );
-//   }
-
-//   /*
-//    * ============================================================
-//    * WAITING FOR USER SERVICE
-//    * ============================================================
-//    */
-
-//   if (
-//     waitingForProfile ||
-//     profileLoading
-//   ) {
-//     return (
-//       <div className="mx-auto max-w-5xl p-6">
-//         <div className="space-y-6">
-//           <div className="h-48 animate-pulse rounded-2xl bg-muted" />
-
-//           <div className="space-y-3">
-//             <div className="h-6 w-48 animate-pulse rounded bg-muted" />
-//             <div className="h-4 w-72 animate-pulse rounded bg-muted" />
-//           </div>
-
-//           <div className="h-32 animate-pulse rounded-2xl bg-muted" />
-
-//           <div className="text-center text-sm text-muted-foreground">
-//             Setting up your profile...
-//           </div>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   /*
-//    * ============================================================
-//    * PROFILE CREATION FAILED
-//    * ============================================================
-//    */
-
-//   if (
-//     profileLoadFailed ||
-//     profileError ||
-//     !profile
-//   ) {
-//     return (
-//       <div className="mx-auto max-w-5xl p-6">
-//         <div className="rounded-2xl border bg-card px-6 py-16 text-center">
-//           <p className="text-sm font-medium">
-//             We couldn't create your profile yet.
-//           </p>
-
-//           <p className="mt-2 text-sm text-muted-foreground">
-//             Please refresh the page and try again.
-//           </p>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   /*
-//    * ============================================================
-//    * PROFILE EXISTS
-//    * ============================================================
-//    */
-
-//   return (
-//     <div className="mx-auto max-w-5xl p-6">
-//       <ProfilePage
-//         profile={profile}
-
-//         isOwnProfile={true}
-//         isFollowing={false}
-
-//         postCount={
-//           postTotal ??
-//           posts?.length ??
-//           0
-//         }
-
-//         followerCount={
-//           followerCount
-//         }
-
-//         followingCount={
-//           followingCount
-//         }
-
-//         interests={
-//           interests ?? []
-//         }
-
-//         stories={[]}
-
-//         posts={
-//           posts ?? []
-//         }
-
-//         savedPosts={[]}
-
-//         postsLoading={
-//           postsLoading &&
-//           (posts?.length ?? 0) === 0
-//         }
-//       />
-//     </div>
-//   );
-// }
-
-
 "use client";
-
-import {
-  useEffect,
-  useState,
-} from "react";
 
 import {
   ProfilePage,
@@ -464,134 +9,121 @@ import {
   useProfile,
 } from "@/features/user/hooks/use-profile";
 
+
+
+import {
+  usePosts,
+} from "@/features/social/hooks/use-posts";
+import { useFollowList } from "@/features/user/hooks/use-follow-list";
+import { useFollowCounts } from "@/features/user/hooks/use-follow-counts";
+import { useInterests } from "@/features/user/hooks/use-interests";
+import { useRouter } from "next/navigation";
+import { FollowUser } from "@/features/user/types/follow";
+import { useUpdateAvatar } from "@/features/user/hooks/use-update-avatar";
+
 export default function ProfileRoute() {
+
+  const router = useRouter();
   const {
     profile,
     loading: profileLoading,
     error: profileError,
-    loadProfileWithRetry,
     updateProfile,
     isAuthenticated,
     authLoading,
   } = useProfile();
 
-  const [
-    loadingProfile,
-    setLoadingProfile,
-  ] = useState(true);
+  const {
+  updateAvatar,
+  loading: avatarLoading,
+} = useUpdateAvatar();
 
-  const [
-    setupMode,
-    setSetupMode,
-  ] = useState(false);
+  const {
+  myInterests,
+  loading: myInterestsLoading,
+  error: myInterestsError,
+} = useInterests();
 
-  /*
-   * ============================================================
-   * LOAD PROFILE
-   * ============================================================
-   */
-
-  useEffect(() => {
-    if (
-      authLoading ||
-      !isAuthenticated
-    ) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const load = async () => {
-      setLoadingProfile(true);
-
-      const result =
-        await loadProfileWithRetry();
-
-      if (cancelled) {
-        return;
+const {
+  posts,
+  total: postTotal,
+  loading: postsLoading,
+  loadingMore: postsLoadingMore,
+  hasMore,
+  loadMore,
+  prependPost,
+  replacePost,
+  removePost,
+} = usePosts(
+  1,
+  3,
+  profile
+    ? {
+        authorId: profile.id,
       }
+    : undefined,
+);
 
-      /*
-       * result có profile hoặc null.
-       */
-      setLoadingProfile(false);
-    };
+const {
+  followers,
+  following,
 
-    load();
+  followersLoading,
+  followingLoading,
 
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    authLoading,
-    isAuthenticated,
-    loadProfileWithRetry,
-  ]);
+  followersLoadingMore,
+  followingLoadingMore,
 
-  /*
-   * ============================================================
-   * CHECK PROFILE SETUP
-   * ============================================================
-   */
+  followersHasMore,
+  followingHasMore,
 
-  useEffect(() => {
-    if (!profile) {
-      return;
-    }
+  loadFollowersFirstPage,
+  loadFollowingFirstPage,
 
-    const setupKey =
-      `profileSetupDone:${profile.id}`;
+  loadMoreFollowers,
+  loadMoreFollowing,
+  // profile?.id,
+} = useFollowList(profile?.id);
 
-    const setupDone =
-      localStorage.getItem(setupKey);
 
-    setSetupMode(
-      setupDone !== "true",
-    );
-  }, [profile]);
+const {
+  followerCount,
+  followingCount,
+} = useFollowCounts(profile?.id ?? '');
 
-  /*
-   * ============================================================
-   * AUTH LOADING
-   * ============================================================
-   */
+  const handleUserClick = (user: FollowUser) => {
+  if (!profile) 
+    return;
+
+  const isCurrentUser = user.id === profile.id || user.username === profile.username;
+
+  if (isCurrentUser) {
+    router.push("/profile");
+    return;
+  }
+
+  router.push(`/${user.username}`);
+};
+
 
   if (authLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-sm text-muted-foreground">
-          Loading session...
-        </p>
+        <p className="text-sm text-muted-foreground">Loading session...</p>
       </div>
     );
   }
-
-  /*
-   * ============================================================
-   * NOT LOGIN
-   * ============================================================
-   */
 
   if (!isAuthenticated) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <p>
-          Please login to view your profile.
-        </p>
+        <p>Please login to view your profile.</p>
       </div>
     );
   }
 
-  /*
-   * ============================================================
-   * WAITING FOR PROFILE
-   * ============================================================
-   */
 
-  if (
-    profileLoading ||
-    loadingProfile
-  ) {
+  if (profileLoading ) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
@@ -607,11 +139,6 @@ export default function ProfileRoute() {
     );
   }
 
-  /*
-   * ============================================================
-   * PROFILE NOT FOUND
-   * ============================================================
-   */
 
   if (!profile) {
     return (
@@ -630,67 +157,78 @@ export default function ProfileRoute() {
     );
   }
 
-  /*
-   * ============================================================
-   * PROFILE SETUP
-   * ============================================================
-   */
 
-  if (setupMode) {
+  if (!profile.isCompleted) {
     return (
-      <div className="mx-auto max-w-5xl px-6">
-        <ProfileSetup
-          profile={profile}
-          onUpdate={async (input) => {
-            const updated =
-              await updateProfile(input);
-
-            /*
-             * Chỉ đánh dấu hoàn thành
-             * sau khi update thành công.
-             */
-            localStorage.setItem(
-              `profileSetupDone:${profile.id}`,
-              "true",
-            );
-
-            /*
-             * Sang bước interests.
-             */
-            window.location.href =
-              "/setup-interests";
-
-            return updated;
-          }}
-        />
-      </div>
+      <ProfileSetup
+        profile={profile}
+        onUpdate={async (input) => {
+          return updateProfile(input);
+        }}
+      />
     );
   }
 
-  /*
-   * ============================================================
-   * NORMAL PROFILE
-   * ============================================================
-   */
+
+  const handleFollowersClick = () => {
+  loadFollowersFirstPage();
+};
+
+const handleFollowingClick = () => {
+  loadFollowingFirstPage();
+};
+
 
   return (
     <div className="mx-auto max-w-5xl px-6">
       <ProfilePage
-        profile={profile}
+  profile={profile}
 
-        isOwnProfile={true}
-        isFollowing={false}
+  isOwnProfile={true}
+  isFollowing={false}
+  onEditAvatar={updateAvatar}
 
-        postCount={0}
-        followerCount={0}
-        followingCount={0}
+  postCount={ postTotal ?? posts?.length ?? 0 }
 
-        interests={[]}
-        stories={[]}
+  followerCount={followerCount}
+  followingCount={followingCount}
 
-        posts={[]}
-        savedPosts={[]}
-      />
+  interests={myInterests ?? []}
+  stories={[]}
+
+  posts={posts ?? []}
+  onPostCreated={prependPost}
+
+  savedPosts={[]}
+
+  postsLoading={
+    postsLoading &&
+    (posts?.length ?? 0) === 0
+  }
+
+  postsLoadingMore={ postsLoadingMore}
+  hasMorePosts={ hasMore}
+  onLoadMorePosts={loadMore}
+
+  followers={followers}
+  following={following}
+
+  followersLoading={followersLoading}
+  followingLoading={followingLoading}
+
+  followersLoadingMore={followersLoadingMore}
+  followingLoadingMore={followingLoadingMore}
+
+  followersHasMore={followersHasMore}
+  followingHasMore={followingHasMore}
+
+  onFollowersClick={handleFollowersClick}
+  onFollowingClick={handleFollowingClick}
+  onLoadMoreFollowers={ loadMoreFollowers}
+  onLoadMoreFollowing={loadMoreFollowing}
+
+  onUserClick={ handleUserClick }
+/>
     </div>
   );
 }

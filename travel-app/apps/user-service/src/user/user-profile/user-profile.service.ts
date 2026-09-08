@@ -69,6 +69,7 @@ export class UserProfileService {
         location: input.location,
         privacy: input.privacy,
         updated_at: new Date(),
+        isCompleted: true,
       });
   }
 
@@ -96,6 +97,7 @@ export class UserProfileService {
     gender: null,
     birthday: null,
     location: null,
+
   });
 }
 
@@ -167,18 +169,42 @@ export class UserProfileService {
     });
   }
 
-  async getInternalUProfileByAccountId(accountId: string): Promise<InternalUserProfileResponse> {
-  const profile =await this.repository.findInternalByAccountId(accountId);
-  if (!profile) 
-    throw new NotFoundException('User profile not found');
+  async updateAvatar(accountId: string,avatarFile: FileUpload) {
+    const profile = await this.repository.findByAccountId(accountId);
+    if (!profile) 
+      throw new NotFoundException( 'Không tìm thấy profile' );
+    
+    const multerFile = await this.convertUploadToBuffer(avatarFile);
+    const uploadRes = await this.cloudinaryService.uploadImage( multerFile, 'travel-social/avatars');
 
-  return {
-    profileId: profile.id,
-    accountId: profile.account_id,
-    username: profile.username,
-    avatarUrl: profile.avatar_url,
-  };
-}
+    return this.repository.update( profile.id,
+      {
+        avatar_url: uploadRes.secure_url,
+        updated_at: new Date(),
+      },
+    );
+  }
+
+  async getInternalUProfileByAccountId(accountId: string): Promise<InternalUserProfileResponse> {
+    const profile =await this.repository.findInternalByAccountId(accountId);
+    if (!profile) 
+      throw new NotFoundException('User profile not found');
+
+    return {
+      profileId: profile.id,
+      accountId: profile.account_id,
+      username: profile.username,
+      avatarUrl: profile.avatar_url,
+    };
+  }
+
+
+  async getProfileByUsername(username: string) {
+    const profile = await this.repository.findByUsername(username);
+    if (!profile) 
+      throw new NotFoundException('User profile not found');
+    return profile;
+  }
 
   
 }

@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-} from '@nestjs/common';
-
+import { Controller, Get, Param } from '@nestjs/common';
 import { FollowService } from './follow.service';
 
 @Controller('internal/follows')

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check,Loader2,Sparkles} from "lucide-react";
+import {Check, Loader2, Sparkles} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { InterestSelector } from "@/features/user/components/interest-selector";
+
 import { useInterests } from "@/features/user/hooks/use-interests";
 
 export default function SetupInterestsPage() {
@@ -25,26 +26,20 @@ export default function SetupInterestsPage() {
     setSelectedIds,
   ] = useState<string[]>([]);
 
-  const [saved, setSaved] =
-    useState(false);
+  const [saved, setSaved] =useState(false);
 
 useEffect(() => {
-  if (myInterests.length === 0) {
-    return;
-  }
-
   const nextSelectedIds = myInterests.map(
     (interest) => interest.id,
   );
 
   setSelectedIds((currentIds) => {
-    const isSame =
+    if (
       currentIds.length === nextSelectedIds.length &&
       currentIds.every(
         (id, index) => id === nextSelectedIds[index],
-      );
-
-    if (isSame) {
+      )
+    ) {
       return currentIds;
     }
 
@@ -56,20 +51,14 @@ useEffect(() => {
     setSaved(false);
 
     try {
-      await saveInterests(
-        selectedIds,
-      );
-
+      await saveInterests(selectedIds);
       setSaved(true);
 
       setTimeout(() => {
-        router.push("/");
+        router.push("/profile");
       }, 700);
     } catch (error) {
-      console.error(
-        "Failed to save interests:",
-        error,
-      );
+      console.error("Failed to save interests:", error );
     }
   };
 
@@ -87,17 +76,13 @@ useEffect(() => {
     );
   }
 
+
   if (error) {
     return (
       <main className="flex min-h-[calc(100svh-4rem)] items-center justify-center p-6">
         <div className="rounded-2xl border bg-card p-8 text-center">
-          <h2 className="font-semibold">
-            Unable to load interests
-          </h2>
-
-          <p className="mt-2 text-sm text-muted-foreground">
-            Please try again later.
-          </p>
+          <h2 className="font-semibold"> Unable to load interests</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Please try again later.</p>
         </div>
       </main>
     );
@@ -106,7 +91,6 @@ useEffect(() => {
   return (
     <main className="min-h-[calc(100svh-4rem)] px-4 py-8 md:px-8">
       <div className="mx-auto max-w-5xl">
-        {/* Heading */}
         <div className="mb-8">
           <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <Sparkles className="size-6" />
@@ -122,8 +106,8 @@ useEffect(() => {
           </p>
         </div>
 
-        {/* Selector */}
         <section className="rounded-3xl border bg-card p-5 shadow-sm md:p-8">
+
           <InterestSelector
             interests={interests}
             selectedIds={selectedIds}
@@ -149,15 +133,13 @@ useEffect(() => {
             </div>
           )}
 
-          {/* Actions */}
           <div className="mt-8 flex justify-end gap-3 border-t pt-6">
+
             <Button
               type="button"
               variant="ghost"
               disabled={saving}
-              onClick={() =>
-                router.push("/")
-              }
+              onClick={() => router.push("/")}
             >
               Skip for now
             </Button>
@@ -172,10 +154,9 @@ useEffect(() => {
                 <Loader2 className="mr-2 size-4 animate-spin" />
               )}
 
-              {saving
-                ? "Saving..."
-                : "Save interests"}
+              {saving ? "Saving..." : "Save interests"}
             </Button>
+
           </div>
         </section>
       </div>

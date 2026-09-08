@@ -22,14 +22,54 @@ export const IS_FOLLOWING_QUERY = gql`
   }
 `;
 
-export const FOLLOWERS_COUNT_QUERY = gql`
-  query FollowersCount($profileId: ID!) {
-    followersCount(profileId: $profileId)
-  }
-`;
 
-export const FOLLOWING_COUNT_QUERY = gql`
-  query FollowingCount($profileId: ID!) {
+export const FOLLOW_STATS_QUERY = gql`
+  query FollowStats($profileId: ID!) {
+    followersCount(profileId: $profileId)
     followingCount(profileId: $profileId)
   }
 `;
+
+export const FOLLOWERS_QUERY = gql`
+  query Followers(
+    $profileId: ID! 
+    $input: GatewayPaginationInput!
+  ) {
+    followers( 
+      profileId: $profileId
+      input: $input
+      ) {
+        data {
+          id
+          username
+          display_name
+          avatar_url
+        }
+        total
+        page
+        limit
+        totalPages
+      }
+    }
+  `;
+
+export const FOLLOWING_QUERY = gql`
+  query Following(
+    $profileId: ID!
+    $input: GatewayPaginationInput!) {
+  following(
+    profileId: $profileId
+    input: $input) {
+        data {
+          id
+          username
+          display_name
+          avatar_url
+        }
+        total
+        page
+        limit
+        totalPages
+      }
+    }
+  `;

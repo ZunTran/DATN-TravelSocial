@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import type { UserProfile } from "../../types/profile";
+import { useRouter } from "next/navigation";
 
 interface ProfileSetupProps {
   profile: UserProfile;
@@ -23,6 +24,8 @@ export default function ProfileSetup({
   profile,
   onUpdate,
 }: ProfileSetupProps) {
+  const router = useRouter();
+
   const [username, setUsername] = useState(
     profile.username ?? "",
   );
@@ -64,25 +67,25 @@ export default function ProfileSetup({
     setError(null);
     setLoading(true);
 
-    try {
-      await onUpdate({
-        username,
-        display_name: displayName,
-        bio: bio || undefined,
-        gender: gender || undefined,
-        birthday:
-          birthday || undefined,
-        location:
-          location || undefined,
-      });
-    } catch (err: any) {
-      setError(
-        err?.message ??
-          "Không thể cập nhật profile.",
-      );
-    } finally {
-      setLoading(false);
-    }
+try {
+  await onUpdate({
+    username,
+    display_name: displayName,
+    bio: bio || undefined,
+    gender: gender || undefined,
+    birthday: birthday || undefined,
+    location: location || undefined,
+  });
+
+  router.push("/setup-interests");
+} catch (err: any) {
+  setError(
+    err?.message ??
+      "Không thể cập nhật profile.",
+  );
+} finally {
+  setLoading(false);
+}
   };
 
   return (

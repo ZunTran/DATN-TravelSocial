@@ -25,14 +25,6 @@ interface UpdateProfileVariables {
 }
 
 function extractErrorMessage(error: any): string {
-  /*
-   * Backend hiện tại trả:
-   *
-   * Bad Gateway Exception
-   *   -> extensions.originalError.message[]
-   *      -> message: "Username đã tồn tại"
-   */
-
   const graphQLError =
     error?.graphQLErrors?.[0];
 
@@ -42,7 +34,6 @@ function extractErrorMessage(error: any): string {
       ?.originalError
       ?.message;
 
-  // originalError.message là array
   if (Array.isArray(originalMessage)) {
     const firstError = originalMessage[0];
 
@@ -70,8 +61,7 @@ function extractErrorMessage(error: any): string {
 
   // fallback cuối cùng
   return (
-    error?.message ||
-    'Không thể cập nhật profile.'
+    error?.message ||'Không thể cập nhật profile.'
   );
 }
 

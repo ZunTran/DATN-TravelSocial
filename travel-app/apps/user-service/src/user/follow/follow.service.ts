@@ -69,23 +69,25 @@ export class FollowService {
     return !!follow;
   }
 
-  async getFollowers(accountId: string,page: number,limit: number,) {
-    const profile =await this.userProfileRepository.findByAccountId(accountId);
-    if (!profile) throw new NotFoundException('Không tìm thấy profile');
+    async getFollowers( profileId: string, page: number, limit: number) {
+    const profile = await this.userProfileRepository.findById(profileId);
+
+    if (!profile) 
+      throw new NotFoundException( 'Không tìm thấy profile'  );
 
     return this.repository.findFollowers(
-      profile.id,
+      profileId,
       page,
       limit,
     );
   }
 
-  async getFollowing(accountId: string,page: number,limit: number) {
-    const profile =await this.userProfileRepository.findByAccountId(accountId);
+  async getFollowing(profileId: string,page: number,limit: number) {
+    const profile =await this.userProfileRepository.findById(profileId);
     if (!profile) throw new NotFoundException('Không tìm thấy profile');
 
     return this.repository.findFollowing(
-      profile.id,
+      profileId,
       page,
       limit
     );

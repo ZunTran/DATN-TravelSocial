@@ -18,7 +18,7 @@ import type {
 } from "../types/follow";
 
 export function useFollow(
-  profileId: string,
+  profileId?: string,
 ) {
   const {
     data,
@@ -31,70 +31,49 @@ export function useFollow(
     IS_FOLLOWING_QUERY,
     {
       variables: {
-        profileId,
-      },
+  profileId: profileId ?? "",
+},
       skip: !profileId,
     },
   );
 
-  const [
+const [
     followMutation,
-    {
-      loading: following,
-    },
+    { loading: following },
   ] = useMutation<
     FollowData,
     { profileId: string }
-  >(
-    FOLLOW_MUTATION,
-    {
-      variables: {
-        profileId,
-      },
-      refetchQueries: [
-        {
-          query: IS_FOLLOWING_QUERY,
-          variables: {
-            profileId,
-          },
-        },
-      ],
-    },
-  );
+  >(FOLLOW_MUTATION);
 
   const [
     unfollowMutation,
-    {
-      loading: unfollowing,
-    },
+    { loading: unfollowing },
   ] = useMutation<
     UnfollowData,
     { profileId: string }
-  >(
-    UNFOLLOW_MUTATION,
-    {
-      variables: {
-        profileId,
-      },
-      refetchQueries: [
-        {
-          query: IS_FOLLOWING_QUERY,
-          variables: {
-            profileId,
-          },
-        },
-      ],
-    },
-  );
-
+  >(UNFOLLOW_MUTATION);
+  
   const isFollowing =
     data?.isFollowing ?? false;
 
   const toggleFollow = async () => {
+   
+    if (!profileId) {
+      return;
+    }
+
     if (isFollowing) {
-      await unfollowMutation();
+      await unfollowMutation({
+        variables: {
+          profileId,
+        },
+      });
     } else {
-      await followMutation();
+      await followMutation({
+        variables: {
+          profileId,
+        },
+      });
     }
 
     await refetch();
