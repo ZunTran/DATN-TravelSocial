@@ -8,7 +8,7 @@ import { Transport } from '@nestjs/microservices';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: false }));
   app.use(graphqlUploadExpress({ maxFileSize: 10 * 1024 * 1024, maxFiles: 5 }));
   app.connectMicroservice({ transport: Transport.RMQ,
 
