@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException,  Injectable, NotFoundException } from '@nestjs/common';
 import { PostStatus } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { SavePostRepository } from './save-post.repository';
 import { UserProfileClient } from '../../../common/clients/user-profile/user-profile.client';
+import { LikeService } from '../like/like.service';
 
 @Injectable()
 export class SavePostService {
@@ -10,7 +11,39 @@ export class SavePostService {
     private readonly prisma: PrismaService,
     private readonly repository: SavePostRepository,
     private readonly userProfileClient: UserProfileClient,
+  private readonly likeService: LikeService,
   ) {}
+
+  private async attachInteractionStatus(
+  accountId: string,
+  posts: any[],
+) {
+  if (posts.length === 0) {
+    return posts;
+  }
+
+  const postIds = posts.map(
+    (post) => post.id,
+  );
+
+  const [likedPostIds, savedPostIds] =
+    await Promise.all([
+      this.likeService.getLikedPostIds(
+        accountId,
+        postIds,
+      ),
+      this.getSavedPostIds(
+        accountId,
+        postIds,
+      ),
+    ]);
+
+  return posts.map((post) => ({
+    ...post,
+    isPostLiked: likedPostIds.has(post.id),
+    isPostSaved: savedPostIds.has(post.id),
+  }));
+}
 
   async save( postId: string, accountId: string, ) {
     const profile = await this.userProfileClient.getByAccountId(accountId);
@@ -132,5 +165,41 @@ export class SavePostService {
     );
   }
 
+async getSavedPosts(
+  accountId: string,
+  page = 1,
+  limit = 10,
+) {
+  const profile =
+    await this.userProfileClient.getByAccountId(accountId);
 
+  const profileId = profile.profileId;
+
+  const skip = (page - 1) * limit;
+
+  const [posts, total] = await Promise.all([
+    this.repository.findSavedPosts(
+      profileId,
+      skip,
+      limit,
+    ),
+    this.repository.countSavedPosts(
+      profileId,
+    ),
+  ]);
+
+  const postsWithInteraction =
+    await this.attachInteractionStatus(
+      accountId,
+      posts,
+    );
+
+  return {
+    items: postsWithInteraction,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
+}
 }

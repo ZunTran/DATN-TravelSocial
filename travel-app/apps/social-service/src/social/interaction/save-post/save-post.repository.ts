@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { PostStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { PostRepository } from '../../post/post.repository';
 
 @Injectable()
 export class SavePostRepository {
-    constructor(
-      private readonly prisma: PrismaService,
-    ) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly postRepository: PostRepository,
+  ) {}
 
   async find(
     tx: Prisma.TransactionClient,
@@ -51,7 +53,6 @@ export class SavePostRepository {
     });
   }
 
-
   async findByProfileAndPostIds(
     profileId: string,
     postIds: string[],
@@ -73,5 +74,43 @@ export class SavePostRepository {
     });
   }
 
+async findSavedPosts(
+  userId: string,
+  skip: number,
+  take: number,
+) {
+  const savedPosts = await this.prisma.save_post.findMany({
+    where: {
+      user_id: userId,
+      post: {
+        status: PostStatus.PUBLISHED,
+      },
+    },
+    orderBy: {
+      saved_at: 'desc',
+    },
+    skip,
+    take,
+    select: {
+      post_id: true,
+    },
+  });
 
+  const postIds = savedPosts.map(
+    (item) => item.post_id,
+  );
+
+  return this.postRepository.findManyByIds(postIds);
+}
+
+  async countSavedPosts(userId: string) {
+    return this.prisma.save_post.count({
+      where: {
+        user_id: userId,
+        post: {
+          status: PostStatus.PUBLISHED,
+        },
+      },
+    });
+  }
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { LikeService } from './like/like.service';
 import { LikeRepository } from './like/like.repository';
 import { CommentService } from './comment/comment.service';
@@ -10,10 +10,12 @@ import { ShareRepository } from './share/share.repository';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserProfileClientModule } from '../../common/clients/user-profile/user-profile.module';
 import { InteractionResolver } from './interaction.resolver';
+import { PostModule } from '../post/post.module';
 
 @Module({
   imports: [
       UserProfileClientModule,
+      forwardRef(() => PostModule),
     ],
 
   providers: [

@@ -18,6 +18,7 @@ import { PaginationInput } from '../../common/dto/pagination.input';
 import { CommentList } from './comment/objects/comment-list.object';
 import { LikeList } from './like/objects/like-list.object';
 import { ShareList } from './share/objects/share-list.object';
+import { PostListObject } from '../post/objects/post-list.object';
 
 @Resolver()
 export class InteractionResolver {
@@ -44,13 +45,6 @@ export class InteractionResolver {
       return this.likeService.unlike( postId, user.accountId);
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Query(() => Boolean)
-  // async isPostLiked(
-  //   @CurrentUser() user: ActiveUserData,
-  //   @Args('postId', { type: () => ID }) postId: string) {
-  //     return this.likeService.isLiked( postId, user.accountId);
-  // }
 
   @UseGuards(JwtAuthGuard)
   @Mutation(() => CommentObject)
@@ -109,14 +103,6 @@ export class InteractionResolver {
       return this.savePostService.unsave(postId, user.accountId);
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Query(() => Boolean)
-  // async isPostSaved(
-  //   @CurrentUser() user: ActiveUserData,
-  //   @Args('postId', { type: () => ID }) postId: string) {
-  //     return this.savePostService.isSaved(postId, user.accountId);
-  // }
-
 
   @UseGuards(JwtAuthGuard)
   @Mutation(() => ShareObject)
@@ -142,4 +128,19 @@ export class InteractionResolver {
     pagination: PaginationInput) {
       return this.shareService.getShares( postId, pagination);
   }
+
+  @UseGuards(JwtAuthGuard)
+@Query(() => PostListObject)
+async savedPosts(
+  @CurrentUser() user: ActiveUserData,
+  @Args('pagination', { type: () => PaginationInput })
+  pagination: PaginationInput,
+) {
+  return this.savePostService.getSavedPosts(
+    user.accountId,
+    pagination.page,
+    pagination.limit,
+  );
+}
+
 }
