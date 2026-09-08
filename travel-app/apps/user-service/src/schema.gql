@@ -70,6 +70,12 @@ enum GenderType {
   PREFER_NOT_TO_SAY
 }
 
+input GetInterestsInput {
+  limit: Int! = 20
+  page: Int! = 1
+  search: String
+}
+
 input GetUserInterestsInput {
   limit: Int! = 20
   page: Int! = 1
@@ -81,6 +87,14 @@ input GetUserReportsInput {
   status: UserReportStatus
 }
 
+type InterestPageObject {
+  data: [InterestTagObject!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+}
+
 type InterestTagObject {
   created_at: DateTime!
   icon_url: String
@@ -90,7 +104,7 @@ type InterestTagObject {
 
 type Mutation {
   block(input: BlockInput!): BlockObject!
-  createInterestTag(input: CreateInterestInput!): InterestTagObject!
+  createInterestTag(icon: Upload, input: CreateInterestInput!): InterestTagObject!
   createProfile(input: CreateProfileInput!): UserProfileObject!
   deleteInterestTag(id: ID!): Boolean!
   follow(profileId: ID!): FollowObject!
@@ -98,7 +112,8 @@ type Mutation {
   seedDefaultAdmin: AdminResponseObject!
   unblock(profileId: ID!): Boolean!
   unfollow(profileId: ID!): Boolean!
-  updateInterestTag(id: ID!, input: UpdateInterestInput!): InterestTagObject!
+  updateAvatar(avatar: Upload!): UserProfileObject!
+  updateInterestTag(icon: Upload, id: ID!, input: UpdateInterestInput!): InterestTagObject!
   updateMyInterests(interestIds: [ID!]!): [InterestTagObject!]!
   updatePrivacy(privacy: UserPrivacy!): UserProfileObject!
   updateProfile(input: UpdateProfileInput!): UserProfileObject!
@@ -116,18 +131,21 @@ type Query {
   adminUserReports(input: GetUserReportsInput!): UserReportPageObject!
   blockedUsers(input: PaginationInput!): BlockPageObject!
   checkUsername(username: String!): Boolean!
-  followers(input: PaginationInput!): FollowPageObject!
+  followers(input: PaginationInput!, profileId: ID!): FollowPageObject!
   followersCount(profileId: ID!): Int!
-  following(input: PaginationInput!): FollowPageObject!
+  following(input: PaginationInput!, profileId: ID!): FollowPageObject!
   followingCount(profileId: ID!): Int!
   getInterestTags: [InterestTagObject!]!
+  getInterestTagsPaginated(input: GetInterestsInput!): InterestPageObject!
   getMyInterests: [InterestTagObject!]!
   getMyInterestsPaginated(input: GetUserInterestsInput!): UserInterestPageObject!
   getSuggestedUsersByInterests: [UserProfileObject!]!
+  getUserInterests(profileId: ID!): [InterestTagObject!]!
   isBlocked(profileId: ID!): Boolean!
   isFollowing(profileId: ID!): Boolean!
   myProfile: UserProfileObject!
   myReports(input: PaginationInput!): UserReportPageObject!
+  profileByUsername(username: String!): UserProfileObject
   searchInterestTags(name: String!): [InterestTagObject!]!
   searchUsers(input: SearchUserInput!): UserProfilePageObject!
   userProfile(id: String!): UserProfileObject!
@@ -185,6 +203,7 @@ type UserProfileObject {
   display_name: String!
   gender: GenderType
   id: ID!
+  isCompleted: Boolean!
   location: String
   privacy: UserPrivacy!
   updated_at: DateTime!
