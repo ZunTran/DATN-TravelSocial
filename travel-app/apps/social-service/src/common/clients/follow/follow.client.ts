@@ -23,18 +23,7 @@ export class FollowClient {
     private readonly http: HttpService,
   ) {}
 
-  /**
-   * Get all profile IDs that an account is following.
-   *
-   * Social:
-   *   accountId
-   *
-   * User Service:
-   *   accountId → user profile → follow table
-   *
-   * Returns:
-   *   ["profileB", "profileC", "profileD"]
-   */
+
   async getFollowingProfileIds(
     accountId: string,
   ): Promise<string[]> {
@@ -66,9 +55,6 @@ export class FollowClient {
     }
   }
 
-  /**
-   * Check whether followerProfileId follows followingProfileId.
-   */
   async isFollowing(
     followerProfileId: string,
     followingProfileId: string,
@@ -99,12 +85,7 @@ export class FollowClient {
     }
   }
 
-  /**
-   * Get paginated following profiles.
-   *
-   * This is useful when Social needs the actual profiles,
-   * not only profile IDs.
-   */
+
   async getFollowing(
     profileId: string,
     page: number,
@@ -144,9 +125,6 @@ export class FollowClient {
     }
   }
 
-  /**
-   * Get one follow relation.
-   */
   async getRelation(
     followerProfileId: string,
     followingProfileId: string,
