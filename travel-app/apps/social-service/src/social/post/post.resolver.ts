@@ -21,9 +21,6 @@ export class PostResolver {
     private readonly postService: PostService,
   ) {}
 
-  
- 
-
   @UseGuards(JwtAuthGuard)
   @Mutation(() => PostObject)
   async createPost(@CurrentUser() user: ActiveUserData,
@@ -52,19 +49,6 @@ export class PostResolver {
     return this.postService.getPost(postId,user.accountId);
   }
 
-  // @Query(() => PostListObject)
-  // async posts(
-  //   @Args('filter', {type: () => PostFilterInput, nullable: true}) 
-  //   filter?: PostFilterInput,
-
-  //   @Args('pagination', {type: () => PaginationInput,nullable: true})
-  //   pagination?: PaginationInput) {
-  //   return this.postService.getPosts(
-  //     filter ?? {},
-  //     pagination?.page ?? 1,
-  //     pagination?.limit ?? 20,
-  //   );
-  // }
 
   @UseGuards(JwtAuthGuard)
   @Query(() => PostListObject)
@@ -91,7 +75,6 @@ export class PostResolver {
     );
   }
 
-  // @UseGuards(JwtAuthGuard)
   @Mutation(() => PostObject)
   async viewPost(@Args('postId', {type: () => ID}) postId: string) {
     return this.postService.incrementView(postId);

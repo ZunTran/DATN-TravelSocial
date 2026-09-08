@@ -1,6 +1,6 @@
 import { PostService } from './post.service';
 import { PostRepository } from './post.repository';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UserProfileClientModule } from '../../common/clients/user-profile/user-profile.module';
 import { MetadataModule } from '../metadata/metadata.module';
 import { PostResolver } from './post.resolver';
@@ -14,7 +14,7 @@ import { InteractionModule } from '../interaction/interaction.module';
     MetadataModule,
     UserProfileClientModule,
     FollowClientModule,
-    InteractionModule
+    forwardRef(() => InteractionModule),
   ],
   controllers: [],
   providers: [
@@ -22,5 +22,11 @@ import { InteractionModule } from '../interaction/interaction.module';
     PostRepository,
     PostResolver,
   ],
+
+  exports: [
+    PostService,
+    PostRepository,
+  ],
+  
 })
 export class PostModule {}

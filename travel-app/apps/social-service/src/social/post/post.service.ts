@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MediaType, PostPrivacy, PostStatus, Prisma } from '@prisma/client';
 import { PostRepository } from './post.repository';
 import { CreatePostInput } from './dto/create-post.input';
@@ -30,7 +30,11 @@ export class PostService {
     private readonly hashtagRepository: HashtagRepository,
     private readonly cloudinaryService: CloudinaryService,
     private readonly followClient: FollowClient,
+
+    @Inject(forwardRef(() => LikeService))
     private readonly likeService: LikeService,
+
+    @Inject(forwardRef(() => SavePostService))
     private readonly savePostService: SavePostService,
 
   ) {}
@@ -229,23 +233,6 @@ async createPostWithFiles(accountId: string,input: CreatePostInput,
     return post;
   }
 
-  // async getPosts(filter: PostFilterInput, page: number, limit: number) {
-  //   const where: Prisma.postWhereInput = {
-  //     status: PostStatus.PUBLISHED,
-  //     privacy: PostPrivacy.PUBLIC,
-  //     ...(filter.authorId && { author_id: filter.authorId }),
-  //     ...(filter.categoryId && { category_id: filter.categoryId }),
-  //     ...(filter.locationId && { location_id: filter.locationId }),
-  //   };
-
-  //   const skip = (page - 1) * limit;
-  //   const [items, total] = await Promise.all([
-  //     this.postRepository.findMany(where, skip, limit),
-  //     this.postRepository.count(where),
-  //   ]);
-
-  //   return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
-  // }
 
     async getPosts(
     accountId: string,
@@ -488,13 +475,6 @@ async changePostStatus(accountId: string, postId: string, newStatus: PostStatus)
   const followingProfileIds = await this.followClient.getFollowingProfileIds( accountId);
   const feed = await this.postRepository.findFeed( followingProfileIds, cursor, limit, ); 
   const items = await this.attachInteractionStatus( accountId, feed.items, );
-
-  // return this.postRepository.findFeed(
-  //   followingProfileIds,
-  //   cursor,
-  //   limit,
-  // );
-
   return { ...feed, items, };
   }
 

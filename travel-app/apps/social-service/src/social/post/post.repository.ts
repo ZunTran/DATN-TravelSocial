@@ -165,92 +165,116 @@ export class PostRepository {
 }
 
   private encodeCursor(createdAt: Date, id: string): string {
-  return Buffer.from(
-    JSON.stringify({
-      createdAt: createdAt.toISOString(),
-      id,
-    }),
-  ).toString('base64');
-}
-
-private decodeCursor(cursor?: string): { createdAt: Date; id: string } | null {
-  if (!cursor) return null;
-
-  try {
-    const decoded = JSON.parse( Buffer.from(cursor, 'base64').toString('utf8'));
-
-    return {
-      createdAt: new Date(decoded.createdAt),
-      id: decoded.id,
-    };
-  } catch {
-    return null;
+    return Buffer.from(
+      JSON.stringify({
+        createdAt: createdAt.toISOString(),
+        id,
+      }),
+    ).toString('base64');
   }
-}
+
+  private decodeCursor(cursor?: string): { createdAt: Date; id: string } | null {
+    if (!cursor) return null;
+
+    try {
+      const decoded = JSON.parse( Buffer.from(cursor, 'base64').toString('utf8'));
+
+      return {
+        createdAt: new Date(decoded.createdAt),
+        id: decoded.id,
+      };
+    } catch {
+      return null;
+    }
+  }
 
   async findFeed( authorIds: string[], cursor?: string, take = 10) {
-  if (authorIds.length === 0) {
+    if (authorIds.length === 0) {
+      return {
+        items: [],
+        hasNextPage: false,
+        endCursor: null,
+      };
+    }
+
+    const decodedCursor = cursor ? this.decodeCursor(cursor) : null;
+    const where: Prisma.postWhereInput = {
+      author_id: { in: authorIds},
+      status: PostStatus.PUBLISHED,
+      privacy: PostPrivacy.PUBLIC,
+
+      ...(decodedCursor && {
+        OR: [
+          {created_at: { lt: decodedCursor.createdAt}},
+          {
+            created_at: decodedCursor.createdAt,
+            id: { lt: decodedCursor.id},
+          },
+        ],
+      }),
+    };
+
+    const posts = await this.prisma.post.findMany({
+      where,
+      orderBy: [
+        { created_at: 'desc' },
+        { id: 'desc' },
+      ],
+
+      take: take + 1,
+
+      include: {
+        media: { orderBy: { display_order: 'asc'},},
+        category: true,
+        location: true,
+      },
+    });
+
+    const hasNextPage = posts.length > take;
+    const slicedPosts = hasNextPage? posts.slice(0, take): posts;
+    const items = slicedPosts.map((post) =>this.mapPost(post));
+    const lastPost = slicedPosts[slicedPosts.length - 1];
+
+    const endCursor = lastPost ? this.encodeCursor( lastPost.created_at, lastPost.id ) : null;
+
     return {
-      items: [],
-      hasNextPage: false,
-      endCursor: null,
+      items,
+      hasNextPage,
+      endCursor,
     };
   }
 
-  const decodedCursor = cursor ? this.decodeCursor(cursor) : null;
+  async findManyByIds( ids: string[]) {
+    if (ids.length === 0) {
+      return [];
+    }
 
-  const where: Prisma.postWhereInput = {
-    author_id: { in: authorIds},
-    status: PostStatus.PUBLISHED,
-    privacy: PostPrivacy.PUBLIC,
-
-    ...(decodedCursor && {
-      OR: [
-        {created_at: { lt: decodedCursor.createdAt},
+    const posts = await this.prisma.post.findMany({
+      where: {
+        id: {
+          in: ids,
         },
-        {
-          created_at: decodedCursor.createdAt,
-          id: { lt: decodedCursor.id},
+        status: PostStatus.PUBLISHED,
+      },
+      include: {
+        media: {
+          orderBy: { display_order: 'asc' },
         },
-      ],
-    }),
-  };
-
-  const posts = await this.prisma.post.findMany({
-    where,
-    orderBy: [
-      {
-        created_at: 'desc',
+        category: true,
+        location: true,
       },
-      {
-        id: 'desc',
-      },
-    ],
+    });
 
-    take: take + 1,
+    const postMap = new Map(
+      posts.map((post) => [post.id, post]),
+    );
 
-    include: {
-      media: { orderBy: { display_order: 'asc'},},
-      category: true,
-      location: true,
-    },
-  });
-
-  const hasNextPage = posts.length > take;
-  const slicedPosts = hasNextPage? posts.slice(0, take): posts;
-  const items = slicedPosts.map((post) =>this.mapPost(post));
-  const lastPost = slicedPosts[slicedPosts.length - 1];
-
-  const endCursor = lastPost ? this.encodeCursor(
-        lastPost.created_at,
-        lastPost.id,
-      ) : null;
-
-  return {
-    items,
-    hasNextPage,
-    endCursor,
-  };
-}
+    return ids
+      .map((id) => postMap.get(id))
+      .filter(
+        ( post ): post is (typeof posts)[number] => post !== undefined,
+      )
+      .map((post) => this.mapPost(post));
+  }
 
 }
