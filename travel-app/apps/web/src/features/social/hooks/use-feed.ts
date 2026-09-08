@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "@apollo/client/react";
+import { useCallback, useState } from "react";import { useQuery } from "@apollo/client/react";
 import { GET_FEED } from "../api/feed.queries";
 import type { FeedResponse } from "../types/feed.types";
 import { useAuthContext } from "@/features/auth/context/auth-context";
+import { Post } from "../post/types/post.types";
 const FEED_LIMIT = 5;
 
 export function useFeed() {
@@ -14,8 +14,10 @@ export function useFeed() {
     isLoading: authLoading,
   } = useAuthContext();
 
-  const [loadingMore, setLoadingMore] =
-    useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+const prependPost = useCallback((post: Post) => {
+}, []);
 
   const shouldSkip =
     authLoading || !isAuthenticated || !accessToken;
@@ -37,7 +39,8 @@ export function useFeed() {
       },
 
       skip: shouldSkip,
-
+      fetchPolicy: "cache-and-network",
+      nextFetchPolicy: "cache-first",
       notifyOnNetworkStatusChange: true,
     },
   );

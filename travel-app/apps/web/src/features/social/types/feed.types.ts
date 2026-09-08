@@ -1,4 +1,4 @@
-import type { Post } from "./post.types";
+import type { Post } from "../post/types/post.types";
 
 export interface Feed {
   items: Post[];
