@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-
 // import { InterestTagModule } from './interest-tag/interest-tag.module';
 import { CloudinaryModule } from '../common/cloudinary/cloudinary.module';
 import { PassportModule } from '@nestjs/passport';
