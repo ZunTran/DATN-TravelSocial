@@ -21,7 +21,7 @@ import {
   MediaType,
   PostPrivacy,
   PostStatus,
-} from './post.types';
+} from '../types/post.types';
 
 @InputType()
 export class CreatePostMediaInput {

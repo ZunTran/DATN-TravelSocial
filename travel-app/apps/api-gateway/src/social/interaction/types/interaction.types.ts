@@ -1,9 +1,5 @@
-import {
-  Field,
-  ID,
-  Int,
-  ObjectType,
-} from '@nestjs/graphql';
+import { Field, ID, Int, ObjectType } from '@nestjs/graphql';
+import { GatewayUserProfile } from '../../../user/types/user-profile.type';
 
 @ObjectType()
 export class LikeObject {
@@ -119,4 +115,22 @@ export class ShareList {
 
   @Field(() => Int)
   totalPages!: number;
+}
+
+@ObjectType()
+export class GatewayFollowPage {
+  @Field(() => [GatewayUserProfile])
+  data: GatewayUserProfile[];
+
+  @Field(() => Int)
+  total: number;
+
+  @Field(() => Int)
+  page: number;
+
+  @Field(() => Int)
+  limit: number;
+
+  @Field(() => Int)
+  totalPages: number;
 }

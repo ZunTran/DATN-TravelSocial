@@ -1,14 +1,5 @@
-import {
-  Field,
-  ID,
-  InputType,
-} from '@nestjs/graphql';
-
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsUUID,
-} from 'class-validator';
+import { Field, ID, InputType, Int } from '@nestjs/graphql';
+import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 @InputType()
 export class CreateCommentInput {
@@ -37,4 +28,17 @@ export class UpdateCommentInput {
   @Field()
   @IsNotEmpty()
   content!: string;
+}
+
+@InputType()
+export class GatewayPaginationInput {
+  @Field(() => Int, {
+    defaultValue: 1,
+  })
+  page: number;
+
+  @Field(() => Int, {
+    defaultValue: 20,
+  })
+  limit: number;
 }

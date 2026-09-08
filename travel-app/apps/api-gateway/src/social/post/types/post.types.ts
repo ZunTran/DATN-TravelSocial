@@ -9,7 +9,7 @@ import {
 import {
   CategoryObject,
   LocationObject,
-} from '../metadata/metadata.types';
+} from '../../metadata/types/metadata.types';
 
 
 export enum PostPrivacy {
@@ -154,17 +154,6 @@ export class PostListObject {
   totalPages!: number;
 }
 
-// ============================================================
-// INTERNAL SOCIAL SERVICE RESPONSE TYPES
-// ============================================================
-//
-// Social Service trả JSON qua HTTP.
-// Date từ GraphQL service khi đi qua HTTP sẽ trở thành string.
-// Vì vậy ở đây phải dùng string.
-//
-// Sau đó SocialGatewayService sẽ normalize String -> Date
-// ============================================================
-
 export interface SocialPostResponse {
   id: string;
   authorId: string;
@@ -187,6 +176,7 @@ export interface SocialPostResponse {
   media: SocialPostMediaResponse[];
   category: SocialCategoryResponse | null;
   location: SocialLocationResponse | null;
+  
 }
 
 export interface SocialPostMediaResponse {

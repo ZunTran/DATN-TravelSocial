@@ -1,17 +1,7 @@
-import {
-  Field,
-  Float,
-  ID,
-  InputType,
-} from '@nestjs/graphql';
 
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsUUID,
-  MaxLength,
-} from 'class-validator';
+
+import { Field, ID, InputType, Float } from '@nestjs/graphql';
+import { IsNotEmpty, IsOptional, IsUUID ,IsNumber,MaxLength} from 'class-validator';
 
 @InputType()
 export class CreateCategoryInput {

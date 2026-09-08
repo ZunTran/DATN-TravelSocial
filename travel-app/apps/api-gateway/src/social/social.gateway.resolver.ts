@@ -1,60 +1,14 @@
-import {
-  Args,
-  Context,
-  ID,
-  Int,
-  Mutation,
-  Query,
-  Resolver,
-} from '@nestjs/graphql';
-
+import { Args, Context, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { SocialGatewayService } from './social.gateway.service';
-
-import {
-  PostObject,
-  PostListObject,
-  PostPrivacy,
-  PostStatus,
-} from './post/post.types';
-
-import {
-  CreatePostInput,
-  UpdatePostInput,
-  PostFilterInput,
-  PaginationInput,
-} from './post/post.inputs';
-
-import {
-  LikeObject,
-  LikeList,
-  CommentObject,
-  CommentList,
-  SavePostObject,
-  ShareObject,
-  ShareList,
-} from './interaction/interaction.types';
-
-import {
-  CreateCommentInput,
-  UpdateCommentInput,
-} from './interaction/interaction.inputs';
-
-import {
-  CategoryObject,
-  LocationObject,
-  HashtagObject,
-} from './metadata/metadata.types';
-
-import {
-  CreateCategoryInput,
-  UpdateCategoryInput,
-  CreateLocationInput,
-  UpdateLocationInput,
-  CreateHashtagInput,
-  UpdateHashtagInput,
-} from './metadata/metadata.inputs';
-import { FeedInput } from './post/feed.inputs';
-import { FeedPageObject } from './post/feed.types';
+import { PostObject, PostListObject, PostPrivacy, PostStatus } from './post/types/post.types';
+import { CreatePostInput, UpdatePostInput, PostFilterInput, PaginationInput } from './post/dto/post.inputs';
+import { LikeObject, LikeList, CommentObject, CommentList, SavePostObject, ShareObject, ShareList } from './interaction/types/interaction.types';
+import { CreateCommentInput, UpdateCommentInput } from './interaction/dto/interaction.inputs';
+import { CategoryObject, LocationObject, HashtagObject } from './metadata/types/metadata.types';
+import { CreateCategoryInput, UpdateCategoryInput, CreateLocationInput, UpdateLocationInput, CreateHashtagInput, UpdateHashtagInput } from './metadata/dto/metadata.inputs';
+import { FeedInput } from './post/dto/feed.inputs';
+import { FeedPageObject } from './post/types/feed.types';
+import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
 
 @Resolver()
 export class SocialGatewayResolver {
@@ -62,17 +16,14 @@ export class SocialGatewayResolver {
     private readonly socialGatewayService: SocialGatewayService,
   ) {}
 
-
   private getAuthorization(context: any): string | undefined {
     return context?.req?.headers?.authorization;
   }
 
-
   @Mutation(() => PostObject)
   createPost(
     @Args('input') input: CreatePostInput,
-    @Context() context: any,
-  ) {
+    @Context() context: any) {
     return this.socialGatewayService.createPost(
       input,
       this.getAuthorization(context),
@@ -82,19 +33,52 @@ export class SocialGatewayResolver {
   @Mutation(() => PostObject)
   updatePost(
     @Args('input') input: UpdatePostInput,
-    @Context() context: any,
-  ) {
+    @Context() context: any) {
     return this.socialGatewayService.updatePost(
       input,
       this.getAuthorization(context),
     );
   }
 
+
   @Mutation(() => PostObject)
-  deletePost(
-    @Args('postId', { type: () => ID }) postId: string,
+  createPostWithFiles(
+    @Args('input') input: CreatePostInput,
+    @Args({
+      name: 'files',
+      type: () => [GraphQLUpload],
+      nullable: true,
+    }) files: Promise<FileUpload>[] | undefined,
     @Context() context: any,
   ) {
+    return this.socialGatewayService.createPostWithFiles(
+      input,
+      files,
+      this.getAuthorization(context),
+    );
+  }
+
+  @Mutation(() => PostObject)
+  updatePostWithFiles(
+    @Args('input') input: UpdatePostInput,
+    @Args({
+      name: 'files',
+      type: () => [GraphQLUpload],
+      nullable: true,
+    })
+    files: Promise<FileUpload>[] | undefined,
+    @Context() context: any) {
+    return this.socialGatewayService.updatePostWithFiles(
+      input,
+      files,
+      this.getAuthorization(context),
+    );
+  }
+
+
+  @Mutation(() => PostObject)
+  deletePost( @Args('postId', { type: () => ID }) postId: string,
+    @Context() context: any) {
     return this.socialGatewayService.deletePost(
       postId,
       this.getAuthorization(context),
@@ -102,10 +86,8 @@ export class SocialGatewayResolver {
   }
 
   @Query(() => PostObject)
-  post(
-    @Args('postId', { type: () => ID }) postId: string,
-    @Context() context: any,
-  ) {
+  post( @Args('postId', { type: () => ID }) postId: string,
+    @Context() context: any) {
     return this.socialGatewayService.post(
       postId,
       this.getAuthorization(context),
@@ -113,21 +95,13 @@ export class SocialGatewayResolver {
   }
 
   @Query(() => PostListObject)
-  posts(
-    @Args('filter', {
+  posts( @Args('filter', {
       type: () => PostFilterInput,
       nullable: true,
     })
     filter: PostFilterInput | undefined,
-
-    @Args('pagination', {
-      type: () => PaginationInput,
-      nullable: true,
-    })
-    pagination: PaginationInput | undefined,
-
-    @Context() context: any,
-  ) {
+    @Args('pagination', { type: () => PaginationInput, nullable: true }) pagination: PaginationInput | undefined,
+    @Context() context: any) {
     return this.socialGatewayService.posts(
       filter,
       pagination,
@@ -137,22 +111,17 @@ export class SocialGatewayResolver {
 
   @Mutation(() => PostObject)
   viewPost(
-    @Args('postId', { type: () => ID }) postId: string,
-  ) {
+    @Args('postId', { type: () => ID }) postId: string ) {
     return this.socialGatewayService.viewPost(postId);
   }
 
   @Mutation(() => PostObject)
   changePostStatus(
     @Args('postId', { type: () => ID }) postId: string,
-
     @Args('newStatus', {
       type: () => PostStatus,
-    })
-    newStatus: PostStatus,
-
-    @Context() context: any,
-  ) {
+    }) newStatus: PostStatus,
+    @Context() context: any) {
     return this.socialGatewayService.changePostStatus(
       postId,
       newStatus,
@@ -163,12 +132,9 @@ export class SocialGatewayResolver {
   @Mutation(() => PostObject)
   changePostPrivacy(
     @Args('postId', { type: () => ID }) postId: string,
-
     @Args('newPrivacy', {
       type: () => PostPrivacy,
-    })
-    newPrivacy: PostPrivacy,
-
+    }) newPrivacy: PostPrivacy,
     @Context() context: any,
   ) {
     return this.socialGatewayService.changePostPrivacy(
@@ -178,9 +144,6 @@ export class SocialGatewayResolver {
     );
   }
 
-  // =========================================================
-  // LIKE
-  // =========================================================
 
   @Mutation(() => LikeObject)
   likePost(
@@ -233,10 +196,6 @@ export class SocialGatewayResolver {
     );
   }
 
-  // =========================================================
-  // SAVE
-  // =========================================================
-
   @Mutation(() => SavePostObject)
   savePost(
     @Args('postId', { type: () => ID }) postId: string,
@@ -270,9 +229,6 @@ export class SocialGatewayResolver {
     );
   }
 
-  // =========================================================
-  // COMMENT
-  // =========================================================
 
   @Mutation(() => CommentObject)
   createComment(
@@ -336,9 +292,6 @@ export class SocialGatewayResolver {
     );
   }
 
-  // =========================================================
-  // SHARE
-  // =========================================================
 
   @Mutation(() => ShareObject)
   sharePost(
@@ -369,9 +322,6 @@ export class SocialGatewayResolver {
     );
   }
 
-  // =========================================================
-  // METADATA
-  // =========================================================
 
   @Query(() => [CategoryObject])
   categories() {
@@ -467,6 +417,19 @@ feed(
   );
 }
 
+@Query(() => PostListObject)
+savedPosts(
+  @Args('pagination', {
+    type: () => PaginationInput,
+  })
+  pagination: PaginationInput,
 
+  @Context() context: any,
+) {
+  return this.socialGatewayService.savedPosts(
+    pagination,
+    this.getAuthorization(context),
+  );
+}
 
 }
