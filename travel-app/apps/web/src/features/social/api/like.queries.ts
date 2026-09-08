@@ -20,8 +20,3 @@ export const UNLIKE_POST = gql`
   }
 `;
 
-// export const IS_POST_LIKED = gql`
-//   query IsPostLiked($postId: ID!) {
-//     isPostLiked(postId: $postId)
-//   }
-// `;
