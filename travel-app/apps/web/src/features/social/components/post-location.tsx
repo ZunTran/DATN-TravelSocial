@@ -1,7 +1,7 @@
 "use client";
 
 import { MapPin} from "lucide-react";
-import type { PostLocation } from "../types/post.types";
+import type { PostLocation } from "../post/types/post.types";
 
 interface PostLocationProps {
   location?: PostLocation | null;

@@ -1,6 +1,6 @@
 export {
   PostCard,
-} from "./post-card";
+} from "../post/components/post-card";
 
 export {
   PostMedia,
@@ -52,4 +52,4 @@ export {
 
 export {
   CreatePostCard,
-} from "./create-post/create-post-card";
+} from "../post/components/create-post-card";

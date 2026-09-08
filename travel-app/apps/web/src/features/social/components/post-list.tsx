@@ -1,7 +1,7 @@
 "use client";
 
-import type {Post} from "../types/post.types";
-import { PostCard} from "./post-card";
+import type {Post} from "../post/types/post.types";
+import { PostCard} from "../post/components/post-card";
 
 interface PostListProps {
   posts: Post[];

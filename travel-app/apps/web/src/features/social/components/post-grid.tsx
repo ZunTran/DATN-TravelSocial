@@ -1,7 +1,7 @@
 'use client';
 
-import{ PostCard }from '../components/post-card';
-import type { Post } from '../types/post.types';
+import{ PostCard }from '../post/components/post-card';
+import type { Post } from '../post/types/post.types';
 
 interface PostGridProps {
   posts: Post[];
