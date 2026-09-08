@@ -65,7 +65,8 @@
         ],
         "options": {
           "buildTarget": "user-service:build",
-          "runBuildTargetDependencies": false
+          "runBuildTargetDependencies": false,
+          "watch": false
         },
         "configurations": {
           "development": {
