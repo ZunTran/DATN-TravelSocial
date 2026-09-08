@@ -240,7 +240,7 @@ export function AppSidebar() {
               asChild
               tooltip="Your profile"
             >
-              <Link href="/profile/dung">
+              <Link href="/profile">
                 <div className="flex size-8 items-center justify-center rounded-full bg-muted">
                   <User className="size-4" />
                 </div>
