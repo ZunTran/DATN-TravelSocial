@@ -20,7 +20,7 @@ async function bootstrap() {
   });
   await app.startAllMicroservices();
   const port = process.env.PORT || 3002;
-  await app.listen(port);
+  await app.listen(port,'0.0.0.0');
   
   Logger.log(`🚀 User Service đang chạy tại: http://localhost:${port}/graphql`);
 }

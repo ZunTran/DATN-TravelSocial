@@ -7,7 +7,7 @@ export default function ExplorePage() {
         Explore
       </h1>
 
-      <PostList />
+      {/* <PostList /> */}
     </main>
   );
 }

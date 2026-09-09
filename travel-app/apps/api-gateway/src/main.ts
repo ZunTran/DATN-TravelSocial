@@ -15,14 +15,13 @@ async function bootstrap() {
     }),
   );
   
-  app.enableCors({
-    origin: 'http://localhost:3000',
-    credentials: true,
-  });
+app.enableCors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+});
 
   const port = process.env.PORT || 4000;
-
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   console.log(
     `🚀 API Gateway running at http://localhost:${port}/graphql`,

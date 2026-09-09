@@ -1,50 +1,278 @@
-version: '3.8'
 services:
   postgres:
     image: postgres:15
     container_name: travel-postgres
-    restart: always
+    restart: unless-stopped
+
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: travel_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
     ports:
-      - '5432:5432'
+      - "5432:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
     networks:
-      - backend-network
+      - travel-network
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
   redis:
-    image: redis:7
+    image: redis:7-alpine
     container_name: travel-redis
+    restart: unless-stopped
+
     ports:
-      - '6379:6379'
+      - "6379:6379"
+
     volumes:
       - redis_data:/data
+
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+
     networks:
-      - backend-network
+      - travel-network
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 
   rabbitmq:
-    image: rabbitmq:3.11-management-alpine
+    image: rabbitmq:3.13-management-alpine
     container_name: travel-rabbitmq
-    restart: always
-    ports:
-      - "5672:5672"
-      - "15672:15672" # RabbitMQ Management UI
+    restart: unless-stopped
+
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+
     networks:
-      - backend-network
+      - travel-network
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "rabbitmq-diagnostics",
+          "-q",
+          "ping"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        APP_NAME: auth-service
+
+    container_name: travel-auth
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+
+      JWT_SECRET: ${JWT_SECRET}
+
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      RABBITMQ_QUEUE: travel_user_events
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+    ports:
+      - "3001:3001"
+
+    networks:
+      - travel-network
+
+
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        APP_NAME: user-service
+
+    container_name: travel-user
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+
+      JWT_SECRET: ${JWT_SECRET}
+
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      RABBITMQ_QUEUE: travel_user_events
+
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+    ports:
+      - "3002:3002"
+
+    networks:
+      - travel-network
+
+
+  social-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        APP_NAME: social-service
+
+    container_name: travel-social
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+
+      JWT_SECRET: ${JWT_SECRET}
+
+      USER_SERVICE_URL: http://user-service:3002
+
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+
+    ports:
+      - "3003:3003"
+
+    networks:
+      - travel-network
+
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        APP_NAME: api-gateway
+
+    container_name: travel-api-gateway
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+
+      FRONTEND_URL: http://localhost:3000
+
+      AUTH_SERVICE_URL: http://auth-service:3001/graphql
+      USER_SERVICE_URL: http://user-service:3002/graphql
+      SOCIAL_SERVICE_URL: http://social-service:3003/graphql
+
+    depends_on:
+      auth-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      social-service:
+        condition: service_started
+
+    ports:
+      - "4000:4000"
+
+    networks:
+      - travel-network
+
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+
+    container_name: travel-web
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_GRAPHQL_URL: http://localhost:4000/graphql
+
+    depends_on:
+      api-gateway:
+        condition: service_started
+
+    ports:
+      - "3000:3000"
+
+    networks:
+      - travel-network
 
 
 volumes:
+
   postgres_data:
+    name: travel-app_postgres_data
+
   redis_data:
+    name: travel_redis_data
+
   rabbitmq_data:
+    name: travel_rabbitmq_data
+
 
 networks:
-  backend-network:
+
+  travel-network:
+    name: travel-network
     driver: bridge
