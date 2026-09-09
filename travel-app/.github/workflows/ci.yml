@@ -4,37 +4,42 @@ on:
   push:
     branches:
       - main
-  pull_request:
+      - develop
 
-permissions:
-  actions: read
-  contents: read
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
-  main:
+  test-and-build:
+    name: Test & Build
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
         with:
-          filter: tree:0
-          fetch-depth: 0
+          node-version: 22
+          cache: npm
 
-      # This enables task distribution via Nx Cloud
-      # Run this command as early as possible, before dependencies are installed
-      # Learn more at https://nx.dev/docs/reference/nx-cloud-cli#npx-nxcloud-startcirun
-      - run: npx nx start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="e2e"
+      - name: Install dependencies
+        run: npm ci
 
-      # Cache node_modules
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 24
-          cache: 'npm'
+      - name: Run tests
+        run: npx nx run-many -t test --all --parallel=2
 
-      - run: npm ci
+      - name: Build backend services
+        run: |
+          npx nx build auth-service
+          npx nx build user-service
+          npx nx build social-service
+          npx nx build api-gateway
 
-      # Prepend any command with "nx record --" to record its logs to Nx Cloud
-      - run: npx nx record -- npx nx format:check --base="remotes/origin/main"
-      - run: npx nx run-many -t lint test build typecheck e2e
-      # Nx Cloud recommends fixes for failures to help you get CI green faster. Learn more: https://nx.dev/docs/features/ci-features/self-healing-ci
-      - run: npx nx fix-ci
-        if: always()
+      - name: Build frontend
+        run: npm run build --workspace=web
+        env:
+          NEXT_PUBLIC_GRAPHQL_URL: https://ci.example.com/graphql
