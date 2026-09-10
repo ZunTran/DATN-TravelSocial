@@ -6,17 +6,18 @@ import { CategoryService } from './category/category.service';
 import { LocationService } from './location/location.service';
 import { HashtagService } from './hashtag/hashtag.service';
 import { MetadataResolver } from './metadata.resolver';
+import { CategoryResolver } from './category/category.resolver';
 
 @Module({
   providers: [
     MetadataResolver,
-    CategoryRepository,
     LocationRepository,
     HashtagRepository,
-    CategoryService,
     LocationService,
-    HashtagService
-
+    HashtagService,
+CategoryResolver,
+  CategoryService,
+  CategoryRepository
   ],
   exports: [
     CategoryRepository,

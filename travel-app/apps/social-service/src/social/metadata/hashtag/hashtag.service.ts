@@ -7,6 +7,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { HashtagRepository } from './hashtag.repository';
 import { CreateHashtagInput } from './dto/create-hashtag.input';
 import { UpdateHashtagInput } from './dto/update-hashtag.input';
+import { AdminHashtagFilterInput } from './dto/admin-hashtag.input';
 
 @Injectable()
 export class HashtagService {
@@ -21,64 +22,32 @@ export class HashtagService {
     );
   }
 
-  async create(
-    input: CreateHashtagInput,
-  ) {
+  async create( input: CreateHashtagInput ) {
     return this.prisma.$transaction(async (tx) => {
-      const name =
-        input.name.trim().toLowerCase();
-
-      const existing =
-        await this.repository.findByName(
-          tx,
-          name,
-        );
-
-      if (existing) {
-        throw new BadRequestException(
-          'Hashtag already exists',
-        );
-      }
-
-      return this.repository.create(
-        tx,
-        name,
-      );
+      const name = this.normalizeName(input.name);
+      const existing = await this.repository.findByName( tx, name);
+      if (existing) 
+        throw new BadRequestException('Hashtag already exists');
+      
+      return this.repository.create( tx, name );
     });
   }
 
-  async update(
-    input: UpdateHashtagInput,
-  ) {
+  async update( input: UpdateHashtagInput) {
     return this.prisma.$transaction(async (tx) => {
-      const hashtag =
-        await this.repository.findById(
+      const hashtag = await this.repository.findById(
           tx,
           input.id,
         );
 
-      if (!hashtag) {
-        throw new NotFoundException(
-          'Hashtag not found',
-        );
-      }
+      if (!hashtag) 
+        throw new NotFoundException('Hashtag not found');
 
-      const name =
-        input.name.trim().toLowerCase();
+      const name =input.name.trim().toLowerCase();
+      const duplicate = await this.repository.findByName( tx, name);
 
-      const duplicate =
-        await this.repository.findByName(
-          tx,
-          name,
-        );
-
-      if (
-        duplicate &&
-        duplicate.id !== input.id
-      ) {
-        throw new BadRequestException(
-          'Hashtag already exists',
-        );
+      if ( duplicate && duplicate.id !== input.id) {
+        throw new BadRequestException('Hashtag already exists' );
       }
 
       return this.repository.update(
@@ -91,18 +60,52 @@ export class HashtagService {
 
   async delete(id: string) {
     return this.prisma.$transaction(async (tx) => {
-      const hashtag =
-        await this.repository.findById(tx, id);
-
-      if (!hashtag) {
-        throw new NotFoundException(
-          'Hashtag not found',
-        );
-      }
+      const hashtag =await this.repository.findById(tx, id);
+      if (!hashtag) 
+        throw new NotFoundException('Hashtag not found');
 
       await this.repository.delete(tx, id);
 
       return true;
     });
   }
+
+  async adminGetHashtags( filter: AdminHashtagFilterInput) {
+    const page = filter.page ?? 1;
+    const limit = filter.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      this.repository.adminFindMany(this.prisma, {
+        search: filter.search,
+        skip,
+        take: limit,
+      }),
+
+      this.repository.adminCount(
+        this.prisma,
+        filter.search,
+      ),
+    ]);
+
+    return {
+      items: items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        postCount: item._count.posts,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  private normalizeName(name: string) {
+    return name
+      .trim()
+      .replace(/^#/, '')
+      .toLowerCase();
+  }
+
 }

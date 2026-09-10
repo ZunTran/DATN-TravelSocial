@@ -3,39 +3,6 @@
 import { Field, ID, InputType, Float } from '@nestjs/graphql';
 import { IsNotEmpty, IsOptional, IsUUID ,IsNumber,MaxLength} from 'class-validator';
 
-@InputType()
-export class CreateCategoryInput {
-  @Field()
-  @IsNotEmpty()
-  @MaxLength(100)
-  name!: string;
-
-  @Field(() => String, {
-    nullable: true,
-  })
-  @IsOptional()
-  @MaxLength(500)
-  description?: string;
-}
-
-@InputType()
-export class UpdateCategoryInput {
-  @Field(() => ID)
-  @IsUUID()
-  id!: string;
-
-  @Field()
-  @IsNotEmpty()
-  @MaxLength(100)
-  name!: string;
-
-  @Field(() => String, {
-    nullable: true,
-  })
-  @IsOptional()
-  @MaxLength(500)
-  description?: string;
-}
 
 @InputType()
 export class CreateLocationInput {
@@ -111,22 +78,3 @@ export class UpdateLocationInput {
   province?: string;
 }
 
-@InputType()
-export class CreateHashtagInput {
-  @Field()
-  @IsNotEmpty()
-  @MaxLength(100)
-  name!: string;
-}
-
-@InputType()
-export class UpdateHashtagInput {
-  @Field(() => ID)
-  @IsUUID()
-  id!: string;
-
-  @Field()
-  @IsNotEmpty()
-  @MaxLength(100)
-  name!: string;
-}

@@ -43,6 +43,7 @@ import { SocialModule } from './social/social.gateway.module';
 
   providers: [
     GatewayResolver,
+    
   ],
 })
 export class AppModule {}

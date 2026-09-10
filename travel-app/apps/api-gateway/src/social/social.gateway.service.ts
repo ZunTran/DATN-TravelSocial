@@ -4,11 +4,8 @@ import { FeedGatewayService } from './post/feed-gateway.service';
 import { LikeGatewayService } from './interaction/like-gateway.service';
 import { SaveGatewayService } from './interaction/save-gateway.service';
 import { CommentGatewayService } from './interaction/comment-gateway.service';
-
 import { ShareGatewayService } from './interaction/share-gateway.service';
-import { CategoryGatewayService } from './metadata/category-gateway.service';
 import { LocationGatewayService } from './metadata/location-gateway.service';
-
 import { HashtagGatewayService } from './metadata/hashtag-gateway.service';
 import { CreatePostInput, PaginationInput, PostFilterInput, UpdatePostInput } from './post/dto/post.inputs';
 import { PostListObject, PostObject, PostPrivacy, PostStatus } from './post/types/post.types';
@@ -17,9 +14,11 @@ import { FeedPageObject } from './post/types/feed.types';
 import { CommentList, CommentObject, LikeList, LikeObject, SavePostObject, ShareList, ShareObject } from './interaction/types/interaction.types';
 import { CreateCommentInput, UpdateCommentInput } from './interaction/dto/interaction.inputs';
 
-import { CreateCategoryInput, CreateHashtagInput, CreateLocationInput, UpdateCategoryInput, UpdateHashtagInput, UpdateLocationInput } from './metadata/dto/metadata.inputs';
-import { CategoryObject, HashtagObject, LocationObject } from './metadata/types/metadata.types';
+import {  HashtagObject, LocationObject } from './metadata/types/metadata.types';
 import type { FileUpload } from 'graphql-upload-ts';
+import { AdminHashtagFilterInput, CreateHashtagInput, UpdateHashtagInput } from './metadata/hashtag/dto/hashtag.input';
+import { AdminHashtagListObject } from './metadata/hashtag/types/hashtag.object';
+import { CreateLocationInput, UpdateLocationInput } from './metadata/location/dto/location.input';
 @Injectable()
 export class SocialGatewayService {
   constructor(
@@ -29,7 +28,6 @@ export class SocialGatewayService {
     private readonly saveGateway: SaveGatewayService,
     private readonly commentGateway: CommentGatewayService,
     private readonly shareGateway: ShareGatewayService,
-    private readonly categoryGateway: CategoryGatewayService,
     private readonly locationGateway: LocationGatewayService,
     private readonly hashtagGateway: HashtagGatewayService,
   ) {}
@@ -299,30 +297,6 @@ export class SocialGatewayService {
   }
 
 
-  categories(): Promise<CategoryObject[]> {
-    return this.categoryGateway.categories();
-  }
-
-  createCategory(
-    input: CreateCategoryInput,
-    authorization?: string,
-  ): Promise<CategoryObject> {
-    return this.categoryGateway.createCategory(
-      input,
-      authorization,
-    );
-  }
-
-  updateCategory(
-    input: UpdateCategoryInput,
-    authorization?: string,
-  ): Promise<CategoryObject> {
-    return this.categoryGateway.updateCategory(
-      input,
-      authorization,
-    );
-  }
-
   locations(): Promise<LocationObject[]> {
     return this.locationGateway.locations();
   }
@@ -362,15 +336,18 @@ export class SocialGatewayService {
     );
   }
 
-  updateHashtag(
-    input: UpdateHashtagInput,
-    authorization?: string,
-  ): Promise<HashtagObject> {
-    return this.hashtagGateway.updateHashtag(
-      input,
-      authorization,
-    );
+  updateHashtag( input: UpdateHashtagInput, authorization?: string): Promise<HashtagObject> {
+    return this.hashtagGateway.updateHashtag(input,authorization );
   }
+
+  adminHashtags(input: AdminHashtagFilterInput, authorization?: string): Promise<AdminHashtagListObject> {
+      return this.hashtagGateway.adminHashtags(input,authorization);
+    }
+  
+  adminDeleteHashtag( id: string, authorization?: string ): Promise<boolean> {
+      return this.hashtagGateway.adminDeleteHashtag(id,authorization);
+    }
+    
 
   
 }

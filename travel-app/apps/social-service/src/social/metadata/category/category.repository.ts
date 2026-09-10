@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma,  } from '@prisma/client';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class CategoryRepository {
@@ -73,5 +74,47 @@ export class CategoryRepository {
     });
   }
 
+  async findMany(
+    tx: Prisma.TransactionClient | PrismaService,
+    options: {
+      search?: string;
+      skip: number;
+      take: number;
+    },
+  ) {
+    return tx.category.findMany({
+      where: options.search
+        ? {
+            name: {
+              contains: options.search,
+              mode: 'insensitive',
+            },
+          }
+        : undefined,
+
+      orderBy: {
+        name: 'asc',
+      },
+
+      skip: options.skip,
+      take: options.take,
+    });
+  }
+
+  async count(
+    tx: Prisma.TransactionClient | PrismaService,
+    search?: string,
+  ) {
+    return tx.category.count({
+      where: search
+        ? {
+            name: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          }
+        : undefined,
+    });
+  }
 
 }

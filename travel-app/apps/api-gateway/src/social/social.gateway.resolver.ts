@@ -1,14 +1,16 @@
-import { Args, Context, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Context, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { SocialGatewayService } from './social.gateway.service';
 import { PostObject, PostListObject, PostPrivacy, PostStatus } from './post/types/post.types';
 import { CreatePostInput, UpdatePostInput, PostFilterInput, PaginationInput } from './post/dto/post.inputs';
 import { LikeObject, LikeList, CommentObject, CommentList, SavePostObject, ShareObject, ShareList } from './interaction/types/interaction.types';
 import { CreateCommentInput, UpdateCommentInput } from './interaction/dto/interaction.inputs';
 import { CategoryObject, LocationObject, HashtagObject } from './metadata/types/metadata.types';
-import { CreateCategoryInput, UpdateCategoryInput, CreateLocationInput, UpdateLocationInput, CreateHashtagInput, UpdateHashtagInput } from './metadata/dto/metadata.inputs';
 import { FeedInput } from './post/dto/feed.inputs';
 import { FeedPageObject } from './post/types/feed.types';
 import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
+import { AdminHashtagFilterInput, CreateHashtagInput, UpdateHashtagInput } from './metadata/hashtag/dto/hashtag.input';
+import { AdminHashtagListObject } from './metadata/hashtag/types/hashtag.object';
+import { CreateLocationInput, UpdateLocationInput } from './metadata/location/dto/location.input';
 
 @Resolver()
 export class SocialGatewayResolver {
@@ -323,11 +325,6 @@ export class SocialGatewayResolver {
   }
 
 
-  @Query(() => [CategoryObject])
-  categories() {
-    return this.socialGatewayService.categories();
-  }
-
   @Query(() => [LocationObject])
   locations() {
     return this.socialGatewayService.locations();
@@ -338,27 +335,7 @@ export class SocialGatewayResolver {
     return this.socialGatewayService.hashtags();
   }
 
-  @Mutation(() => CategoryObject)
-  createCategory(
-    @Args('input') input: CreateCategoryInput,
-    @Context() context: any,
-  ) {
-    return this.socialGatewayService.createCategory(
-      input,
-      this.getAuthorization(context),
-    );
-  }
 
-  @Mutation(() => CategoryObject)
-  updateCategory(
-    @Args('input') input: UpdateCategoryInput,
-    @Context() context: any,
-  ) {
-    return this.socialGatewayService.updateCategory(
-      input,
-      this.getAuthorization(context),
-    );
-  }
 
   @Mutation(() => CategoryObject)
   createLocation(
@@ -382,27 +359,35 @@ export class SocialGatewayResolver {
     );
   }
 
-  @Mutation(() => HashtagObject)
-  createHashtag(
-    @Args('input') input: CreateHashtagInput,
-    @Context() context: any,
-  ) {
-    return this.socialGatewayService.createHashtag(
-      input,
-      this.getAuthorization(context),
-    );
-  }
+@Mutation(() => HashtagObject)
+createHashtag(
+  @Args('input', {
+    type: () => CreateHashtagInput,
+  })
+  input: CreateHashtagInput,
 
-  @Mutation(() => HashtagObject)
-  updateHashtag(
-    @Args('input') input: UpdateHashtagInput,
-    @Context() context: any,
-  ) {
-    return this.socialGatewayService.updateHashtag(
-      input,
-      this.getAuthorization(context),
-    );
-  }
+  @Context() context: any,
+) {
+  return this.socialGatewayService.createHashtag(
+    input,
+    this.getAuthorization(context),
+  );
+}
+
+@Mutation(() => HashtagObject)
+updateHashtag(
+  @Args('input', {
+    type: () => UpdateHashtagInput,
+  })
+  input: UpdateHashtagInput,
+
+  @Context() context: any,
+) {
+  return this.socialGatewayService.updateHashtag(
+    input,
+    this.getAuthorization(context),
+  );
+}
 
   @Query(() => FeedPageObject)
 feed(
@@ -431,5 +416,30 @@ savedPosts(
     this.getAuthorization(context),
   );
 }
+
+
+  @Query(() => AdminHashtagListObject)
+  adminHashtags(
+    @Args('filter', { type: () => AdminHashtagFilterInput, nullable: true})
+    filter?: AdminHashtagFilterInput,
+    @Context() context?: any) {
+    return this.socialGatewayService.adminHashtags(
+      filter ?? {
+        page: 1,
+        limit: 20,
+      },
+      context?.req?.headers?.authorization,
+    );
+  }
+
+  @Mutation(() => Boolean)
+  async adminDeleteHashtag(
+    @Args('id', {type: () => ID})id: string,
+    @Context() context?: any) {
+    return this.socialGatewayService.adminDeleteHashtag(
+      id,
+      context?.req?.headers?.authorization,
+    );
+  }
 
 }

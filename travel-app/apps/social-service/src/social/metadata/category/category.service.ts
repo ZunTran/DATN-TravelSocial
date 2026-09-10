@@ -7,6 +7,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { CategoryRepository } from './category.repository';
 import { CreateCategoryInput } from './dto/create-category.input';
 import { UpdateCategoryInput } from './dto/update-category.input';
+import { CategoryFilterInput } from './dto/category-filter.input';
 
 @Injectable()
 export class CategoryService {
@@ -98,5 +99,39 @@ export class CategoryService {
 
       return true;
     });
+  }
+
+
+  async getPaginated(filter: CategoryFilterInput) {
+    const page = filter.page ?? 1;
+    const limit = filter.limit ?? 20;
+
+    const skip = (page - 1) * limit;
+
+    const search = filter.search?.trim() || undefined;
+
+    const [items, total] = await Promise.all([
+      this.repository.findMany(this.prisma, {
+        search,
+        skip,
+        take: limit,
+      }),
+
+      this.repository.count(
+        this.prisma,
+        search,
+      ),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+    };
   }
 }

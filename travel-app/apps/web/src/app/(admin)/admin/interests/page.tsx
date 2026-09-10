@@ -5,9 +5,9 @@ import { Plus, Pencil, Trash2, Search, ChevronLeft, ChevronRight, Loader2 } from
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAdminInterests } from '@/features/admin/hooks/use-admin-interests';
-import { InterestDialog } from '@/features/admin/components/interest-dialog';
-import type { AdminInterest } from '@/features/admin/types/interest.types';
+import { useAdminInterests } from '@/features/admin/interest/hooks/use-admin-interests';
+import { InterestDialog } from '@/features/admin/interest/component/interest-dialog';
+import type { AdminInterest } from '@/features/admin/interest/types/interest.types';
 
 export default function AdminInterestsPage() {
   const [page, setPage] = useState(1);

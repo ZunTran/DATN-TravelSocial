@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { LocationObject } from '@nestjs/graphql';
 import { SocialGraphqlClient } from '../clients/social-graphql.client';
-import { CreateLocationInput, UpdateLocationInput } from './dto/metadata.inputs';
+import { LocationObject } from './types/metadata.types';
+import { CreateLocationInput, UpdateLocationInput } from './location/dto/location.input';
 
 interface LocationsResponse { locations: LocationObject[]; }
 interface CreateLocationResponse { createLocation: LocationObject; }

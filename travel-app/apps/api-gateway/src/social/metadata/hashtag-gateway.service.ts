@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { SocialGraphqlClient } from '../clients/social-graphql.client';
-import { HashtagObject } from '@nestjs/graphql';
-import { CreateHashtagInput, UpdateHashtagInput } from './dto/metadata.inputs';
+import { HashtagObject } from './types/metadata.types';
+import { AdminHashtagFilterInput, CreateHashtagInput, UpdateHashtagInput } from './hashtag/dto/hashtag.input';
+import { AdminHashtagListObject } from './hashtag/types/hashtag.object';
 
 interface HashtagsResponse {
   hashtags: HashtagObject[];
@@ -13,6 +14,10 @@ interface CreateHashtagResponse {
 
 interface UpdateHashtagResponse {
   updateHashtag: HashtagObject;
+}
+
+interface AdminHashtagsResponse {
+  adminHashtags: AdminHashtagListObject;
 }
 
 @Injectable()
@@ -80,4 +85,49 @@ export class HashtagGatewayService {
 
     return data.updateHashtag;
   }
+
+  async adminHashtags(input: AdminHashtagFilterInput, authorization?: string): Promise<AdminHashtagListObject> {
+    const data = await this.socialClient.execute<AdminHashtagsResponse>(
+        `
+        query AdminHashtags(
+          $filter: AdminHashtagFilterInput!
+) {
+          adminHashtags(filter: $filter) {
+            items {
+              id
+              name
+              postCount
+            }
+            total
+            page
+            limit
+            totalPages
+          }
+        }
+        `,
+        { filter: input },
+        authorization,
+      );
+
+    return data.adminHashtags;
+  }
+
+  async adminDeleteHashtag( id: string, authorization?: string ): Promise<boolean> {
+    const data = await this.socialClient.execute<{
+        adminDeleteHashtag: boolean;
+      }>(
+        `
+        mutation AdminDeleteHashtag(
+          $id: ID!
+        ) {
+          adminDeleteHashtag(id: $id)
+        }
+        `,
+        { id },
+        authorization,
+      );
+
+    return data.adminDeleteHashtag;
+  }
+  
 }

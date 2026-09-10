@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class HashtagRepository {
@@ -53,23 +54,14 @@ export class HashtagRepository {
     });
   }
 
-  async update(
-    tx: Prisma.TransactionClient,
-    id: string,
-    name: string,
-  ) {
+  async update( tx: Prisma.TransactionClient, id: string, name: string) {
     return tx.hashtag.update({
       where: { id },
-      data: {
-        name,
-      },
+      data: { name },
     });
   }
 
-  async delete(
-    tx: Prisma.TransactionClient,
-    id: string,
-  ) {
+  async delete( tx: Prisma.TransactionClient, id: string) {
     return tx.hashtag.delete({
       where: { id },
     });
@@ -96,4 +88,33 @@ export class HashtagRepository {
       skipDuplicates: true,
     });
   }
+
+  async adminFindMany(
+    tx: Prisma.TransactionClient | PrismaService,
+    options: { search?: string; skip: number; take: number}) {
+    return tx.hashtag.findMany({
+      where: options.search
+        ? { name: { contains: options.search, mode: 'insensitive'} }: undefined,
+
+      orderBy: { name: 'asc'},
+      skip: options.skip,
+      take: options.take,
+      include: {_count: { select: { posts: true }},
+      },
+    });
+  }
+
+  async adminCount( tx: Prisma.TransactionClient | PrismaService, search?: string) {
+    return tx.hashtag.count({
+      where: search
+        ? { name: { contains: search, mode: 'insensitive'} } : undefined,
+    });
+  }
+
+  async countPosts(tx: Prisma.TransactionClient | PrismaService, hashtagId: string) {
+  return tx.post_hashtag.count({
+    where: { hashtag_id: hashtagId},
+  });
+}
+
 }
