@@ -1,5 +1,5 @@
 import { Field, ID, Int, ObjectType } from '@nestjs/graphql';
-import { GatewayUserProfile } from '../../../user/types/user-profile.type';
+import { GatewayUserProfile } from '../../../user/types/profile.type';
 
 @ObjectType()
 export class LikeObject {
