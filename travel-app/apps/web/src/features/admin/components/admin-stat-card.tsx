@@ -1,36 +1,28 @@
-import type { LucideIcon } from "lucide-react";
+'use client';
+import type { LucideIcon } from 'lucide-react';
 
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-
-interface Props {
+interface AdminStatCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
 }
 
-export default function AdminStatCard({
-  title,
-  value,
-  icon: Icon,
-}: Props) {
+export default function AdminStatCard({ title, value, icon: Icon}: AdminStatCardProps) {
   return (
-    <Card>
-      <CardContent className="flex items-center justify-between p-6">
-        <div>
-          <p className="text-sm text-muted-foreground">
+    <div className="rounded-lg border bg-card px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium text-muted-foreground">
             {title}
           </p>
 
-          <p className="mt-2 text-3xl font-bold">
+          <p className="mt-1 text-xl font-bold tracking-tight">
             {value}
           </p>
         </div>
 
-        <Icon className="h-8 w-8 text-muted-foreground" />
-      </CardContent>
-    </Card>
+        <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
+      </div>
+    </div>
   );
 }
