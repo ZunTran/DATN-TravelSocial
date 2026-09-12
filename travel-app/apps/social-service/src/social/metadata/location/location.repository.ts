@@ -8,11 +8,96 @@ export class LocationRepository {
     id: string,
   ) {
     return tx.location.findUnique({
-      where: { id },
+      where: {
+        id,
+      },
     });
   }
 
-   async findAll(
+  async findPage(
+    tx: Prisma.TransactionClient,
+    options: {
+      search?: string;
+      province?: string;
+      page: number;
+      limit: number;
+    },
+  ) {
+    const {
+      search,
+      province,
+      page,
+      limit,
+    } = options;
+
+    const where: Prisma.locationWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        {
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          address: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          province: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
+
+    if (province) {
+      where.province = {
+        equals: province,
+        mode: 'insensitive',
+      };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [
+      items,
+      total,
+    ] = await Promise.all([
+      tx.location.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [
+          {
+            province: 'asc',
+          },
+          {
+            name: 'asc',
+          },
+        ],
+      }),
+
+      tx.location.count({
+        where,
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      hasNextPage: page * limit < total,
+    };
+  }
+
+  async findAll(
     tx: Prisma.TransactionClient,
   ) {
     return tx.location.findMany({
@@ -26,7 +111,6 @@ export class LocationRepository {
       ],
     });
   }
-
 
   async create(
     tx: Prisma.TransactionClient,
@@ -61,7 +145,9 @@ export class LocationRepository {
     },
   ) {
     return tx.location.update({
-      where: { id },
+      where: {
+        id,
+      },
       data,
     });
   }
@@ -71,8 +157,9 @@ export class LocationRepository {
     id: string,
   ) {
     return tx.location.delete({
-      where: { id },
+      where: {
+        id,
+      },
     });
   }
-
 }

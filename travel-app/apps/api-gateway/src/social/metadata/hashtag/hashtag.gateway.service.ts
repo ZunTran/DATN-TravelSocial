@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { SocialGraphqlClient } from '../clients/social-graphql.client';
-import { HashtagObject } from './types/metadata.types';
-import { AdminHashtagFilterInput, CreateHashtagInput, UpdateHashtagInput } from './hashtag/dto/hashtag.input';
-import { AdminHashtagListObject } from './hashtag/types/hashtag.object';
+import { SocialGraphqlClient } from '../../clients/social-graphql.client';
+import { HashtagObject } from '../types/metadata.types';
+import { AdminHashtagFilterInput, CreateHashtagInput, UpdateHashtagInput } from './dto/hashtag.input';
+import { AdminHashtagListObject } from './types/hashtag.object';
 
 interface HashtagsResponse {
   hashtags: HashtagObject[];

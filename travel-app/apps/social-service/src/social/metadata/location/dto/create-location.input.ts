@@ -13,22 +13,22 @@ export class CreateLocationInput {
   @MaxLength(255)
   name!: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
-  address?: string;
+  address?: string | null;
 
   @Field(() => Float, { nullable: true })
   @IsOptional()
   @IsNumber()
-  latitude?: number;
+  latitude?: number | null;
 
   @Field(() => Float, { nullable: true })
   @IsOptional()
   @IsNumber()
-  longitude?: number;
+  longitude?: number | null;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @MaxLength(100)
-  province?: string;
+  province?: string | null;
 }
