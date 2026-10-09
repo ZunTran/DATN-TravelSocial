@@ -43,9 +43,7 @@ export class CommentRepository {
   ) {
     return tx.comment.update({
       where: { id },
-      data: {
-        content,
-      },
+      data: { content },
     });
   }
 
@@ -73,11 +71,11 @@ export class CommentRepository {
   }
 
   async findReplies(
-    parentCommentId: string,
+    commentId: string,
   ) {
     return this.prisma.comment.findMany({
       where: {
-        parent_comment_id: parentCommentId,
+        parent_comment_id: commentId,
       },
       orderBy: {
         created_at: 'asc',

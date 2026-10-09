@@ -238,22 +238,26 @@ async refreshToken(refreshToken: string) {
     );
   }
 
-  async changePassword(
-    input: any,
-    authorization?: string,
-  ) {
-    return this.execute(
-      `
-      mutation ChangePassword($input: ChangePasswordInput!) {
-        changePassword(input: $input)
-      }
-      `,
-      {
-        input,
-      },
-      authorization,
-    );
-  }
+async changePassword(
+  input: any,
+  authorization?: string,
+): Promise<boolean> {
+  const result = await this.execute<{
+    changePassword: boolean;
+  }>(
+    `
+    mutation ChangePassword($input: ChangePasswordInput!) {
+      changePassword(input: $input)
+    }
+    `,
+    { input },
+    authorization,
+  );
+
+  return result.changePassword;
+}
+
+
 
 async getActiveSessions(authorization?: string) {
   const result = await this.execute<{

@@ -51,9 +51,6 @@ export class AdminService {
   }
 
   async getUserDashboard(days: number | null) {
-    // =========================
-    // VALIDATE DAYS
-    // =========================
     if (
       days !== null &&
       ![7, 30, 90].includes(days)
@@ -65,9 +62,6 @@ export class AdminService {
 
     const now = new Date();
 
-    // =========================
-    // ALL TIME
-    // =========================
     if (days === null) {
       const [
         statistics,
@@ -105,9 +99,6 @@ export class AdminService {
       };
     }
 
-    // =========================
-    // LIMITED PERIOD
-    // =========================
     const currentStart = new Date(now);
 
     currentStart.setDate(
@@ -213,17 +204,6 @@ export class AdminService {
     );
   }
 
-//   async getAdminAccounts(
-//   filter: {
-//     search?: string;
-//     page?: number;
-//     limit?: number;
-//   } = {},
-// ) {
-//   return this.adminAccountRepository.findAccounts(
-//     filter,
-//   );
-// }
 
 async getAdminAccounts(
   filter: {

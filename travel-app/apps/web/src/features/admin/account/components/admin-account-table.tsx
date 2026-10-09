@@ -30,7 +30,6 @@ export function AdminAccountTable() {
     enabled,
   });
 
-  // Lazy load khi table gần viewport
   useEffect(() => {
     const element = tableRef.current;
 
@@ -143,7 +142,6 @@ export function AdminAccountTable() {
       ref={tableRef}
       className="rounded-xl border bg-card"
     >
-      {/* HEADER */}
       <div className="flex items-center justify-between gap-4 p-6">
         <div>
           <h2 className="text-lg font-semibold">
@@ -167,14 +165,12 @@ export function AdminAccountTable() {
         />
       </div>
 
-      {/* ERROR */}
       {error && (
         <div className="mx-6 mb-4 rounded-md border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive">
           Không thể tải danh sách tài khoản.
         </div>
       )}
 
-      {/* TABLE */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -257,14 +253,12 @@ export function AdminAccountTable() {
         </table>
       </div>
 
-      {/* LOADING */}
       {loading && (
         <div className="border-t px-6 py-3 text-center text-sm text-muted-foreground">
           Đang tải trang {page}...
         </div>
       )}
 
-      {/* PAGINATION */}
       <div className="flex items-center justify-between border-t px-6 py-4">
         <div className="text-sm text-muted-foreground">
           {pagination.total > 0
@@ -273,7 +267,6 @@ export function AdminAccountTable() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* PREVIOUS */}
           <button
             type="button"
             disabled={
@@ -295,12 +288,10 @@ export function AdminAccountTable() {
             <ChevronLeft className="h-4 w-4" />
           </button>
 
-          {/* PAGE */}
           <span className="min-w-20 text-center text-sm">
             Trang {page} / {totalPages || 1}
           </span>
 
-          {/* NEXT */}
           <button
             type="button"
             disabled={

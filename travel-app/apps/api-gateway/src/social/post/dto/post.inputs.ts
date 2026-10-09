@@ -80,12 +80,10 @@ export class CreatePostInput {
   @IsEnum(PostStatus)
   status?: PostStatus;
 
-  @Field(() => [ID], {
-    nullable: true,
-  })
+  @Field(() => [ID], {nullable: true})
   @IsOptional()
   @IsArray()
-  @IsUUID('all')
+  @IsUUID('all', { each: true })
   hashtagIds?: string[];
 
   @Field(() => [CreatePostMediaInput], {
@@ -166,9 +164,7 @@ export class UpdatePostInput {
   @IsArray()
   media?: UpdatePostMediaInput[];
 
-  @Field(() => [ID], {
-    nullable: true,
-  })
+  @Field(() => [ID], {nullable: true})
   @IsOptional()
   @IsArray()
   @IsUUID('all')
@@ -197,6 +193,13 @@ export class PostFilterInput {
   @IsOptional()
   @IsUUID()
   locationId?: string;
+
+   @Field(() => String, {
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  keyword?: string;
 }
 
 @InputType()

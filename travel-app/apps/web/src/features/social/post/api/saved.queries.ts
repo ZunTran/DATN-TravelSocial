@@ -1,8 +1,14 @@
 import { gql } from "@apollo/client";
 
 export const GET_SAVED_POSTS = gql`
-  query SavedPosts($pagination: PaginationInput!) {
-    savedPosts(pagination: $pagination) {
+  query SavedPosts(
+    $profileId: ID!
+    $pagination: PaginationInput!
+  ) {
+    savedPosts(
+      profileId: $profileId
+      pagination: $pagination
+    ) {
       items {
         id
         authorId
@@ -52,6 +58,7 @@ export const GET_SAVED_POSTS = gql`
       page
       limit
       totalPages
+      hasNextPage
     }
   }
 `;

@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 
 import type {
   UserProfile,
-} from "../types/profile";
+} from "../user-profile/types/profile";
 
 interface ProfileFormProps {
   profile: UserProfile;
@@ -127,7 +127,6 @@ export function ProfileForm({
         </p>
       </div>
 
-      {/* Username */}
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-sm font-medium">
           <User className="size-4" />
@@ -145,7 +144,6 @@ export function ProfileForm({
         />
       </div>
 
-      {/* Display name */}
       <div className="space-y-2">
         <label className="text-sm font-medium">
           Display name
@@ -162,7 +160,6 @@ export function ProfileForm({
         />
       </div>
 
-      {/* Bio */}
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-sm font-medium">
           <FileText className="size-4" />
@@ -180,7 +177,6 @@ export function ProfileForm({
         />
       </div>
 
-      {/* Location */}
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-sm font-medium">
           <MapPin className="size-4" />
@@ -198,7 +194,6 @@ export function ProfileForm({
         />
       </div>
 
-      {/* Birthday */}
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-sm font-medium">
           <Calendar className="size-4" />
@@ -217,7 +212,6 @@ export function ProfileForm({
         />
       </div>
 
-      {/* Actions */}
       <div className="flex justify-end gap-3 border-t pt-5">
         <Button
           type="button"

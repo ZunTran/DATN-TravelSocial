@@ -84,6 +84,7 @@
     }
   },
   "dependencies": {
+    "@as-integrations/express5": "^1.1.2",
     "@nestjs/apollo": "^13.4.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.4",
@@ -94,7 +95,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.0",
     "@prisma/adapter-pg": "^7.9.1",
-    "@prisma/client": "^7.9.1",
+    "@prisma/client": "^7.10.0",
     "amqp-connection-manager": "^5.0.0",
     "amqplib": "^2.0.1",
     "bcrypt": "^6.0.0",
@@ -113,6 +114,6 @@
     "@types/bcrypt": "^6.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.20.0",
-    "prisma": "^7.9.1"
+    "prisma": "^7.10.0"
   }
 }

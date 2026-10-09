@@ -1,32 +1,12 @@
-import {
-  Injectable,
-} from '@nestjs/common';
 
-import {
-  CreatePostInput,
-  UpdatePostInput,
-  PostFilterInput,
-  PaginationInput,
-} from './dto/post.inputs';
-
-import {
-  PostPrivacy,
-  PostStatus,
-  PostObject,
-  PostListObject,
-  SocialPostResponse,
-} from './types/post.types';
-
-import {
-  SocialGraphqlClient,
-} from '../clients/social-graphql.client';
-
-import {
-  normalizePost,
-  normalizePostList,
-} from '../common/post-normalizer';
 
 import type { FileUpload } from 'graphql-upload-ts';
+import { CREATE_POST_MUTATION, CREATE_POST_WFILE_MUTATION, DELETE_POST_MUTATION, MY_DRAFT_POSTS_QUERY, POST_PRIVACY_MUTATION, POST_QUERY, POST_STATUS_MUTATION, POSTS_QUERY, PROFILE_POSTS_QUERY, SEARCH_POSTS_QUERY, UPDATE_POST_MUTATION, UPDATE_POST_WFILE_MUTATION } from './post.queries';
+import { PostListObject, PostObject, PostPrivacy, PostStatus, SocialPostResponse } from './types/post.types';
+import { Injectable } from '@nestjs/common';
+import { SocialGraphqlClient } from '../clients/social-graphql.client';
+import { CreatePostInput, PaginationInput, PostFilterInput, UpdatePostInput } from './dto/post.inputs';
+import { normalizePost, normalizePostList } from '../common/post-normalizer';
 
 interface CreatePostResponse {
   createPost: SocialPostResponse;
@@ -58,6 +38,29 @@ interface PostsResponse {
     page: number;
     limit: number;
     totalPages: number;
+    hasNextPage: boolean;
+  };
+}
+
+interface ProfilePostsResponse {
+  profilePosts: {
+    items: SocialPostResponse[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+  };
+}
+
+interface MyDraftPostsResponse {
+  myDraftPosts: {
+    items: SocialPostResponse[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
   };
 }
 
@@ -96,54 +99,7 @@ export class PostGatewayService {
     input: CreatePostInput,
     authorization?: string,
   ): Promise<PostObject> {
-    const data =
-      await this.socialClient.execute<CreatePostResponse>(
-        `
-        mutation CreatePost(
-          $input: CreatePostInput!
-        ) {
-          createPost(input: $input) {
-            id
-            authorId
-            categoryId
-            locationId
-            content
-            privacy
-            status
-            createdAt
-            updatedAt
-            viewCount
-            likeCount
-            commentCount
-            shareCount
-            saveCount
-            authorUsername
-            authorAvatar
-
-            media {
-              id
-              mediaUrl
-              mediaType
-              displayOrder
-            }
-
-            category {
-              id
-              name
-              description
-            }
-
-            location {
-              id
-              name
-              address
-              latitude
-              longitude
-              province
-            }
-          }
-        }
-        `,
+    const data =await this.socialClient.execute<CreatePostResponse>(CREATE_POST_MUTATION,
         { input },
         authorization,
       );
@@ -158,59 +114,7 @@ export class PostGatewayService {
   files?: Promise<FileUpload>[],
   authorization?: string,
 ): Promise<PostObject> {
-  const data =
-    await this.socialClient.executeMultipart<CreatePostWithFilesResponse>(
-      `
-      mutation CreatePostWithFiles(
-        $input: CreatePostInput!
-        $files: [Upload!]
-      ) {
-        createPostWithFiles(
-          input: $input
-          files: $files
-        ) {
-          id
-          authorId
-          categoryId
-          locationId
-          content
-          privacy
-          status
-          createdAt
-          updatedAt
-          viewCount
-          likeCount
-          commentCount
-          shareCount
-          saveCount
-
-          authorUsername
-          authorAvatar
-
-          media {
-            id
-            mediaUrl
-            mediaType
-            displayOrder
-          }
-
-          category {
-            id
-            name
-            description
-          }
-
-          location {
-            id
-            name
-            address
-            latitude
-            longitude
-            province
-          }
-        }
-      }
-      `,
+  const data = await this.socialClient.executeMultipart<CreatePostWithFilesResponse>(CREATE_POST_WFILE_MUTATION,
       {
         input,
         files: files?.map(() => null),
@@ -229,53 +133,7 @@ export class PostGatewayService {
     authorization?: string,
   ): Promise<PostObject> {
     const data =
-      await this.socialClient.execute<UpdatePostResponse>(
-        `
-        mutation UpdatePost(
-          $input: UpdatePostInput!
-        ) {
-          updatePost(input: $input) {
-            id
-            authorId
-            categoryId
-            locationId
-            content
-            privacy
-            status
-            createdAt
-            updatedAt
-            viewCount
-            likeCount
-            commentCount
-            shareCount
-            saveCount
-            authorUsername
-            authorAvatar
-
-            media {
-              id
-              mediaUrl
-              mediaType
-              displayOrder
-            }
-
-            category {
-              id
-              name
-              description
-            }
-
-            location {
-              id
-              name
-              address
-              latitude
-              longitude
-              province
-            }
-          }
-        }
-        `,
+      await this.socialClient.execute<UpdatePostResponse>(UPDATE_POST_MUTATION,
         { input },
         authorization,
       );
@@ -291,58 +149,7 @@ export class PostGatewayService {
   authorization?: string,
     ): Promise<PostObject> {
     const data =
-        await this.socialClient.executeMultipart<UpdatePostWithFilesResponse>(
-        `
-        mutation UpdatePostWithFiles(
-            $input: UpdatePostInput!
-            $files: [Upload!]
-        ) {
-            updatePostWithFiles(
-            input: $input
-            files: $files
-            ) {
-            id
-            authorId
-            categoryId
-            locationId
-            content
-            privacy
-            status
-            createdAt
-            updatedAt
-            viewCount
-            likeCount
-            commentCount
-            shareCount
-            saveCount
-
-            authorUsername
-            authorAvatar
-
-            media {
-                id
-                mediaUrl
-                mediaType
-                displayOrder
-            }
-
-            category {
-                id
-                name
-                description
-            }
-
-            location {
-                id
-                name
-                address
-                latitude
-                longitude
-                province
-            }
-            }
-        }
-        `,
+        await this.socialClient.executeMultipart<UpdatePostWithFilesResponse>(UPDATE_POST_WFILE_MUTATION,
         {
             input,
             files: files?.map(() => null),
@@ -363,17 +170,7 @@ export class PostGatewayService {
     Pick<PostObject, 'id' | 'status'>
   > {
     const data =
-      await this.socialClient.execute<DeletePostResponse>(
-        `
-        mutation DeletePost(
-          $postId: ID!
-        ) {
-          deletePost(postId: $postId) {
-            id
-            status
-          }
-        }
-        `,
+      await this.socialClient.execute<DeletePostResponse>(DELETE_POST_MUTATION,
         { postId },
         authorization,
       );
@@ -387,62 +184,12 @@ export class PostGatewayService {
     authorization?: string,
   ): Promise<PostObject> {
     const data =
-      await this.socialClient.execute<PostResponse>(
-        `
-        query Post(
-          $postId: ID!
-        ) {
-          post(postId: $postId) {
-            id
-            authorId
-            categoryId
-            locationId
-            content
-            privacy
-            status
-            createdAt
-            updatedAt
-            viewCount
-            likeCount
-            commentCount
-            shareCount
-            saveCount
-            isPostLiked
-            isPostSaved
-            authorUsername
-            authorAvatar
-
-            media {
-              id
-              mediaUrl
-              mediaType
-              displayOrder
-            }
-
-            category {
-              id
-              name
-              description
-            }
-
-            location {
-              id
-              name
-              address
-              latitude
-              longitude
-              province
-            }
-          }
-        }
-        `,
+      await this.socialClient.execute<PostResponse>(POST_QUERY,
         { postId },
         authorization,
       );
 
-    return normalizePost(
-      data.post,
-    );
+    return normalizePost(data.post);
   }
 
   async posts(
@@ -451,68 +198,7 @@ export class PostGatewayService {
     authorization?: string,
   ): Promise<PostListObject> {
     const data =
-      await this.socialClient.execute<PostsResponse>(
-        `
-        query Posts(
-          $filter: PostFilterInput
-          $pagination: PaginationInput
-        ) {
-          posts(
-            filter: $filter
-            pagination: $pagination
-          ) {
-            items {
-              id
-              authorId
-              categoryId
-              locationId
-              content
-              privacy
-              status
-              createdAt
-              updatedAt
-              viewCount
-              likeCount
-              commentCount
-              shareCount
-              saveCount
-
-              isPostLiked
-              isPostSaved
-
-              authorUsername
-              authorAvatar
-
-              media {
-                id
-                mediaUrl
-                mediaType
-                displayOrder
-              }
-
-              category {
-                id
-                name
-                description
-              }
-
-              location {
-                id
-                name
-                address
-                latitude
-                longitude
-                province
-              }
-            }
-
-            total
-            page
-            limit
-            totalPages
-          }
-        }
-        `,
+      await this.socialClient.execute<PostsResponse>(POSTS_QUERY,
         {
           filter,
           pagination: pagination ?? {
@@ -532,50 +218,76 @@ export class PostGatewayService {
         (post) => ({
           id: post.id,
           authorId: post.authorId,
-          isPostLiked:
-            post.isPostLiked,
-          isPostSaved:
-            post.isPostSaved,
-          typeLiked:
-            typeof post.isPostLiked,
-          typeSaved:
-            typeof post.isPostSaved,
+          isPostLiked: post.isPostLiked??false,
+          isPostSaved: post.isPostSaved??false,
+          typeLiked: typeof post.isPostLiked,
+          typeSaved: typeof post.isPostSaved,
         }),
       ),
     );
 
-    console.log(
-      '=============================================',
-    );
-
-    return normalizePostList(
-      data.posts,
-    );
+    return normalizePostList(data.posts);
   }
 
-  async viewPost(
-    postId: string,
-  ): Promise<
-    Pick<PostObject, 'id' | 'viewCount'>
-  > {
-    const data =
-      await this.socialClient.execute<ViewPostResponse>(
-        `
-        mutation ViewPost(
-          $postId: ID!
-        ) {
-          viewPost(postId: $postId) {
-            id
-            viewCount
-          }
-        }
-        `,
-        { postId },
-      );
+  async profilePosts(
+  profileId: string,
+  page = 1,
+  limit = 10,
+  authorization?: string,
+): Promise<PostListObject> {
+  const data = await this.socialClient.execute<ProfilePostsResponse>(
+    PROFILE_POSTS_QUERY,
+    {
+      profileId,
+      page,
+      limit,
+    },
+    authorization,
+  );
 
-    return data.viewPost;
-  }
+  return normalizePostList(data.profilePosts);
+}
 
+async myDraftPosts(
+  page = 1,
+  limit = 10,
+  authorization?: string,
+): Promise<PostListObject> {
+  const data = await this.socialClient.execute<MyDraftPostsResponse>(
+    MY_DRAFT_POSTS_QUERY,
+    {
+      page,
+      limit,
+    },
+    authorization,
+  );
+
+  return normalizePostList(data.myDraftPosts);
+}
+
+async viewPost(
+  postId: string,
+  authorization?: string,
+): Promise<
+  Pick<PostObject, 'id' | 'viewCount'>
+> {
+  const data = await this.socialClient.execute<ViewPostResponse>(
+    `
+    mutation ViewPost(
+      $postId: ID!
+    ) {
+      viewPost(postId: $postId) {
+        id
+        viewCount
+      }
+    }
+    `,
+    { postId },
+    authorization,
+  );
+
+  return data.viewPost;
+}
 
   async changePostStatus(
     postId: string,
@@ -588,22 +300,7 @@ export class PostGatewayService {
     >
   > {
     const data =
-      await this.socialClient.execute<ChangePostStatusResponse>(
-        `
-        mutation ChangePostStatus(
-          $postId: ID!
-          $newStatus: PostStatus!
-        ) {
-          changePostStatus(
-            postId: $postId
-            newStatus: $newStatus
-          ) {
-            id
-            status
-            updatedAt
-          }
-        }
-        `,
+      await this.socialClient.execute<ChangePostStatusResponse>(POST_STATUS_MUTATION,
         {
           postId,
           newStatus,
@@ -619,28 +316,8 @@ export class PostGatewayService {
     newPrivacy: PostPrivacy,
     authorization?: string,
   ): Promise<
-    Pick<
-      PostObject,
-      'id' | 'privacy' | 'updatedAt'
-    >
-  > {
-    const data =
-      await this.socialClient.execute<ChangePostPrivacyResponse>(
-        `
-        mutation ChangePostPrivacy(
-          $postId: ID!
-          $newPrivacy: PostPrivacy!
-        ) {
-          changePostPrivacy(
-            postId: $postId
-            newPrivacy: $newPrivacy
-          ) {
-            id
-            privacy
-            updatedAt
-          }
-        }
-        `,
+    Pick< PostObject, 'id' | 'privacy' | 'updatedAt'>> {
+    const data = await this.socialClient.execute<ChangePostPrivacyResponse>(POST_PRIVACY_MUTATION,
         {
           postId,
           newPrivacy,
@@ -651,5 +328,25 @@ export class PostGatewayService {
     return data.changePostPrivacy;
   }
 
-  
+async searchPosts(
+  keyword: string,
+  page: number,
+  limit: number,
+  authorization?: string,
+): Promise<PostListObject> {
+  const data = await this.socialClient.execute<PostsResponse>(SEARCH_POSTS_QUERY,
+      {
+        filter: {
+          keyword: keyword.trim(),
+        },
+        pagination: {
+          page,
+          limit,
+        },
+      },
+      authorization,
+    );
+
+  return normalizePostList(data.posts);
+}
 }

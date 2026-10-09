@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from "@/components/ui/alert-dialog";
 
-import type { UserProfile } from "../../types/profile";
+import type { UserProfile } from "../../user-profile/types/profile";
 import { MediaLightbox } from "@/features/social/components/media-lightbox";
 import { toast } from "sonner";
+import { useReportUser } from "../../user-report/hooks/use-report-user";
+import { Textarea } from "@/components/ui/textarea";
 interface ProfileHeaderProps {
   profile: UserProfile;
   isOwnProfile?: boolean;
@@ -46,6 +48,9 @@ export default function ProfileHeader({
   const [avatarSuccess, setAvatarSuccess] =useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+
+  const [reportReason, setReportReason] = useState('');
+const { reportUser, loading: reportLoading } = useReportUser();
 
   const displayName = display_name || username || "User";
   const initials = displayName.slice(0, 2).toUpperCase();
@@ -307,28 +312,69 @@ export default function ProfileHeader({
               Report @{username}?
             </AlertDialogTitle>
 
-            <AlertDialogDescription>
-              Are you sure you want to report
-              this user? We will review the
-              report and take appropriate
-              action if necessary.
+             <AlertDialogDescription>
+              Please provide a reason for reporting this user.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              Cancel
-            </AlertDialogCancel>
+           <div className="space-y-2">
+            <Textarea
+              value={reportReason}
+              onChange={(event) =>
+                setReportReason(event.target.value)
+              }
+              placeholder="Describe why you want to report this user..."
+              maxLength={1000}
+              disabled={reportLoading}
+              rows={5}
+            />
 
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                setReportOpen(false);
-              }}
-            >
-              Report User
-            </AlertDialogAction>
-          </AlertDialogFooter>
+            <div className="text-right text-xs text-muted-foreground">
+              {reportReason.length}/1000
+            </div>
+          </div>
+
+           <AlertDialogFooter>
+    <AlertDialogCancel
+      disabled={reportLoading}
+      onClick={() => setReportReason('')}
+    >
+      Cancel
+    </AlertDialogCancel>
+
+    <AlertDialogAction
+      disabled={
+        reportLoading ||
+        !reportReason.trim()
+      }
+      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      onClick={async (event) => {
+        event.preventDefault();
+        if (!reportReason.trim()) 
+          return;
+
+        try {
+          await reportUser({
+            reportedUserId: profile.id,
+            reason: reportReason.trim(),
+          });
+          toast.success('Report submitted successfully.');
+
+          setReportReason('');
+          setReportOpen(false);
+        } catch (error: any) {
+          console.error('Report user failed:', error);
+          toast.error(error?.message ?? 'Failed to submit report.');
+        }
+      }}
+    >
+      {reportLoading ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />  Reporting...
+        </>
+      ) : ( 'Report User' )}
+    </AlertDialogAction>
+  </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>

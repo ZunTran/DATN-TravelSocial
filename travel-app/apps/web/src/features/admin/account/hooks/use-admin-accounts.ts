@@ -24,7 +24,7 @@ export function useAdminAccounts({
   const [debouncedSearch, setDebouncedSearch] =
     useState(search);
 
-  // Debounce search
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -50,25 +50,19 @@ export function useAdminAccounts({
     },
   );
 
-  // Gọi API khi page/search thay đổi
   useEffect(() => {
-    if (!enabled) {
-      return;
-    }
+    if (!enabled) return;
+    
 
     const variables = {
       filter: {
-        search:
-          debouncedSearch.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
         page,
         limit,
       },
     };
 
-    console.log(
-      '[AdminAccounts] CALL API:',
-      variables,
-    );
+    console.log( '[AdminAccounts] CALL API:', variables);
 
     fetchAdminAccounts({
       variables,
@@ -89,8 +83,7 @@ export function useAdminAccounts({
     totalPages: 0,
   };
 
-  console.log(
-    '[AdminAccounts] STATE:',
+  console.log('[AdminAccounts] STATE:',
     {
       page,
       responsePage: pagination.page,

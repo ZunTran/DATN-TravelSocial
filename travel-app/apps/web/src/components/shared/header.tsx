@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  useState,
+  type KeyboardEvent,
+} from "react";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -19,8 +24,32 @@ import { useAuthContext } from "@/features/auth/context/auth-context";
 
 export function Header() {
   const router = useRouter();
-
   const { logout } = useAuthContext();
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const handleSearch = () => {
+    const keyword = searchKeyword.trim();
+
+    if (!keyword) {
+      return;
+    }
+
+    router.push(
+      `/explore?keyword=${encodeURIComponent(keyword)}`,
+    );
+  };
+
+  const handleSearchKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+
+    handleSearch();
+  };
+
 
   const handleLogout = async () => {
     try {
@@ -31,14 +60,7 @@ export function Header() {
         error,
       );
     } finally {
-      /*
-       * AuthContext đã:
-       * 1. gọi logout API
-       * 2. setAccessToken(null)
-       * 3. clearAccessToken()
-       *
-       * Sau đó Header đưa user về login.
-       */
+
       router.push("/login");
     }
   };
@@ -46,8 +68,6 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center border-b bg-background/90 px-4 backdrop-blur-xl">
       <div className="flex w-full items-center gap-3">
-
-        {/* SIDEBAR */}
 
         <SidebarTrigger
           className="
@@ -60,16 +80,13 @@ export function Header() {
 
         <div className="hidden h-6 w-px bg-border md:block" />
 
-        {/* LOGO */}
-
         <Link
           href="/"
           className="hidden items-center gap-2.5 md:flex"
         >
           <div
             className="
-              flex
-              size-9
+              flex size-9
               items-center
               justify-center
               rounded-xl
@@ -94,8 +111,6 @@ export function Header() {
           </div>
         </Link>
 
-        {/* SEARCH */}
-
         <div
           className="
             relative
@@ -118,6 +133,11 @@ export function Header() {
           />
 
           <Input
+            value={searchKeyword}
+            onChange={(event) =>
+              setSearchKeyword(event.target.value)
+            }
+            onKeyDown={handleSearchKeyDown}
             placeholder="Search destinations, people..."
             className="
               h-10
@@ -135,12 +155,7 @@ export function Header() {
             "
           />
         </div>
-
-        {/* RIGHT ACTIONS */}
-
         <div className="ml-auto flex items-center gap-1">
-
-          {/* MOBILE SEARCH */}
 
           <Button
             variant="ghost"
@@ -153,6 +168,31 @@ export function Header() {
               hover:text-primary
               md:hidden
             "
+            onClick={() => {
+              const keyword = window.prompt(
+                "Search",
+                searchKeyword,
+              );
+
+              if (keyword === null) {
+                return;
+              }
+
+              setSearchKeyword(keyword);
+
+              const trimmedKeyword =
+                keyword.trim();
+
+              if (!trimmedKeyword) {
+                return;
+              }
+
+              router.push(
+                `/explore?keyword=${encodeURIComponent(
+                  trimmedKeyword,
+                )}`,
+              );
+            }}
           >
             <Search className="size-5" />
 
@@ -160,8 +200,6 @@ export function Header() {
               Search
             </span>
           </Button>
-
-          {/* FRIENDS */}
 
           <Button
             variant="ghost"
@@ -198,7 +236,6 @@ export function Header() {
             </Link>
           </Button>
 
-          {/* NOTIFICATIONS */}
 
           <Button
             variant="ghost"
@@ -237,8 +274,6 @@ export function Header() {
 
           <div className="mx-2 hidden h-6 w-px bg-border sm:block" />
 
-          {/* PROFILE */}
-
           <Link
             href="/profile/me"
             className="
@@ -255,8 +290,7 @@ export function Header() {
           >
             <div
               className="
-                flex
-                size-8
+                flex size-8
                 items-center
                 justify-center
                 rounded-lg
@@ -281,7 +315,6 @@ export function Header() {
             </div>
           </Link>
 
-          {/* LOGOUT */}
 
           <Button
             type="button"
@@ -309,3 +342,4 @@ export function Header() {
     </header>
   );
 }
+

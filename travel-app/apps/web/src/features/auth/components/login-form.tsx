@@ -93,8 +93,6 @@ export function LoginForm() {
         className="space-y-5"
       >
 
-        {/* EMAIL */}
-
         <div className="space-y-2">
           <label
             htmlFor="email"
@@ -127,8 +125,6 @@ export function LoginForm() {
             </p>
           )}
         </div>
-
-        {/* PASSWORD */}
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -188,15 +184,11 @@ export function LoginForm() {
           )}
         </div>
 
-        {/* ERROR */}
-
         {error && (
           <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             {error}
           </div>
         )}
-
-        {/* SUBMIT */}
 
         <Button
           type="submit"

@@ -54,18 +54,7 @@ export function ForgotPasswordForm() {
   ) => {
     try {
       setError(null);
-
-      /*
-       * TODO:
-       * Gọi forgotPassword mutation
-       *
-       * await forgotPassword(values.email)
-       */
-
-      console.log(
-        "Forgot password:",
-        values.email,
-      );
+      console.log( "Forgot password:", values.email );
 
       setSubmitted(true);
     } catch (error: any) {

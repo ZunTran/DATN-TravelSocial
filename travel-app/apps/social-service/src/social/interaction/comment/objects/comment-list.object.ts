@@ -17,4 +17,7 @@ export class CommentList {
 
   @Field(() => Int)
   totalPages: number;
+
+  @Field(() => Boolean)
+  hasNextPage!: boolean;
 }

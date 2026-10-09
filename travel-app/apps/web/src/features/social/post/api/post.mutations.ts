@@ -46,6 +46,11 @@ export const CREATE_POST = gql`
         province
       }
 
+      hashtags {
+        id
+        name
+      }
+
       isPostLiked
       isPostSaved
 
@@ -99,6 +104,12 @@ export const UPDATE_POST = gql`
         longitude
         province
       }
+
+      hashtags {
+        id
+        name
+      }
+
     }
   }
 `;
@@ -210,6 +221,11 @@ export const CREATE_POST_WITH_FILES = gql`
         longitude
         province
       }
+
+      hashtags {
+        id
+        name
+      }
     }
   }
 `;
@@ -239,9 +255,6 @@ export const UPDATE_POST_WITH_FILES = gql`
       shareCount
       saveCount
 
-      isPostLiked
-      isPostSaved
-
       authorUsername
       authorAvatar
 
@@ -269,6 +282,12 @@ export const UPDATE_POST_WITH_FILES = gql`
         longitude
         province
       }
+
+      hashtags {
+        id
+        name
+      }
+        
     }
   }
 `;

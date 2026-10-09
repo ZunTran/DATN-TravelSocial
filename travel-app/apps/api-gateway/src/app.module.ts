@@ -8,7 +8,10 @@ import { GatewayResolver } from './app/graphql/gateway.resolver';
 import { UserGatewayModule } from './user/user.gateway.module';
 import { AuthGatewayModule } from './auth/auth.gateway.module';
 import { Request, Response } from 'express';
+import { AdminModule } from './admin/admin.module';
 import { SocialModule } from './social/social.gateway.module';
+import { TravelPlanModule } from './travel-plan/travel-plan.module';
+import { UserReportModule } from './user/user-report/user-report.module';
 
 @Module({
   imports: [
@@ -39,11 +42,13 @@ import { SocialModule } from './social/social.gateway.module';
     AuthGatewayModule,
     UserGatewayModule,
     SocialModule,
+    AdminModule,
+    TravelPlanModule,
+    
   ],
 
   providers: [
     GatewayResolver,
-    
   ],
 })
 export class AppModule {}

@@ -103,8 +103,6 @@ export function RegisterForm() {
         className="space-y-5"
       >
 
-        {/* EMAIL */}
-
         <div className="space-y-2">
           <label
             htmlFor="email"
@@ -137,8 +135,6 @@ export function RegisterForm() {
             </p>
           )}
         </div>
-
-        {/* PASSWORD */}
 
         <div className="space-y-2">
           <label
@@ -193,8 +189,6 @@ export function RegisterForm() {
             </p>
           )}
         </div>
-
-        {/* CONFIRM PASSWORD */}
 
         <div className="space-y-2">
           <label
@@ -254,15 +248,12 @@ export function RegisterForm() {
           )}
         </div>
 
-        {/* ERROR */}
-
         {error && (
           <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
-        {/* SUBMIT */}
 
         <Button
           type="submit"

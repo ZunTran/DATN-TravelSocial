@@ -10,6 +10,8 @@ import { AdminHashtagListObject } from './objects/admin-hashtag.object';
 import { JwtAuthGuard } from '../../../common/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/auth/guards/roles.guard';
 import { Roles } from '../../../common/auth/decorators/roles.decorator';
+import { HashtagPageObject } from './objects/hashtag-page.object';
+import { HashtagFilterInput } from './dto/hashtag-filter.input';
 
 @Resolver(() => HashtagObject)
 export class HashtagResolver {
@@ -71,8 +73,19 @@ export class HashtagResolver {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   async adminDeleteHashtag(
-    @Args('id', { type: () => ID }) id: string,
-  ) {
+    @Args('id', { type: () => ID }) id: string) {
     return this.hashtagService.delete(id);
+  }
+
+  @Query(() => HashtagPageObject)
+  @UseGuards(JwtAuthGuard)
+  async hashtagOptions(
+  @Args('filter', { type: () => HashtagFilterInput, nullable: true }) filter?: HashtagFilterInput) {
+    return this.hashtagService.getPage(
+      filter ?? {
+        page: 1,
+        limit: 20,
+      },
+    );
   }
 }

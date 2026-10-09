@@ -31,41 +31,78 @@ export class UserProfileRepository {
     return this.prisma.user_profile.update({where: { id },data});
   }
 
-  async searchUsers(input: SearchUserInput) {
-  const { keyword, page, limit } = input;
-  const skip = (page - 1) * limit;
+  async searchUsers( input: SearchUserInput, excludedProfileIds: string[] = []) {
+    const { keyword, page, limit} = input;
+    const skip = (page - 1) * limit;
+    const trimmedKeyword = keyword?.trim();
+    const whereCondition: Prisma.user_profileWhereInput = {
+      id: {
+        notIn: excludedProfileIds,
+      },
 
-  const whereCondition = keyword
-    ? {
-        OR: [
-          { username: { contains: keyword, mode: 'insensitive' as const } },
-          { display_name: { contains: keyword, mode: 'insensitive' as const } },
-        ],
-      }
-    : {};
+      ...(trimmedKeyword ? {
+            OR: [
+              {
+                username: {
+                  contains: trimmedKeyword,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                display_name: {
+                  contains: trimmedKeyword,
+                  mode: 'insensitive',
+                },
+              },
+            ],
+          }
+        : {}),
+    };
 
-  const [data, total] = await Promise.all([
-    this.prisma.user_profile.findMany({
-      where: whereCondition,
-      skip,
-      take: limit,
-      orderBy: { created_at: 'desc' },
-    }),
-    
-    this.prisma.user_profile.count({ where: whereCondition })
-  ]);
+    const [data, total] = await Promise.all([
+      this.prisma.user_profile.findMany({
+        where: whereCondition,
+        skip,
+        take: limit,
+        orderBy: {
+          created_at: 'desc',
+        },
+      }),
 
-  return {
-    data,total,
-    page,limit,
-    totalPages: Math.ceil(total / limit),
-  };
-}
+      this.prisma.user_profile.count({
+        where: whereCondition,
+      }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 
   async findInternalByAccountId(accountId: string) {
-  return this.prisma.user_profile.findUnique({
+    return this.prisma.user_profile.findUnique({
+      where: {
+        account_id: accountId,
+      },
+      select: {
+        id: true,
+        account_id: true,
+        username: true,
+        avatar_url: true,
+      },
+    });
+  }
+
+  async findInternalByIds(profileIds: string[]) {
+  return this.prisma.user_profile.findMany({
     where: {
-      account_id: accountId,
+      id: {
+        in: profileIds,
+      },
     },
     select: {
       id: true,

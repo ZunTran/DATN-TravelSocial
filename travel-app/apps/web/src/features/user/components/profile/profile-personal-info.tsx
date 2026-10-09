@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-import type { UserProfile } from '../../types/profile';
+import type { UserProfile } from '../../user-profile/types/profile';
 
 interface ProfilePersonalInfoProps {
   profile: UserProfile;
@@ -84,13 +84,11 @@ export default function ProfilePersonalInfo({
 
       <CardContent>
         <div className="divide-y rounded-xl border">
-          {/* USERNAME */}
           <InfoRow
             label="Username"
             value={`@${profile.username}`}
           />
 
-          {/* DISPLAY NAME */}
           <InfoRow
             label="Display name"
             value={
@@ -99,25 +97,21 @@ export default function ProfilePersonalInfo({
             }
           />
 
-          {/* BIO */}
           <InfoRow
             label="Bio"
             value={profile.bio || 'Not provided'}
           />
 
-          {/* GENDER */}
           <InfoRow
             label="Gender"
             value={formatGender(profile.gender)}
           />
 
-          {/* BIRTHDAY */}
           <InfoRow
             label="Birthday"
             value={formatBirthday(profile.birthday)}
           />
 
-          {/* LOCATION */}
           <InfoRow
             label="Location"
             value={
@@ -126,13 +120,11 @@ export default function ProfilePersonalInfo({
             }
           />
 
-          {/* PRIVACY */}
           <InfoRow
             label="Privacy"
             value={formatPrivacy(profile.privacy)}
           />
 
-          {/* CREATED AT */}
           <InfoRow
             label="Member since"
             value={new Date(
@@ -140,7 +132,6 @@ export default function ProfilePersonalInfo({
             ).toLocaleDateString('en-GB')}
           />
 
-          {/* UPDATED AT */}
           <InfoRow
             label="Last updated"
             value={new Date(

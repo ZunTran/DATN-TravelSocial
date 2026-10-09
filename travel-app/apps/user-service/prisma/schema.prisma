@@ -31,8 +31,10 @@ model user_profile {
   notifications_received notification[]  @relation("notification_receiver")
   notifications_sent     notification[]  @relation("notification_sender")
   user_interests         user_interest[]
+  
   reports_received       user_report[]   @relation("user_reported")
   reports_made           user_report[]   @relation("user_reporter")
+  reports_handled        user_report[]   @relation("user_report_handled_by")
 
   @@index([username], map: "idx_user_profile_username")
   @@map("user_profile")
@@ -114,9 +116,12 @@ model user_report {
   created_at       DateTime           @default(now()) @db.Timestamp(6)
   reported_user    user_profile       @relation("user_reported", fields: [reported_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   reporter         user_profile       @relation("user_reporter", fields: [reporter_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
+  
+  handled_by_user  user_profile?      @relation("user_report_handled_by", fields: [handled_by], references: [id], onDelete: NoAction)
+  
   @@unique([reporter_id, reported_user_id], map: "idx_unique_user_report", where: raw("(status = 'PENDING'::user_report_status)"))
   @@index([status], map: "idx_user_report_status")
+  @@index([handled_by], map: "idx_user_report_handled_by")
   @@map("user_report")
 }
 

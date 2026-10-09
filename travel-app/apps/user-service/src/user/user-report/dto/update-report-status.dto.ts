@@ -1,10 +1,6 @@
 import { IsEnum } from 'class-validator';
-import { user_report_status } from '@prisma/client';
-import { Field, InputType, registerEnumType } from '@nestjs/graphql';
-
-registerEnumType(user_report_status, {
-  name: 'UserReportStatus',
-});
+import { Field, InputType } from '@nestjs/graphql';
+import { user_report_status } from '../types/user-report-status.enum';
 
 @InputType()
 export class UpdateReportStatusInput {

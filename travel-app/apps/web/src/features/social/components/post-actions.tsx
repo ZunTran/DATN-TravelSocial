@@ -1,10 +1,15 @@
 "use client";
 
 import {
-  Bookmark,
+  useEffect,
+  useState,
+} from "react";
+
+import {
   Heart,
   MessageCircle,
   Share2,
+  Bookmark,
 } from "lucide-react";
 
 import { useMutation } from "@apollo/client/react";
@@ -15,7 +20,6 @@ import { usePostLike } from "../hooks/use-post-like";
 import { usePostSave } from "../hooks/use-post-save";
 
 import { SHARE_POST } from "../api/share.queries";
-import { useEffect, useState } from "react";
 
 interface PostActionsProps {
   postId: string;
@@ -33,7 +37,7 @@ interface PostActionsProps {
     likeCount: number,
   ) => void;
 
-  onComment?: () => void;
+  onCommentClick?: () => void;
 }
 
 interface SharePostResponse {
@@ -57,11 +61,10 @@ export function PostActions({
   isSaved,
 
   onLikeChange,
-  onComment,
+  onCommentClick,
 }: PostActionsProps) {
-
   const [localIsSaved, setLocalIsSaved] =
-  useState(isSaved);
+    useState(isSaved);
 
   const [localSaveCount, setLocalSaveCount] =
     useState(saveCount);
@@ -97,8 +100,8 @@ export function PostActions({
   }, [shareCount]);
 
   useEffect(() => {
-  setLocalIsSaved(isSaved);
-}, [isSaved]);
+    setLocalIsSaved(isSaved);
+  }, [isSaved]);
 
   const handleLike = async () => {
     if (likeLoading) {
@@ -108,17 +111,14 @@ export function PostActions({
     const previousIsLiked = isLiked;
     const previousLikeCount = likeCount;
 
-    const nextIsLiked =
-      !previousIsLiked;
+    const nextIsLiked = !previousIsLiked;
 
-    const nextLikeCount =
-      nextIsLiked
-        ? previousLikeCount + 1
-        : Math.max(
-            0,
-            previousLikeCount - 1,
-          );
-
+    const nextLikeCount = nextIsLiked
+      ? previousLikeCount + 1
+      : Math.max(
+          0,
+          previousLikeCount - 1,
+        );
 
     onLikeChange?.(
       nextIsLiked,
@@ -126,14 +126,11 @@ export function PostActions({
     );
 
     try {
-
       await toggleLike(
         postId,
         previousIsLiked,
       );
     } catch (error) {
-
-
       onLikeChange?.(
         previousIsLiked,
         previousLikeCount,
@@ -146,24 +143,26 @@ export function PostActions({
     }
   };
 
-  /*
-   * ============================================================
-   * SAVE
-   * ============================================================
-   */
-
   const handleSave = async () => {
     if (saveLoading) {
       return;
     }
 
-    const previousIsSaved = localIsSaved;
-    const previousSaveCount = localSaveCount;
+    const previousIsSaved =
+      localIsSaved;
 
-    const nextIsSaved =!previousIsSaved;
+    const previousSaveCount =
+      localSaveCount;
 
-    const nextSaveCount = nextIsSaved ? previousSaveCount + 1
-        : Math.max( 0, previousSaveCount - 1);
+    const nextIsSaved =
+      !previousIsSaved;
+
+    const nextSaveCount = nextIsSaved
+      ? previousSaveCount + 1
+      : Math.max(
+          0,
+          previousSaveCount - 1,
+        );
 
     setLocalIsSaved(nextIsSaved);
     setLocalSaveCount(nextSaveCount);
@@ -174,18 +173,25 @@ export function PostActions({
         previousIsSaved,
       );
     } catch (error) {
+      setLocalIsSaved(
+        previousIsSaved,
+      );
 
-      setLocalIsSaved(previousIsSaved);
-      setLocalSaveCount(previousSaveCount);
+      setLocalSaveCount(
+        previousSaveCount,
+      );
 
-      console.error("Failed to toggle save", error);
+      console.error(
+        "Failed to toggle save",
+        error,
+      );
     }
   };
 
-
   const handleShare = async () => {
-    if (shareLoading) 
-      return; 
+    if (shareLoading) {
+      return;
+    }
 
     try {
       await sharePost({
@@ -194,16 +200,19 @@ export function PostActions({
         },
       });
 
-      setLocalShareCount( (count) => count + 1 );
+      setLocalShareCount(
+        (count) => count + 1,
+      );
     } catch (error) {
-      console.error( "Failed to share post", error );
+      console.error(
+        "Failed to share post",
+        error,
+      );
     }
   };
 
-
   return (
     <div className="border-t">
-
       <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground">
         <span>
           {likeCount} likes
@@ -226,9 +235,7 @@ export function PostActions({
         </div>
       </div>
 
-
       <div className="grid grid-cols-4 px-2 pb-1">
-
         <Button
           type="button"
           variant="ghost"
@@ -259,7 +266,7 @@ export function PostActions({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={onComment}
+          onClick={onCommentClick}
           className="gap-2"
         >
           <MessageCircle className="size-4" />
@@ -284,7 +291,6 @@ export function PostActions({
           </span>
         </Button>
 
-
         <Button
           type="button"
           variant="ghost"
@@ -292,7 +298,7 @@ export function PostActions({
           disabled={saveLoading}
           onClick={handleSave}
           className={
-            isSaved
+            localIsSaved
               ? "gap-2 text-primary"
               : "gap-2"
           }
@@ -315,6 +321,4 @@ export function PostActions({
   );
 }
 
-
 export default PostActions;
-

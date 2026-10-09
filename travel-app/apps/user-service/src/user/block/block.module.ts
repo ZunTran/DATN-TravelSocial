@@ -1,9 +1,9 @@
 import { forwardRef, Module } from '@nestjs/common';
+
 import { PrismaModule } from '../../prisma/prisma.module';
 import { BlockResolver } from './block.resolver';
 import { BlockService } from './block.service';
 import { BlockRepository } from './block.repository';
-
 import { FollowModule } from '../follow/follow.module';
 import { UserProfileModule } from '../user-profile/user-profile.module';
 
@@ -11,16 +11,18 @@ import { UserProfileModule } from '../user-profile/user-profile.module';
   imports: [
     PrismaModule,
     forwardRef(() => FollowModule),
-    UserProfileModule
+    forwardRef(() => UserProfileModule),
   ],
+
   providers: [
     BlockResolver,
     BlockService,
-    BlockRepository
+    BlockRepository,
   ],
+
   exports: [
     BlockService,
-    BlockRepository
+    BlockRepository,
   ],
 })
 export class BlockModule {}

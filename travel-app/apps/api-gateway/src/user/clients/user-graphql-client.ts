@@ -25,13 +25,9 @@ async execute<T>(
   try {
     console.log('--- USER GRAPHQL REQUEST ---');
     console.log('QUERY:', query);
-    console.log(
-      'VARIABLES:',
-      JSON.stringify(variables, null, 2),
-    );
+    console.log('[USER GRAPHQL CLIENT]', authorization? 'AUTH EXISTS': 'NO AUTH',);
 
-    const response =
-      await firstValueFrom(
+    const response = await firstValueFrom(
         this.httpService.post<GraphQLResponse<T>>(
           SERVICE_URLS.USER,
           {

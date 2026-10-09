@@ -5,6 +5,7 @@ import { LikeRepository } from './like.repository';
 import { UserProfileClient } from '../../../common/clients/user-profile/user-profile.client';
 import { PaginationInput } from '../../../common/dto/pagination.input';
 import { LikeList } from './objects/like-list.object';
+// import { SocialEventPublisher } from '../../../common/events/social-event.publisher';
 
 @Injectable()
 export class LikeService {
@@ -14,54 +15,65 @@ export class LikeService {
     private readonly userProfileClient: UserProfileClient,
   ) {}
 
-  async like(postId: string,accountId: string) {
-    const profile = await this.userProfileClient.getByAccountId(accountId);
-    const profileId = profile.profileId;
 
-    return this.prisma.$transaction(async (tx) => {
-      const post = await tx.post.findUnique({
-        where: { id: postId },
-        select: {
-          id: true,
-          status: true,
-        },
-      });
 
-      if (!post) 
-        throw new NotFoundException('Post not found');
+  async like(postId: string, accountId: string) {
+  const profile = await this.userProfileClient.getByAccountId(accountId);
+  const profileId = profile.profileId;
 
-      if (post.status !== PostStatus.PUBLISHED) 
-        throw new BadRequestException('Only published posts can be liked',);
-      
-      const existing = await this.likeRepository.find(
-        tx,
-        postId,
-        profileId,
-      );
-
-      if (existing) 
-        throw new BadRequestException('You already liked this post');
-      
-      const like = await this.likeRepository.create(
-        tx,
-        postId,
-        profileId,
-      );
-
-      await tx.post.update({
-        where: { id: postId },
-        data: {
-          like_count: {increment: 1},
-        },
-      });
-
-      return {
-        postId: like.post_id,
-        userId: like.user_id,
-        createdAt: like.created_at,
-      };
+  const result = await this.prisma.$transaction(async (tx) => {
+    const post = await tx.post.findUnique({
+      where: { id: postId },
+      select: {
+        id: true,
+        status: true,
+        author_id: true,
+        content: true,
+      },
     });
-  }
+
+    if (!post) 
+      throw new NotFoundException('Post not found');
+    
+    if (post.status !== PostStatus.PUBLISHED) 
+      throw new BadRequestException('Only published posts can be liked');
+  
+    const existing = await this.likeRepository.find(
+      tx,
+      postId,
+      profileId,
+    );
+
+    if (existing) 
+      throw new BadRequestException('You already liked this post');
+    
+    const like = await this.likeRepository.create(
+      tx,
+      postId,
+      profileId,
+    );
+
+    await tx.post.update({
+      where: { id: postId },
+      data: {
+        like_count: {
+          increment: 1,
+        },
+      },
+    });
+
+    return {
+      post,
+      like,
+    };
+  });
+
+  return {
+    postId: result.like.post_id,
+    userId: result.like.user_id,
+    createdAt: result.like.created_at,
+  };
+}
 
   async unlike(postId: string,accountId: string) {
     const profile = await this.userProfileClient.getByAccountId(accountId);
@@ -112,6 +124,22 @@ export class LikeService {
     return !!like;
   }
 
+  async isLikedByProfileId(
+  postId: string,
+  profileId: string,
+): Promise<boolean> {
+  const like = await this.prisma.post_like.findUnique({
+    where: {
+      post_id_user_id: {
+        post_id: postId,
+        user_id: profileId,
+      },
+    },
+  });
+
+  return !!like;
+}
+
   async getLikes(postId: string,pagination: PaginationInput): Promise<LikeList> {
     const page = Math.max(1, pagination.page);
     const limit = Math.min(Math.max(1, pagination.limit), 100);
@@ -154,11 +182,8 @@ export class LikeService {
     if (postIds.length === 0) {
       return new Set<string>();
     }
-
     const profile = await this.userProfileClient.getByAccountId(accountId);
-
     const likes = await this.likeRepository.findByProfileAndPostIds( profile.profileId, postIds);
-
     return new Set( likes.map((like) => like.post_id));
   }
 

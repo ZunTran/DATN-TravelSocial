@@ -30,14 +30,6 @@ export class LocationPageInfo {
   hasNextPage!: boolean;
 }
 
-// @ObjectType()
-// export class LocationPage {
-//   @Field(() => [LocationObject])
-//   items!: LocationObject[];
-
-//   @Field(() => LocationPageInfo)
-//   pageInfo!: LocationPageInfo;
-// }
 
 @ObjectType()
 export class AdminLocationPage {

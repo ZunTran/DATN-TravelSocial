@@ -1,4 +1,4 @@
-import {  Args,  Context,  ID,  Mutation,  Parent,  Query,  ResolveField,  Resolver} from '@nestjs/graphql';
+import {  Args,  ID,  Int,  Mutation, Query,  Resolver} from '@nestjs/graphql';
 import { PostService } from './post.service';
 import { PostObject } from './objects/post.object';
 import { PostListObject } from './objects/post-list.object';
@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { PostPrivacy, PostStatus } from '@prisma/client';
 import { FeedPageObject } from './objects/feed-page.object';
 import { FeedInput } from './dto/feed.input';
+import { PostPageObject } from './objects/post-page.object';
 
 @Resolver(() => PostObject)
 export class PostResolver {
@@ -132,6 +133,57 @@ export class PostResolver {
       input.limit,
     );
   }
+
+  @UseGuards(JwtAuthGuard)
+@Query(() => PostPageObject)
+async myDraftPosts(
+  @CurrentUser() user: ActiveUserData,
+  @Args('page', {
+    type: () => Int,
+    nullable: true,
+    defaultValue: 1,
+  }) page: number,
+
+  @Args('limit', {
+    type: () => Int,
+    nullable: true,
+    defaultValue: 10,
+  }) limit: number) {
+  return this.postService.getMyDrafts( user.accountId, page, limit,
+  );
+}
+
+@UseGuards(JwtAuthGuard)
+@Query(() => PostPageObject)
+async profilePosts(
+  @CurrentUser() user: ActiveUserData,
+
+  @Args('profileId', {
+    type: () => ID,
+  })
+  profileId: string,
+
+  @Args('page', {
+    type: () => Int,
+    nullable: true,
+    defaultValue: 1,
+  })
+  page: number,
+
+  @Args('limit', {
+    type: () => Int,
+    nullable: true,
+    defaultValue: 10,
+  })
+  limit: number,
+) {
+  return this.postService.getProfilePosts(
+    user.accountId,
+    profileId,
+    page,
+    limit,
+  );
+}
 
   
 }

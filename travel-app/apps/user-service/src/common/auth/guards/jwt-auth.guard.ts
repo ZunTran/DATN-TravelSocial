@@ -6,6 +6,9 @@ import { GqlExecutionContext } from '@nestjs/graphql';
 export class JwtAuthGuard extends AuthGuard('jwt') {
   override getRequest(context: ExecutionContext) {
     const ctx = GqlExecutionContext.create(context);
-    return ctx.getContext().req;
+    const req = ctx.getContext().req;
+    console.log( '[USER JWT GUARD]', req?.headers?.authorization ? 'AUTH EXISTS' : 'AUTH MISSING');
+
+    return req;
   }
 }

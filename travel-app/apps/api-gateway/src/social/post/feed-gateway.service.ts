@@ -17,10 +17,9 @@ import {
 import {
   SocialGraphqlClient,
 } from '../clients/social-graphql.client';
+import { normalizePost } from '../common/post-normalizer';
 
-import {
-  normalizePost,
-} from '../common/post-normalizer';
+
 
 interface FeedResponse {
   feed: {

@@ -10,7 +10,7 @@ import { CurrentUser } from '../../common/auth/decorators/current-user.decorator
 import type { ActiveUserData } from '../../common/auth/interfaces/user-data.interface';
 
 
-@Resolver(() => RecommendationLogResolver)
+@Resolver(() => RecommendationLogObject)
 export class RecommendationLogResolver {
   constructor(
     private readonly service: RecommendationLogService,

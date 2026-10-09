@@ -14,9 +14,9 @@ import { InternalFollowController } from './internal-follow.controller';
 ],
   imports: [
     PrismaModule,
-    UserProfileModule, 
+    forwardRef(() => UserProfileModule),
     forwardRef(() => BlockModule),
-    NotificationModule,
+    forwardRef(() => NotificationModule),
   ],
   providers: [
     FollowResolver,

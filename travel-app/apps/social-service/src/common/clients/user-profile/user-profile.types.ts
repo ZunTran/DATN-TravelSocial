@@ -4,3 +4,7 @@ export interface UserProfileSnapshot {
   username: string;
   avatarUrl: string | null;
 }
+
+export interface UserProfilesBatchResponse {
+  items: UserProfileSnapshot[];
+}

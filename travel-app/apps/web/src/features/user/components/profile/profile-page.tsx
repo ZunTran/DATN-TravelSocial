@@ -11,11 +11,11 @@ import ProfileTabs from './profile-tabs';
 import ProfileStories from './profile-stories';
 import ProfileFollowDialog from './profile-follow-dialog';
 
-import type { UserProfile } from '../../types/profile';
-import type { InterestTag } from '../../types/interest';
+import type { UserProfile } from '../../user-profile/types/profile';
+import type { InterestTag } from '../../user-interest/types/interest';
 import type { Post } from '@/features/social/post/types/post.types';
-import type { FollowUser } from '../../types/follow';
 import { CreatePostCard } from '@/features/social/components';
+import { FollowUser } from '../../user-interact/types/follow';
 
 interface Story {
   id: string;
@@ -45,6 +45,7 @@ interface ProfilePageProps {
   posts: Post[];
   savedPosts?: Post[];
   onPostCreated?: (post: Post) => void;
+  onPostDeleted?: (postId: string) => void;
 
   postsLoading?: boolean;
   postsLoadingMore?: boolean;
@@ -94,6 +95,7 @@ export function ProfilePage({
   posts,
   savedPosts = [],
   onPostCreated,
+  onPostDeleted,
 
   postsLoading = false,
   postsLoadingMore = false,
@@ -130,9 +132,44 @@ export function ProfilePage({
   setProfile(initialProfile);
 }, [initialProfile]);
 
+const EDITING_DRAFT_STORAGE_KEY = 'travel-social:editing-draft';
+const [editingDraft, setEditingDraft] = useState<Post | null>(null);
+const [draftRefreshKey, setDraftRefreshKey] = useState(0);
+
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [followDialog, setFollowDialog] = useState< 'followers' | 'following' | null >(null);
+
+  useEffect(() => {
+  if (!isOwnProfile) {
+    return;
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(
+      EDITING_DRAFT_STORAGE_KEY,
+    );
+
+    if (!raw) {
+      return;
+    }
+
+    const savedDraft = JSON.parse(raw) as Post;
+
+    if (savedDraft?.id) {
+      setEditingDraft(savedDraft);
+    }
+  } catch (error) {
+    console.warn(
+      'Cannot restore editing draft:',
+      error,
+    );
+
+    window.sessionStorage.removeItem(
+      EDITING_DRAFT_STORAGE_KEY,
+    );
+  }
+}, [isOwnProfile]);
 
   const handleEditProfile = () => {
     setUpdateSuccess(false);
@@ -166,7 +203,58 @@ export function ProfilePage({
     onFollowingClick?.();
   };
 
-  return (
+
+  const handleEditDraft = (post: Post) => {
+  setEditingDraft(post);
+
+  try {
+    window.sessionStorage.setItem(
+      EDITING_DRAFT_STORAGE_KEY,
+      JSON.stringify(post),
+    );
+  } catch (error) {
+    console.warn('Cannot persist editing draft:', error,
+    );
+  }
+};
+
+const handleEditCancel = () => {
+  setEditingDraft(null);
+
+  try {
+    window.sessionStorage.removeItem(
+      EDITING_DRAFT_STORAGE_KEY,
+    );
+  } catch (error) {
+    console.warn(
+      'Cannot clear editing draft:',
+      error,
+    );
+  }
+};
+
+const handleEditSuccess = (post: Post) => {
+  setEditingDraft(null);
+
+  try {
+    window.sessionStorage.removeItem(
+      EDITING_DRAFT_STORAGE_KEY,
+    );
+  } catch (error) {
+    console.warn(
+      'Cannot clear editing draft:',
+      error,
+    );
+  }
+
+  setDraftRefreshKey(
+    (current) => current + 1,
+  );
+
+  onPostCreated?.(post);
+};
+
+return (
     <>
       <div className="space-y-6">
 
@@ -181,13 +269,7 @@ export function ProfilePage({
           onEditCover={onEditCover}
         />
 
-{isOwnProfile && (
-  <CreatePostCard
-    onCreated={(post) => {
-      onPostCreated?.(post);
-    }}
-  />
-)}
+
 
 
         <ProfileStats
@@ -209,25 +291,39 @@ export function ProfilePage({
           stories={stories}
         />
 
+{isOwnProfile && (
+  <CreatePostCard
+    editingPost={editingDraft}
+    onCreated={(post) => {
+      onPostCreated?.(post);
+    }}
+    onEditSuccess={handleEditSuccess}
+    onEditCancel={handleEditCancel}
+  />
+)}
 
         <ProfileTabs
           isOwnProfile={isOwnProfile}
           profile={profile}
           posts={posts}
           savedPosts={savedPosts}
-
           onPostCreated={onPostCreated}
+          onPostDeleted={onPostDeleted}
 
           postsLoading={postsLoading}
-  postsLoadingMore={postsLoadingMore}
-  hasMorePosts={hasMorePosts}
-  onLoadMorePosts={onLoadMorePosts}
+          postsLoadingMore={postsLoadingMore}
+          hasMorePosts={hasMorePosts}
+          onLoadMorePosts={onLoadMorePosts}
   
           isEditingProfile={isEditingProfile}
           onEditProfile={handleEditProfile}
           onCancelEdit={handleCancelEdit}
           onProfileUpdated={handleProfileUpdated}
+          onEditDraft={handleEditDraft}
+          draftRefreshKey={draftRefreshKey}
+
         />
+
 
 
         {updateSuccess && (

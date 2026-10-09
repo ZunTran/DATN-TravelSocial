@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15
+    image: pgvector/pgvector:pg15
     container_name: travel-postgres
     restart: unless-stopped
 
@@ -103,7 +103,7 @@ services:
     restart: unless-stopped
 
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3001
 
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
@@ -137,7 +137,7 @@ services:
     restart: unless-stopped
 
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3002
 
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
@@ -175,7 +175,7 @@ services:
     restart: unless-stopped
 
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3003
 
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
@@ -200,6 +200,43 @@ services:
     networks:
       - travel-network
 
+  ai-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        APP_NAME: ai-service
+
+    container_name: travel-ai
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: production
+      PORT: 3004
+
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+
+      JWT_SECRET: ${JWT_SECRET}
+
+      USER_SERVICE_URL: http://user-service:3002
+      SOCIAL_SERVICE_URL: http://social-service:3003
+
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      social-service:
+        condition: service_started
+
+    ports:
+      - "3004:3004"
+
+    networks:
+      - travel-network
 
   api-gateway:
     build:
@@ -212,7 +249,7 @@ services:
     restart: unless-stopped
 
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 4000
 
       FRONTEND_URL: http://localhost:3000
@@ -220,6 +257,7 @@ services:
       AUTH_SERVICE_URL: http://auth-service:3001/graphql
       USER_SERVICE_URL: http://user-service:3002/graphql
       SOCIAL_SERVICE_URL: http://social-service:3003/graphql
+      AI_SERVICE_URL: http://ai-service:3004/graphql
 
     depends_on:
       auth-service:
@@ -228,12 +266,18 @@ services:
         condition: service_started
       social-service:
         condition: service_started
+      ai-service:
+        condition: service_started
 
     ports:
       - "4000:4000"
 
     networks:
       - travel-network
+
+
+
+
 
 
   web:
@@ -245,7 +289,7 @@ services:
     restart: unless-stopped
 
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       NEXT_PUBLIC_GRAPHQL_URL: http://localhost:4000/graphql
 
     depends_on:

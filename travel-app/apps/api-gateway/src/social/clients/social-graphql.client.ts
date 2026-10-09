@@ -2,8 +2,8 @@ import { BadGatewayException, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import FormData from 'form-data';
-import { SERVICE_URLS } from '../../config/service-url.config';
 import type { FileUpload } from 'graphql-upload-ts';
+import { SERVICE_URLS } from '../../config/service-url.config';
 
 export interface GraphQLResponse<T> {
   data: T;

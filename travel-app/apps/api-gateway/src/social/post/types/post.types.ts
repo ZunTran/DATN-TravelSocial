@@ -5,12 +5,9 @@ import {
   ObjectType,
   registerEnumType,
 } from '@nestjs/graphql';
-
-import {
-  CategoryObject,
-  LocationObject,
-} from '../../metadata/types/metadata.types';
-
+import { LocationObject } from '../../metadata/location/objects/location.object';
+import { GatewayCategoryObject } from '../../metadata/category/types/category.types';
+import { HashtagObject } from '../../metadata/hashtag/types/hashtag.object';
 
 export enum PostPrivacy {
   PUBLIC = 'PUBLIC',
@@ -40,8 +37,6 @@ registerEnumType(MediaType, {
   name: 'MediaType',
 });
 
-
-
 @ObjectType()
 export class PostMediaObject {
   @Field(() => ID)
@@ -56,7 +51,6 @@ export class PostMediaObject {
   @Field(() => Int)
   displayOrder!: number;
 }
-
 
 @ObjectType()
 export class PostObject {
@@ -109,15 +103,20 @@ export class PostObject {
   @Field(() => [PostMediaObject])
   media!: PostMediaObject[];
 
-  @Field(() => CategoryObject, {
+  @Field(() => GatewayCategoryObject, {
     nullable: true,
   })
-  category?: CategoryObject | null;
+  category?: GatewayCategoryObject | null;
 
   @Field(() => LocationObject, {
     nullable: true,
   })
   location?: LocationObject | null;
+
+  @Field(() => [HashtagObject], {
+    nullable: true,
+  })
+  hashtags?: HashtagObject[] | null;
 
   @Field(() => String)
   authorUsername!: string;
@@ -132,9 +131,7 @@ export class PostObject {
 
   @Field(() => Boolean)
   isPostSaved!: boolean;
-
 }
-
 
 @ObjectType()
 export class PostListObject {
@@ -152,6 +149,9 @@ export class PostListObject {
 
   @Field(() => Int)
   totalPages!: number;
+
+  @Field(() => Boolean)
+  hasNextPage!: boolean;
 }
 
 export interface SocialPostResponse {
@@ -169,14 +169,14 @@ export interface SocialPostResponse {
   commentCount: number;
   shareCount: number;
   saveCount: number;
-  isPostLiked: boolean;
-  isPostSaved: boolean;
+isPostLiked?: boolean | null;
+isPostSaved?: boolean | null;
   authorUsername: string;
   authorAvatar: string | null;
   media: SocialPostMediaResponse[];
   category: SocialCategoryResponse | null;
   location: SocialLocationResponse | null;
-  
+  hashtags: SocialHashtagResponse[];
 }
 
 export interface SocialPostMediaResponse {
@@ -199,4 +199,9 @@ export interface SocialLocationResponse {
   latitude?: number | null;
   longitude?: number | null;
   province?: string | null;
+}
+
+export interface SocialHashtagResponse {
+  id: string;
+  name: string;
 }

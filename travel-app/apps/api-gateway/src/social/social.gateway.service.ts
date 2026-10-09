@@ -1,24 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PostGatewayService } from './post/post-gateway.service';
 import { FeedGatewayService } from './post/feed-gateway.service';
-import { LikeGatewayService } from './interaction/like-gateway.service';
-import { SaveGatewayService } from './interaction/save-gateway.service';
-import { CommentGatewayService } from './interaction/comment-gateway.service';
-import { ShareGatewayService } from './interaction/share-gateway.service';
-import { LocationGatewayService } from './metadata/location-gateway.service';
-import { HashtagGatewayService } from './metadata/hashtag-gateway.service';
+import { LikeGatewayService } from './interaction/like.gateway.service';
+import { SaveGatewayService } from './interaction/save.gateway.service';
+import { ShareGatewayService } from './interaction/share.gateway.service';
 import { CreatePostInput, PaginationInput, PostFilterInput, UpdatePostInput } from './post/dto/post.inputs';
 import { PostListObject, PostObject, PostPrivacy, PostStatus } from './post/types/post.types';
 import { FeedInput } from './post/dto/feed.inputs';
 import { FeedPageObject } from './post/types/feed.types';
-import { CommentList, CommentObject, LikeList, LikeObject, SavePostObject, ShareList, ShareObject } from './interaction/types/interaction.types';
-import { CreateCommentInput, UpdateCommentInput } from './interaction/dto/interaction.inputs';
-
-import {  HashtagObject, LocationObject } from './metadata/types/metadata.types';
+import { LikeList, LikeObject, SavePostObject, ShareList, ShareObject } from './interaction/types/interaction.types';
 import type { FileUpload } from 'graphql-upload-ts';
-import { AdminHashtagFilterInput, CreateHashtagInput, UpdateHashtagInput } from './metadata/hashtag/dto/hashtag.input';
-import { AdminHashtagListObject } from './metadata/hashtag/types/hashtag.object';
-import { CreateLocationInput, UpdateLocationInput } from './metadata/location/dto/location.input';
+
 @Injectable()
 export class SocialGatewayService {
   constructor(
@@ -26,10 +18,8 @@ export class SocialGatewayService {
     private readonly feedGateway: FeedGatewayService,
     private readonly likeGateway: LikeGatewayService,
     private readonly saveGateway: SaveGatewayService,
-    private readonly commentGateway: CommentGatewayService,
     private readonly shareGateway: ShareGatewayService,
-    private readonly locationGateway: LocationGatewayService,
-    private readonly hashtagGateway: HashtagGatewayService,
+    // private readonly hashtagGateway: HashtagGatewayService,
   ) {}
 
   createPost( input: CreatePostInput, authorization?: string ): Promise<PostObject> {
@@ -93,10 +83,54 @@ export class SocialGatewayService {
     );
   }
 
-  viewPost( postId: string ): Promise < Pick<PostObject, 'id' | 'viewCount'>
-  > {
-    return this.postGateway.viewPost( postId );
+  profilePosts(
+  profileId: string,
+  page = 1,
+  limit = 10,
+  authorization?: string,
+): Promise<PostListObject> {
+  return this.postGateway.profilePosts(
+    profileId,
+    page,
+    limit,
+    authorization,
+  );
+}
+
+myDraftPosts(
+  page = 1,
+  limit = 10,
+  authorization?: string,
+): Promise<PostListObject> {
+  return this.postGateway.myDraftPosts(
+    page,
+    limit,
+    authorization,
+  );
+}
+
+  searchPosts(
+  keyword: string,
+  page: number,
+  limit: number,
+  authorization?: string): Promise<PostListObject> {
+    return this.postGateway.searchPosts(
+      keyword,
+      page,
+      limit,
+      authorization,
+    );
   }
+
+viewPost(
+  postId: string,
+  authorization?: string,
+): Promise<Pick<PostObject, 'id' | 'viewCount'>> {
+  return this.postGateway.viewPost(
+    postId,
+    authorization,
+  );
+}
 
   changePostStatus( postId: string,  newStatus: PostStatus, authorization?: string,
   ): Promise< Pick < PostObject, 'id' | 'status' | 'updatedAt'>
@@ -136,8 +170,6 @@ export class SocialGatewayService {
     );
   }
 
-
-  // LIKE
   likePost(
     postId: string,
     authorization?: string,
@@ -180,7 +212,6 @@ export class SocialGatewayService {
     );
   }
 
-  // SAVE
   savePost(
     postId: string,
     authorization?: string,
@@ -211,68 +242,16 @@ export class SocialGatewayService {
     );
   }
 
-  savedPosts(
+  savedPosts(  profileId: string,
     pagination: PaginationInput,
     authorization?: string,
   ): Promise<PostListObject> {
     return this.saveGateway.savedPosts(
+      profileId,
       pagination,
       authorization,
     );
   }
-
-  createComment(
-    input: CreateCommentInput,
-    authorization?: string,
-  ): Promise<CommentObject> {
-    return this.commentGateway.createComment(
-      input,
-      authorization,
-    );
-  }
-
-  updateComment(
-    input: UpdateCommentInput,
-    authorization?: string,
-  ): Promise<CommentObject> {
-    return this.commentGateway.updateComment(
-      input,
-      authorization,
-    );
-  }
-
-  deleteComment(
-    commentId: string,
-    authorization?: string,
-  ): Promise<boolean> {
-    return this.commentGateway.deleteComment(
-      commentId,
-      authorization,
-    );
-  }
-
-  comments(
-    postId: string,
-    pagination: PaginationInput,
-    authorization?: string,
-  ): Promise<CommentList> {
-    return this.commentGateway.comments(
-      postId,
-      pagination,
-      authorization,
-    );
-  }
-
-  replies(
-    commentId: string,
-    authorization?: string,
-  ): Promise<CommentObject[]> {
-    return this.commentGateway.replies(
-      commentId,
-      authorization,
-    );
-  }
-
 
   sharePost(
     postId: string,
@@ -296,58 +275,4 @@ export class SocialGatewayService {
     );
   }
 
-
-  locations(): Promise<LocationObject[]> {
-    return this.locationGateway.locations();
-  }
-
-  createLocation(
-    input: CreateLocationInput,
-    authorization?: string,
-  ): Promise<LocationObject> {
-    return this.locationGateway.createLocation(
-      input,
-      authorization,
-    );
-  }
-
-  updateLocation(
-    input: UpdateLocationInput,
-    authorization?: string,
-  ): Promise<LocationObject> {
-    return this.locationGateway.updateLocation(
-      input,
-      authorization,
-    );
-  }
-
-  // HASHTAG
-  hashtags(): Promise<HashtagObject[]> {
-    return this.hashtagGateway.hashtags();
-  }
-
-  createHashtag(
-    input: CreateHashtagInput,
-    authorization?: string,
-  ): Promise<HashtagObject> {
-    return this.hashtagGateway.createHashtag(
-      input,
-      authorization,
-    );
-  }
-
-  updateHashtag( input: UpdateHashtagInput, authorization?: string): Promise<HashtagObject> {
-    return this.hashtagGateway.updateHashtag(input,authorization );
-  }
-
-  adminHashtags(input: AdminHashtagFilterInput, authorization?: string): Promise<AdminHashtagListObject> {
-      return this.hashtagGateway.adminHashtags(input,authorization);
-    }
-  
-  adminDeleteHashtag( id: string, authorization?: string ): Promise<boolean> {
-      return this.hashtagGateway.adminDeleteHashtag(id,authorization);
-    }
-    
-
-  
 }

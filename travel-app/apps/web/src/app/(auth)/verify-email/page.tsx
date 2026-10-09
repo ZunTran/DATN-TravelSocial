@@ -1,10 +1,4 @@
-// import {
-//   VerifyEmailCard,
-// } from "@/features/auth/components/verify-email-card";
 
-// export default function VerifyEmailPage() {
-//   return <VerifyEmailCard />;
-// }
 
 export default function ExplorePage() {
   return (
@@ -12,8 +6,6 @@ export default function ExplorePage() {
       <h1 className="mb-6 text-2xl font-bold">
         Verified email
       </h1>
-
-      {/* <PostList /> */}
     </main>
   );
 }

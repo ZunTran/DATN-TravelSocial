@@ -1,4 +1,4 @@
-import { Args,ID,Mutation,Parent,Query,ResolveField,Resolver,} from '@nestjs/graphql';
+import { Args,ID,Mutation,Query,Resolver,} from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
@@ -11,7 +11,6 @@ import { LikeObject } from './like/objects/like.object';
 import { CommentObject } from './comment/objects/comment.object';
 import { SavePostObject } from './save-post/objects/save-post.object';
 import { ShareObject } from './share/objects/share.object';
-
 import { CreateCommentInput } from './comment/dto/create-comment.input';
 import { UpdateCommentInput } from './comment/dto/update-comment.input';
 import { PaginationInput } from '../../common/dto/pagination.input';
@@ -74,9 +73,9 @@ export class InteractionResolver {
   @Query(() => CommentList)
   async comments(
     @Args('postId', { type: () => ID }) postId: string,
-    @Args('pagination', { type: () => PaginationInput })
-    pagination: PaginationInput) {
-      return this.commentService.getComments( postId, pagination);
+    @Args('pagination', { type: () => PaginationInput, nullable: true },)
+    pagination?: PaginationInput) {
+      return this.commentService.getComments( postId, pagination ?? { page: 1, limit: 5});
 }
 
   @UseGuards(JwtAuthGuard)
@@ -129,14 +128,16 @@ export class InteractionResolver {
       return this.shareService.getShares( postId, pagination);
   }
 
-  @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Query(() => PostListObject)
-async savedPosts(
+savedPosts(
   @CurrentUser() user: ActiveUserData,
+  @Args('profileId', { type: () => ID }) profileId: string,
   @Args('pagination', { type: () => PaginationInput })
   pagination: PaginationInput,
 ) {
   return this.savePostService.getSavedPosts(
+    profileId,
     user.accountId,
     pagination.page,
     pagination.limit,

@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@apollo/client/react';
-import { GET_POSTS } from '../api/post.queries';
+import { POSTS_QUERY } from '../post/api/post.queries';
 import type { Post } from '../post/types/post.types';
 
 interface PostsData {
@@ -26,56 +26,16 @@ export function usePosts(
 ) {
   const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [currentPage, setCurrentPage] = useState(page);
-
-  const prependPost = useCallback(
-    (post: Post) => {
-      setAllPosts((current) => {
-        const withoutDuplicate =
-          current.filter(
-            (item) => item.id !== post.id,
-          );
-
-        return [
-          post,
-          ...withoutDuplicate,
-        ];
-      });
-    },
-    [],
-  );
-
-
-  const replacePost = useCallback(
-    (updatedPost: Post) => {
-      setAllPosts((current) =>
-        current.map((post) =>
-          post.id === updatedPost.id ? updatedPost : post,
-        ),
-      );
-    },
-    [],
-  );
-
-
-  const removePost = useCallback(
-    (postId: string) => {
-      setAllPosts((current) =>
-        current.filter(
-          (post) => post.id !== postId,
-        ),
-      );
-    },
-    [],
-  );
-
+  const [reloading, setReloading] = useState(false);
 
   const {
     data,
     loading,
     error,
     fetchMore,
+    refetch,
   } = useQuery<PostsData>(
-    GET_POSTS,
+    POSTS_QUERY,
     {
       variables: {
         pagination: {
@@ -89,82 +49,130 @@ export function usePosts(
     },
   );
 
+  const prependPost = useCallback(
+    (post: Post) => {
+      setAllPosts((current) => {
+        const withoutDuplicate = current.filter(
+          (item) => item.id !== post.id,
+        );
+
+        return [post, ...withoutDuplicate];
+      });
+    },
+    [],
+  );
+
+  const replacePost = useCallback(
+    (updatedPost: Post) => {
+      setAllPosts((current) =>
+        current.map((post) =>
+          post.id === updatedPost.id ? updatedPost : post,
+        ),
+      );
+    },
+    [],
+  );
+
+  const removePost = useCallback(
+    (postId: string) => {
+      setAllPosts((current) =>
+        current.filter((post) => post.id !== postId),
+      );
+    },
+    [],
+  );
+
+  const reloadPosts = useCallback(async () => {
+    if (!filter?.authorId) {
+      return;
+    }
+
+    setReloading(true);
+    setAllPosts([]);
+    setCurrentPage(page);
+
+    try {
+      const result = await refetch({
+        pagination: {
+          page,
+          limit,
+        },
+        filter,
+      });
+
+      const refreshedPosts = result.data?.posts?.items ?? [];
+
+      setAllPosts(refreshedPosts);
+      setCurrentPage(result.data?.posts?.page ?? page);
+    } finally {
+      setReloading(false);
+    }
+  }, [filter, limit, page, refetch]);
 
   useEffect(() => {
-    if (!data?.posts) return;
+    if (!data?.posts || reloading) {
+      return;
+    }
 
     setAllPosts((current) => {
-      const serverPosts =data.posts.items;
+      const serverPosts = data.posts.items;
 
       if (current.length === 0) {
         return serverPosts;
       }
 
       const serverIds = new Set(
-        serverPosts.map(
-          (post) => post.id,
-        ),
+        serverPosts.map((post) => post.id),
       );
 
-      const localOnlyPosts = current.filter( (post) =>!serverIds.has(post.id) );
+      const localOnlyPosts = current.filter(
+        (post) => !serverIds.has(post.id),
+      );
 
-      return [
-        ...localOnlyPosts,
-        ...serverPosts,
-      ];
+      return [...localOnlyPosts, ...serverPosts];
     });
 
-    setCurrentPage( data.posts.page,
-    );
-  }, [data]);
-
+    setCurrentPage(data.posts.page);
+  }, [data, reloading]);
 
   const loadMore = useCallback(
     async () => {
-      if ( !data?.posts || loading) {
+      if (!data?.posts || loading || reloading) {
         return;
       }
 
-      if ( currentPage >= data.posts.totalPages) {
+      if (currentPage >= data.posts.totalPages) {
         return;
       }
+
       const nextPage = currentPage + 1;
 
-      const result =
-        await fetchMore({
-          variables: {
-            pagination: {
-              page: nextPage,
-              limit,
-            },
-            filter,
+      const result = await fetchMore({
+        variables: {
+          pagination: {
+            page: nextPage,
+            limit,
           },
-        });
+          filter,
+        },
+      });
 
-      const newPosts = result.data?.posts?.items ??
-        [];
+      const newPosts = result.data?.posts?.items ?? [];
 
       if (newPosts.length === 0) {
         return;
       }
 
       setAllPosts((prev) => {
-        const existingIds =
-          new Set(
-            prev.map(
-              (post) => post.id,
-            ),
-          );
+        const existingIds = new Set(
+          prev.map((post) => post.id),
+        );
 
-        const uniquePosts =
-          newPosts.filter(
-            (post) => !existingIds.has( post.id ),
-          );
+        const uniquePosts = newPosts.filter(
+          (post) => !existingIds.has(post.id),
+        );
 
-        return [
-          ...prev,
-          ...uniquePosts,
-        ];
+        return [...prev, ...uniquePosts];
       });
 
       setCurrentPage(nextPage);
@@ -176,19 +184,20 @@ export function usePosts(
       limit,
       filter,
       loading,
+      reloading,
     ],
   );
 
   return {
     posts: allPosts,
     total: data?.posts?.total ?? 0,
-    loading,
+    loading: loading || reloading,
     error,
-    loadingMore:  loading && allPosts.length > 0,
-
-    hasMore: !!data?.posts &&  currentPage < data.posts.totalPages,
+    loadingMore: loading && allPosts.length > 0 && !reloading,
+    hasMore: !!data?.posts && currentPage < data.posts.totalPages,
 
     loadMore,
+    reloadPosts,
     prependPost,
     replacePost,
     removePost,

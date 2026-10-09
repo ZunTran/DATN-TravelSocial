@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { SocialGraphqlClient } from '../clients/social-graphql.client';
-import { normalizePostList } from '../common/post-normalizer';
+
 import { SavePostObject } from './types/interaction.types';
 import { PaginationInput } from '../post/dto/post.inputs';
 import { PostListObject, SocialPostResponse } from '../post/types/post.types';
+import { normalizePostList } from '../common/post-normalizer';
 
 interface SavePostResponse { savePost: SavePostObject; }
 interface UnsavePostResponse { unsavePost: SavePostObject; }
@@ -15,6 +16,8 @@ interface SavedPostsResponse {
     page: number;
     limit: number;
     totalPages: number;
+    hasNextPage: boolean;
+
   };
 }
 
@@ -71,11 +74,25 @@ export class SaveGatewayService {
     return data.isPostSaved;
   }
 
-  async savedPosts(pagination: PaginationInput, authorization?: string): Promise<PostListObject> {
-    const data = await this.socialClient.execute<SavedPostsResponse>(
-      `
-      query SavedPosts($pagination: PaginationInput!) {
-        savedPosts(pagination: $pagination) {
+  async savedPosts(
+  profileId: string,
+  pagination: PaginationInput,
+  authorization?: string,
+): Promise<PostListObject> {
+  console.log("========== SAVED POSTS GATEWAY ==========");
+console.log("profileId:", profileId);
+console.log("pagination:", pagination);
+console.log("authorization:", authorization ? "HAS TOKEN" : "NO TOKEN");
+  const data = await this.socialClient.execute<SavedPostsResponse>(
+    `
+      query SavedPosts(
+        $profileId: ID!
+        $pagination: PaginationInput!
+      ) {
+        savedPosts(
+          profileId: $profileId
+          pagination: $pagination
+        ) {
           items {
             id
             authorId
@@ -95,17 +112,20 @@ export class SaveGatewayService {
             isPostSaved
             authorUsername
             authorAvatar
+
             media {
               id
               mediaUrl
               mediaType
               displayOrder
             }
+
             category {
               id
               name
               description
             }
+
             location {
               id
               name
@@ -115,16 +135,22 @@ export class SaveGatewayService {
               province
             }
           }
+
           total
           page
           limit
           totalPages
+          hasNextPage
         }
       }
-      `,
-      { pagination },
-      authorization,
-    );
-    return normalizePostList(data.savedPosts);
-  }
+    `,
+    {
+      profileId,
+      pagination,
+    },
+    authorization,
+  );
+
+  return normalizePostList(data.savedPosts);
+}
 }

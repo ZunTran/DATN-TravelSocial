@@ -5,11 +5,10 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../../../prisma/prisma.service';
-
 import { LocationRepository } from './location.repository';
-
 import { CreateLocationInput } from './dto/create-location.input';
 import { UpdateLocationInput } from './dto/update-location.input';
+import { HybridLocationSearchInput } from './dto/hybrid-location-search.input';
 
 @Injectable()
 export class LocationService {
@@ -17,6 +16,13 @@ export class LocationService {
     private readonly prisma: PrismaService,
     private readonly repository: LocationRepository,
   ) {}
+
+  async hybridSearch(input: HybridLocationSearchInput) {
+    console.log('[LocationService] START');
+    const result = await this.repository.hybridSearch(input);
+  console.log('[LocationService] DONE');
+  return result;
+  }
 
   private mapLocation(location: any) {
     return {
@@ -86,8 +92,7 @@ export class LocationService {
   async findAll() {
     return this.prisma.$transaction(
       async (tx) => {
-        const locations =
-          await this.repository.findAll(tx);
+        const locations = await this.repository.findAll(tx);
 
         return locations.map(
           (location) =>

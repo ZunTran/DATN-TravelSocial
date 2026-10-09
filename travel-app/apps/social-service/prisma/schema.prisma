@@ -43,7 +43,8 @@ model category {
   description String?
 
   posts post[]
-
+  locations location[]
+  
   @@map("category")
 }
 
@@ -56,13 +57,38 @@ model location {
   longitude Decimal? @db.Decimal(9, 6)
   province  String?  @db.VarChar(100)
 
-  posts post[]
+  description     String?
+  estimated_cost  Decimal? @db.Decimal(10, 2)
+  opening_hours   String?
+  duration_minutes Int?
+  source          String?  @db.VarChar(100)
+  source_url      String?
 
+  category_id String? @db.Uuid
+  category    category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+
+  posts post[]
+  embedding location_embedding?
+
+  @@index([category_id], map: "idx_location_category")
   @@index([province], map: "idx_location_province")
   @@index([name], map: "idx_location_name")
   @@map("location")
 }
 
+model location_embedding {
+  location_id String @id @db.Uuid
+  content   String
+  embedding Unsupported("vector")
+  metadata  Json?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  location location @relation(fields: [location_id], references: [id], onDelete: Cascade)
+
+  @@map("location_embedding")
+}
 
 model post {
   id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

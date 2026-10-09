@@ -126,11 +126,6 @@ const handleSearchChange = (value: string) => {
 
       setDeleteDialogOpen(false);
       setSelectedCategory(null);
-
-      /**
-       * Nếu xóa item cuối cùng
-       * của page hiện tại thì lùi page.
-       */
       if (
         categories.length === 1 &&
         page > 1
@@ -145,8 +140,6 @@ const handleSearchChange = (value: string) => {
 
   return (
     <div className="space-y-6 p-6">
-      {/* HEADER */}
-
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold">
@@ -166,8 +159,6 @@ const handleSearchChange = (value: string) => {
         </button>
       </div>
 
-      {/* SEARCH */}
-
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <input
           value={search}
@@ -183,15 +174,11 @@ const handleSearchChange = (value: string) => {
         </div>
       </div>
 
-      {/* ERROR */}
-
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
           Failed to load categories.
         </div>
       )}
-
-      {/* TABLE */}
 
       {!loading &&
       categories.length === 0 ? (
@@ -204,8 +191,6 @@ const handleSearchChange = (value: string) => {
           onDelete={handleDelete}
         />
       )}
-
-      {/* PAGINATION */}
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
@@ -249,8 +234,6 @@ const handleSearchChange = (value: string) => {
         </div>
       )}
 
-      {/* CREATE / UPDATE */}
-
       <CategoryDialog
         open={dialogOpen}
         category={selectedCategory}
@@ -262,8 +245,6 @@ const handleSearchChange = (value: string) => {
         }
         onSubmit={handleSubmit}
       />
-
-      {/* DELETE */}
 
       <CategoryDeleteDialog
         open={deleteDialogOpen}

@@ -107,7 +107,6 @@ getUserInterests(
     return this.service.getUserInterestsPaginated(user.accountId, input);
   }
 
-  // Gợi ý những user khác có chung sở thích du lịch
   @Query(() => [UserProfileObject]) 
   @UseGuards(JwtAuthGuard)
   getSuggestedUsersByInterests(@CurrentUser() user: ActiveUserData) {

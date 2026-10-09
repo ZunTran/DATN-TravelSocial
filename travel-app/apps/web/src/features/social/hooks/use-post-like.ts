@@ -7,7 +7,6 @@ import {
   UNLIKE_POST,
 } from '../api/like.queries';
 
-import { GET_POSTS } from '../api/post.queries';
 
 interface LikePostData {
   likePost: {

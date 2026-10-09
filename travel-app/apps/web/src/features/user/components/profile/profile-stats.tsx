@@ -21,7 +21,6 @@ export default function ProfileStats({
   return (
     <Card className="overflow-hidden rounded-2xl">
       <div className="grid grid-cols-3 divide-x">
-        {/* POSTS */}
         <div className="flex flex-col items-center justify-center px-3 py-5">
           <span className="text-xl font-bold sm:text-2xl">
             {postCount}
@@ -32,7 +31,6 @@ export default function ProfileStats({
           </span>
         </div>
 
-        {/* FOLLOWERS */}
         <button
           type="button"
           onClick={onFollowersClick}
@@ -46,8 +44,6 @@ export default function ProfileStats({
             Followers
           </span>
         </button>
-
-        {/* FOLLOWING */}
         <button
           type="button"
           onClick={onFollowingClick}

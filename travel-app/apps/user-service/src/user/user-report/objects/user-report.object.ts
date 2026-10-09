@@ -1,5 +1,6 @@
-import {Field,ID,ObjectType,} from '@nestjs/graphql';
+import {Field,GraphQLISODateTime,ID,ObjectType,} from '@nestjs/graphql';
 import { UserProfileObject } from '../../user-profile/objects/user-profile.object';
+import { user_report_status } from '@prisma/client';
 
 @ObjectType()
 export class UserReportObject {
@@ -15,20 +16,20 @@ export class UserReportObject {
   @Field()
   reason: string;
 
-  @Field()
-  status: string;
+  @Field(() => user_report_status)
+  status: user_report_status;
 
   @Field(() => ID, {
     nullable: true,
   })
   handled_by?: string;
 
-  @Field({
+  @Field(() => GraphQLISODateTime, {
     nullable: true,
   })
-  handled_at?: Date;
+  handled_at?: Date | null;
 
-  @Field()
+  @Field(() => GraphQLISODateTime)
   created_at: Date;
 
   @Field(() => UserProfileObject, {

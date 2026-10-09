@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { HashtagFilterInput } from './dto/hashtag-filter.input';
 
 @Injectable()
 export class HashtagRepository {
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {}
   async findByIds(
     tx: Prisma.TransactionClient,
     ids: string[]) {
@@ -112,9 +116,52 @@ export class HashtagRepository {
   }
 
   async countPosts(tx: Prisma.TransactionClient | PrismaService, hashtagId: string) {
-  return tx.post_hashtag.count({
-    where: { hashtag_id: hashtagId},
-  });
+    return tx.post_hashtag.count({
+      where: { hashtag_id: hashtagId},
+    });
+  }
+
+
+  async findPage(filter: HashtagFilterInput) {
+  const page = filter.page ?? 1;
+  const limit = filter.limit ?? 20;
+  const skip = (page - 1) * limit;
+  const trimmedSearch = filter.search?.trim();
+
+  const where: Prisma.hashtagWhereInput = trimmedSearch
+    ? {
+        name: {
+          contains: trimmedSearch,
+          mode: 'insensitive',
+        },
+      }
+    : {};
+
+  const [items, total] = await Promise.all([
+    this.prisma.hashtag.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        name: 'asc',
+      },
+    }),
+
+    this.prisma.hashtag.count({
+      where,
+    }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+    totalPages,
+    hasNextPage: page < totalPages,
+  };
 }
 
 }

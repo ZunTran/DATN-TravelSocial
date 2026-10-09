@@ -35,13 +35,23 @@ export function UserRegistrationChart({
 }: Props) {
   const chartData = data.map((item) => ({
     date: item.date,
-    label: new Date(item.date).toLocaleDateString(
+    // label: new Date(item.date).toLocaleDateString(
+    //   'vi-VN',
+    //   {
+    //     day: '2-digit',
+    //     month: '2-digit',
+    //   },
+    // ),
+
+    label: item.date
+  ? new Date(item.date).toLocaleDateString(
       'vi-VN',
       {
         day: '2-digit',
         month: '2-digit',
       },
-    ),
+    )
+  : 'N/A',
     registrations: item.count,
   }));
 

@@ -2,10 +2,42 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input AdminAccountFilterInput {
+  limit: Int = 10
+  page: Int = 1
+  search: String
+}
+
+type AdminAccountObject {
+  createdAt: DateTime!
+  displayName: String
+  email: String!
+  id: String!
+  lastLoginAt: DateTime
+  status: String!
+  username: String
+}
+
+type AdminAccountPageObject {
+  items: [AdminAccountObject!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+}
+
 type AdminResponseObject {
   email: String
   message: String!
   username: String
+}
+
+type AdminUserDashboardObject {
+  registrationGrowth: RegistrationGrowthObject!
+  sessionActivityByDay: [SessionActivityObject!]!
+  sessions: SessionStatisticsObject!
+  userGrowthByDay: [UserGrowthObject!]!
+  users: UserStatisticsObject!
 }
 
 input BlockInput {
@@ -108,6 +140,8 @@ type Mutation {
   createProfile(input: CreateProfileInput!): UserProfileObject!
   deleteInterestTag(id: ID!): Boolean!
   follow(profileId: ID!): FollowObject!
+  markAllNotificationsAsRead: Boolean!
+  markNotificationAsRead(notificationId: ID!): Boolean!
   reportUser(input: UserReportInput!): UserReportObject!
   seedDefaultAdmin: AdminResponseObject!
   unblock(profileId: ID!): Boolean!
@@ -121,12 +155,45 @@ type Mutation {
   updateUserReportStatus(input: UpdateReportStatusInput!, reportId: ID!): UserReportObject!
 }
 
+type NotificationObject {
+  createdAt: DateTime!
+  id: ID!
+  isRead: Boolean!
+  message: String!
+  postId: String
+  receiverId: ID!
+  senderId: ID
+  type: NotificationType!
+}
+
+type NotificationPageObject {
+  data: [NotificationObject!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+enum NotificationType {
+  COMMENT_REPLIED
+  MESSAGE_RECEIVED
+  NEW_FOLLOWER
+  POST_COMMENTED
+  POST_LIKED
+  POST_SHARED
+  STORY_VIEWED
+  SYSTEM_NOTIFICATION
+  TRAVEL_PLAN_CREATED
+}
+
 input PaginationInput {
   limit: Int! = 20
   page: Int! = 1
 }
 
 type Query {
+  adminAccounts(filter: AdminAccountFilterInput): AdminAccountPageObject!
+  adminUserDashboard(days: Int = 30): AdminUserDashboardObject!
   adminUserReport(id: ID!): UserReportObject!
   adminUserReports(input: GetUserReportsInput!): UserReportPageObject!
   blockedUsers(input: PaginationInput!): BlockPageObject!
@@ -144,17 +211,35 @@ type Query {
   isBlocked(profileId: ID!): Boolean!
   isFollowing(profileId: ID!): Boolean!
   myProfile: UserProfileObject!
-  myReports(input: PaginationInput!): UserReportPageObject!
+  myUserReports(input: PaginationInput!): UserReportPageObject!
+  notifications(limit: Int! = 10, page: Int! = 1): NotificationPageObject!
   profileByUsername(username: String!): UserProfileObject
   searchInterestTags(name: String!): [InterestTagObject!]!
   searchUsers(input: SearchUserInput!): UserProfilePageObject!
   userProfile(id: String!): UserProfileObject!
 }
 
+type RegistrationGrowthObject {
+  percentage: Float!
+  trend: String!
+}
+
 input SearchUserInput {
   keyword: String
   limit: Int! = 20
   page: Int! = 1
+}
+
+type SessionActivityObject {
+  date: DateTime!
+  sessions: Int!
+  users: Int!
+}
+
+type SessionStatisticsObject {
+  activeSessions: Int!
+  sessions: Int!
+  uniqueUsers: Int!
 }
 
 input UpdateInterestInput {
@@ -181,6 +266,11 @@ input UpdateReportStatusInput {
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
 
+type UserGrowthObject {
+  count: Int!
+  date: DateTime!
+}
+
 type UserInterestPageObject {
   data: [InterestTagObject!]!
   limit: Int!
@@ -198,6 +288,7 @@ type UserProfileObject {
   avatar_url: String
   bio: String
   birthday: DateTime
+  commonInterestsCount: Int
   cover_url: String
   created_at: DateTime!
   display_name: String!
@@ -233,7 +324,7 @@ type UserReportObject {
   reported_user_id: ID!
   reporter: UserProfileObject
   reporter_id: ID!
-  status: String!
+  status: UserReportStatus!
 }
 
 type UserReportPageObject {
@@ -249,4 +340,12 @@ enum UserReportStatus {
   REJECTED
   RESOLVED
   REVIEWING
+}
+
+type UserStatisticsObject {
+  active: Int!
+  banned: Int!
+  locked: Int!
+  newUsers: Int!
+  total: Int!
 }

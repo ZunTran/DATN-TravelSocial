@@ -4,3 +4,7 @@ export interface InternalUserProfileResponse {
   username: string;
   avatarUrl: string | null;
 }
+
+export interface InternalUserProfilesResponse {
+  items: InternalUserProfileResponse[];
+}

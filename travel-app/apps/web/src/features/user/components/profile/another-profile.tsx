@@ -8,15 +8,15 @@ import {
     PROFILE_STORAGE_KEY,
   useProfile,
   useProfileByUsername,
-} from "@/features/user/hooks/use-profile";
+} from "@/features/user/user-profile/hooks/use-profile";
 
 import { usePosts } from "@/features/social/hooks/use-posts";
-import { useFollowCounts } from "@/features/user/hooks/use-follow-counts";
-import { useFollow } from "@/features/user/hooks/use-follow";
-import { useFollowList } from "@/features/user/hooks/use-follow-list";
-import { useUserInterests } from "../../hooks/use-interests";
+import { useFollowCounts } from "@/features/user/user-interact/hooks/use-follow-counts";
+import { useFollow } from "@/features/user/user-interact/hooks/use-follow";
+import { useFollowList } from "@/features/user/user-interact/hooks/use-follow-list";
+import { useUserInterests } from "../../user-interest/hooks/use-interests";
+import { FollowUser } from "../../user-interact/types/follow";
 
-import type { FollowUser } from "@/features/user/types/follow";
 
 interface AnotherProfileRouteProps {
   username: string;

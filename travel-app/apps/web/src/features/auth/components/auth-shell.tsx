@@ -27,8 +27,6 @@ export function AuthShell({
     <div className="min-h-svh bg-gradient-to-br from-background via-background to-accent/40 px-4 py-8 sm:py-12">
       <div className="mx-auto grid min-h-[calc(100svh-4rem)] max-w-6xl items-center gap-10 lg:grid-cols-2">
 
-        {/* LEFT BRAND */}
-
         <div className="hidden lg:block">
           <div className="max-w-lg">
             <div className="mb-6 flex items-center gap-3">
@@ -78,7 +76,6 @@ export function AuthShell({
           </div>
         </div>
 
-        {/* RIGHT FORM */}
 
         <div className="mx-auto w-full max-w-md">
           <Card className="overflow-hidden rounded-3xl border-border/70 shadow-xl shadow-primary/5">

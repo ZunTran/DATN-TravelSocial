@@ -4,7 +4,7 @@ import {
   UserRound,
 } from 'lucide-react';
 
-import type { UserProfile } from '../../types/profile';
+import type { UserProfile } from '../../user-profile/types/profile';
 
 interface ProfileInfoProps {
   profile: UserProfile;

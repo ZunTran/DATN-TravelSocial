@@ -122,12 +122,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* ========================================
-          CONTENT
-      ======================================== */}
-
       <SidebarContent>
-        {/* MAIN */}
         <SidebarGroup>
           <SidebarGroupLabel>
             Discover
@@ -169,7 +164,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* PERSONAL */}
         <SidebarGroup>
           <SidebarGroupLabel>
             Your Space
@@ -203,7 +197,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* SETTINGS */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>

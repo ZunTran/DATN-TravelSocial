@@ -8,12 +8,10 @@ export class NotificationRepository {
     private readonly prisma: PrismaService,
   ) {}
 
-  async create(data: Prisma.notificationCreateInput,
-    tx?: Prisma.TransactionClient,) {
-
+  async create(data: Prisma.notificationCreateInput, tx?: Prisma.TransactionClient) {
     const client = tx ?? this.prisma;
     return client.notification.create({data});
-}
+  }
 
   async findById(id: string) {
     return this.prisma.notification.findUnique({where: { id },});
@@ -21,7 +19,6 @@ export class NotificationRepository {
 
   async findByUser(userId: string,page: number,limit: number) {
     const skip = (page - 1) * limit;
-
     const where = {receiver_id: userId};
 
     const [data, total] = await Promise.all([
@@ -55,4 +52,36 @@ export class NotificationRepository {
       data: {is_read: true},
     });
   }
+
+  async createMany( data: Prisma.notificationCreateManyInput[]) {
+  return this.prisma.notification.createMany({ data });
+}
+
+async findPostLikeNotifications( receiverId: string, postId: string) {
+  return this.prisma.notification.findMany({
+    where: {
+      receiver_id: receiverId,
+      type: 'POST_LIKED',
+      data: {
+        path: ['postId'],
+        equals: postId,
+      },
+    },
+
+    include: {
+      sender: {
+        select: {
+          id: true,
+          username: true,
+          display_name: true,
+          avatar_url: true,
+        },
+      },
+    },
+
+    orderBy: {created_at: 'desc'},
+    take: 100,
+  });
+}
+
 }

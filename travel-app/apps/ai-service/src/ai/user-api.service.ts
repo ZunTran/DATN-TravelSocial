@@ -6,12 +6,7 @@ import { firstValueFrom } from 'rxjs';
 export class UserClientService {
   private readonly userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:3002';
   private readonly internalSecret = process.env.JWT_SECRET || 'GRADUATION_SUPER_SECRET_KEY';
-
   constructor(private readonly httpService: HttpService) {}
-
-  /**
-   * Gọi User Service để lấy thông tin user -lúc tạo post
-   */
   async getAuthorProfile(authorId: string) {
     try {
       const url = `${this.userServiceUrl}/api/internal/users/${authorId}`;

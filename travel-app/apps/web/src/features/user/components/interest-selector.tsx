@@ -6,7 +6,7 @@ import { Check, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-import type { InterestTag } from "../types/interest";
+import type { InterestTag } from "../user-interest/types/interest";
 
 interface InterestSelectorProps {
   interests: InterestTag[];
@@ -61,7 +61,6 @@ export function InterestSelector({
 
   return (
     <div className="space-y-6">
-      {/* Search */}
       <div className="relative">
         <Search
           className="
@@ -85,7 +84,6 @@ export function InterestSelector({
         />
       </div>
 
-      {/* Selected */}
       <div>
         <div className="mb-3 flex items-center justify-between">
           <p className="text-sm font-medium">
@@ -142,7 +140,6 @@ export function InterestSelector({
         )}
       </div>
 
-      {/* All interests */}
       <div>
         <p className="mb-3 text-sm font-medium">
           Interests

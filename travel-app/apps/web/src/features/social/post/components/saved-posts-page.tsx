@@ -1,100 +1,134 @@
 "use client";
-
 import { Bookmark } from "lucide-react";
-
+import { useProfile } from "@/features/user/user-profile/hooks/use-profile";
 import { useSavedPosts } from "../hooks/use-saved-posts";
 import { PostCard } from "./post-card";
 
 export function SavedPostsPage() {
   const {
+    profile,
+    loading: profileLoading,
+    error: profileError,
+  } = useProfile();
+
+  const profileId =
+    !profileLoading && !profileError
+      ? profile?.id
+      : undefined;
+
+  const {
     posts,
     total,
-    loading,
-    error,
-  } = useSavedPosts();
+    loading: savedPostsLoading,
+    error: savedPostsError,
+  } = useSavedPosts(profileId);
 
-  if (loading) {
+  if (profileLoading) {
     return (
-      <main className="min-h-screen">
-        <div className="mx-auto w-full max-w-3xl px-4 py-6">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">
-              Saved Posts
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Posts you saved for later.
-            </p>
-          </div>
+      <div className="space-y-4">
+        <div className="h-6 w-32 animate-pulse rounded bg-muted" />
 
-          <div className="space-y-6">
-            {[1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="h-64 animate-pulse rounded-2xl border bg-muted"
-              />
-            ))}
-          </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-64 animate-pulse rounded-xl bg-muted"
+            />
+          ))}
         </div>
-      </main>
+      </div>
     );
   }
 
-  if (error) {
+  if (profileError || !profile?.id) {
     return (
-      <main className="min-h-screen">
-        <div className="mx-auto w-full max-w-3xl px-4 py-6">
-          <h1 className="text-2xl font-bold">
-            Saved Posts
-          </h1>
+      <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 text-center">
+        <Bookmark className="h-10 w-10 text-muted-foreground" />
 
-          <p className="mt-4 text-sm text-destructive">
-            Failed to load saved posts.
-          </p>
+        <p className="text-sm text-muted-foreground">
+          Không thể lấy thông tin profile.
+        </p>
+      </div>
+    );
+  }
+
+  if (savedPostsLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Bookmark className="h-5 w-5" />
+          <h1 className="text-lg font-semibold">
+            Bài viết đã lưu
+          </h1>
         </div>
-      </main>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-64 animate-pulse rounded-xl bg-muted"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+
+  if (savedPostsError) {
+    return (
+      <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 text-center">
+        <Bookmark className="h-10 w-10 text-muted-foreground" />
+
+        <p className="text-sm text-muted-foreground">
+          Không thể tải bài viết đã lưu.
+        </p>
+
+        <p className="max-w-md text-xs text-muted-foreground">
+          {savedPostsError.message}
+        </p>
+      </div>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 text-center">
+        <Bookmark className="h-10 w-10 text-muted-foreground" />
+
+        <h1 className="text-lg font-semibold">
+          Chưa có bài viết đã lưu
+        </h1>
+
+        <p className="text-sm text-muted-foreground">
+          Những bài viết bạn lưu sẽ xuất hiện ở đây.
+        </p>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen">
-      <div className="mx-auto w-full max-w-3xl px-4 py-6">
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <Bookmark className="size-5" />
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Bookmark className="h-5 w-5" />
 
-            <h1 className="text-2xl font-bold">
-              Saved Posts
-            </h1>
-          </div>
+        <h1 className="text-lg font-semibold">
+          Bài viết đã lưu
+        </h1>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            {total} saved {total === 1 ? "post" : "posts"}
-          </p>
-        </div>
-
-        {posts.length === 0 ? (
-          <div className="rounded-2xl border bg-card px-6 py-16 text-center">
-            <Bookmark className="mx-auto mb-4 size-10 text-muted-foreground" />
-
-            <h2 className="text-lg font-semibold">
-              No saved posts
-            </h2>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Posts you save will appear here.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-              />
-            ))}
-          </div>
-        )}
+        <span className="text-sm text-muted-foreground">
+          ({total})
+        </span>
       </div>
-    </main>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {posts.map((post) => (
+          <PostCard
+            key={post.id}
+            post={post}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

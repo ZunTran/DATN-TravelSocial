@@ -108,24 +108,62 @@ export class InterestTagRepository {
     });
   }
 
-
   async findUsersWithCommonInterests(
-    user_profile_id: string,interestIds: string[],limit: number = 10,
+    userProfileId: string,
+    interestIds: string[],
+    limit = 10,
   ) {
-    if (interestIds.length === 0) return [];
+    if (interestIds.length === 0) {
+      return [];
+    }
 
     const matches = await this.prisma.user_profile.findMany({
       where: {
-        id: {not: user_profile_id,},
+        id: {
+          not: userProfileId,
+        },
         user_interests: {
-          some: {interest_id: {in: interestIds},},
-        }},
+          some: {
+            interest_id: {
+              in: interestIds,
+            },
+          },
+        },
+      },
+      include: {
+        user_interests: {
+          where: {
+            interest_id: {
+              in: interestIds,
+            },
+          },
+          include: {
+            interest_tag: true,
+          },
+        },
+      },
       take: limit,
-      orderBy: {created_at: 'desc'},
+      orderBy: {
+        created_at: 'desc',
+      },
     });
 
-    return matches;
+    return matches
+      .map((user) => ({
+        ...user,
+        commonInterestsCount: user.user_interests.length,
+        commonInterests: user.user_interests.map(
+          (item) => item.interest_tag,
+        ),
+      }))
+      .sort(
+        (a, b) =>
+          b.commonInterestsCount -
+          a.commonInterestsCount,
+      );
   }
+
+
 
   async findAllPaginated( page: number, limit: number, search?: string) {
     const skip = (page - 1) * limit;

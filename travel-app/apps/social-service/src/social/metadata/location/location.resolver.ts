@@ -7,12 +7,9 @@ import {
 } from '@nestjs/graphql';
 
 import { UseGuards } from '@nestjs/common';
-
 import { LocationService } from './location.service';
-
 import { LocationObject } from './objects/location.object';
 import { LocationPageObject } from './objects/location-page.object';
-
 import { CreateLocationInput } from './dto/create-location.input';
 import { UpdateLocationInput } from './dto/update-location.input';
 import { LocationFilterInput } from './dto/location-filter.input';
@@ -21,12 +18,24 @@ import { AdminLocationFilterInput } from './dto/admin-location-filter.input';
 import { RolesGuard } from '../../../common/auth/guards/roles.guard';
 import { JwtAuthGuard } from '../../../common/auth/guards/jwt-auth.guard';
 import { Roles } from '../../../common/auth/decorators/roles.decorator';
+import { LocationSearchResult } from './objects/location-search.object';
+import { HybridLocationSearchInput } from './dto/hybrid-location-search.input';
 
 @Resolver(() => LocationObject)
 export class LocationResolver {
   constructor(
     private readonly locationService: LocationService,
   ) {}
+
+  @Query(() => [LocationSearchResult])
+  async hybridLocationSearch( @Args('input') input: HybridLocationSearchInput) {
+    console.log('[Resolver] hybridLocationSearch START');
+    const result = await this.locationService.hybridSearch(input);
+
+  console.log('[Resolver] hybridLocationSearch DONE');
+
+  return result;
+  }
 
   @Query(() => LocationPageObject)
   async locationOptions(

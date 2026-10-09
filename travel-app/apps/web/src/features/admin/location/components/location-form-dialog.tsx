@@ -94,39 +94,6 @@ export function LocationFormDialog({
     return null;
   }
 
-//   async function handleSubmit(
-//     event: React.FormEvent,
-//   ) {
-//     event.preventDefault();
-
-//     await onSubmit({
-//       ...(location
-//         ? {
-//             id: location.id,
-//           }
-//         : {}),
-
-//       name: name.trim(),
-
-//       address:
-//         address.trim() || null,
-
-//       province:
-//         province.trim() || null,
-
-//       latitude:
-//         latitude !== ''
-//           ? Number(latitude)
-//           : null,
-
-//       longitude:
-//         longitude !== ''
-//           ? Number(longitude)
-//           : null,
-//     } as CreateLocationInput);
-
-//     onClose();
-//   }
 
 async function handleSubmit(
   event: React.FormEvent,

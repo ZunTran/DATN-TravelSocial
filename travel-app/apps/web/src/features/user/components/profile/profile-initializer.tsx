@@ -1,6 +1,6 @@
 "use client";
 
-import { useProfile } from "@/features/user/hooks/use-profile";
+import { useProfile } from "@/features/user/user-profile/hooks/use-profile";
 
 export function ProfileInitializer() {
   useProfile();

@@ -1,25 +1,15 @@
-import {
-  Args,
-  ID,
-  Mutation,
-  Query,
-  Resolver,
-} from '@nestjs/graphql';
+import { Args, ID, Mutation, Query, Resolver} from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 
 import { CategoryService } from './category.service';
-
 import { CategoryObject } from './objects/category.object';
 import { CategoryPageObject } from './objects/category-page.object';
-
 import { CreateCategoryInput } from './dto/create-category.input';
 import { UpdateCategoryInput } from './dto/update-category.input';
 import { CategoryFilterInput } from './dto/category-filter.input';
 import { JwtAuthGuard } from '../../../common/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/auth/guards/roles.guard';
 import { Roles } from '../../../common/auth/decorators/roles.decorator';
-
-
 
 @Resolver(() => CategoryObject)
 export class CategoryResolver {

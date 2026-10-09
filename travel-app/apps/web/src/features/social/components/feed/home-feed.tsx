@@ -27,7 +27,6 @@ export function HomeFeed() {
     <main className="min-h-screen">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-6">
 
-        {/* TITLE */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight">
             News Feed
@@ -38,12 +37,10 @@ export function HomeFeed() {
           </p>
         </div>
 
-        {/* STORIES */}
         <section className="mb-6">
           <StoryCarousel />
         </section>
 
-        {/* FEED */}
         <div
           className="
             grid gap-6
@@ -52,24 +49,19 @@ export function HomeFeed() {
             lg:justify-center
           "
         >
-          {/* MAIN COLUMN */}
           <div className="min-w-0 space-y-6">
-
-            {/* CREATE POST */}
             <CreatePostCard
               onCreated={() => {
                 refetch();
               }}
             />
 
-            {/* POSTS */}
             <FeedList
               posts={posts}
               loading={loading}
               error={error}
             />
 
-            {/* LOAD MORE */}
             <LoadMore
               hasNextPage={hasNextPage}
               loading={loadingMore}
@@ -77,7 +69,6 @@ export function HomeFeed() {
             />
           </div>
 
-          {/* SIDEBAR */}
           <aside className="hidden lg:block">
             <div className="sticky top-6">
               <FriendRecommendation />

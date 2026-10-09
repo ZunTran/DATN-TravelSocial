@@ -8,6 +8,7 @@ import { HashtagRepository } from './hashtag.repository';
 import { CreateHashtagInput } from './dto/create-hashtag.input';
 import { UpdateHashtagInput } from './dto/update-hashtag.input';
 import { AdminHashtagFilterInput } from './dto/admin-hashtag.input';
+import { HashtagFilterInput } from './dto/hashtag-filter.input';
 
 @Injectable()
 export class HashtagService {
@@ -106,6 +107,12 @@ export class HashtagService {
       .trim()
       .replace(/^#/, '')
       .toLowerCase();
+  }
+
+  async getPage(filter: HashtagFilterInput) {
+    return this.repository.findPage(
+      filter,
+    );
   }
 
 }

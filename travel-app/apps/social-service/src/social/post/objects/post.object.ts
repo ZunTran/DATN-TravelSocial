@@ -15,6 +15,7 @@ import '../enums/post.enum';
 import { PostMediaObject } from './post-media.object';
 import { CategoryObject } from '../../metadata/category/objects/category.object';
 import { LocationObject } from '../../metadata/location/objects/location.object';
+import { HashtagObject } from '../../metadata/hashtag/objects/hashtag.object';
 
 @ObjectType()
 export class PostObject {
@@ -75,6 +76,9 @@ export class PostObject {
 
   @Field(() => LocationObject, { nullable: true })
   location?: LocationObject | null;
+
+  @Field(() => [HashtagObject], { nullable: true })
+  hashtags?: HashtagObject[] | null;
 
   @Field(() => String)
   authorUsername!: string;

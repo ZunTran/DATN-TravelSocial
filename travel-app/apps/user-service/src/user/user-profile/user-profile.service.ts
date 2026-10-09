@@ -6,13 +6,15 @@ import { SearchUserInput } from './dto/search-user.input';
 import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
 import { FileUpload } from 'graphql-upload-ts';
 import { user_privacy } from '@prisma/client';
-import { InternalUserProfileResponse } from './response/internal-uprofile.response';
+import { InternalUserProfileResponse, InternalUserProfilesResponse } from './response/internal-uprofile.response';
+import { FollowService } from '../follow/follow.service';
 
 @Injectable()
 export class UserProfileService {
   constructor(
     private readonly repository: UserProfileRepository,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly followService: FollowService,
   ) {}
 
   async createProfile(account_id: string,input: CreateProfileInput,) {
@@ -112,9 +114,23 @@ export class UserProfileService {
     return !profile;
   }
 
-  async searchUsers(input: SearchUserInput) {
-  return this.repository.searchUsers(input);
-}
+  async searchUsers(accountId: string, input: SearchUserInput ) {
+    const currentProfile = await this.repository.findByAccountId(accountId);
+    if (!currentProfile) 
+      throw new NotFoundException( 'Không tìm thấy profile');
+
+    const followingProfileIds = await this.followService.getFollowingProfileIds( accountId);
+
+    const excludedProfileIds = [
+      currentProfile.id,
+      ...followingProfileIds,
+    ];
+
+    return this.repository.searchUsers(
+      input,
+      excludedProfileIds,
+    );
+  }
 
   private async convertUploadToBuffer(fileUpload: FileUpload): Promise<Express.Multer.File> {
     const { createReadStream, filename, mimetype } = fileUpload;
@@ -198,6 +214,46 @@ export class UserProfileService {
     };
   }
 
+async getInternalUProfilesByIds(
+  profileIds: string[],
+): Promise<InternalUserProfilesResponse> {
+  if (!profileIds.length) {
+    return {
+      items: [],
+    };
+  }
+
+  const uniqueProfileIds = [
+    ...new Set(profileIds),
+  ];
+
+  const profiles =
+    await this.repository.findInternalByIds(
+      uniqueProfileIds,
+    );
+
+  const items: InternalUserProfileResponse[] =
+    profiles.map(
+      (
+        profile: {
+          id: string;
+          account_id: string;
+          username: string;
+          avatar_url: string | null;
+        },
+      ) => ({
+        profileId: profile.id,
+        accountId: profile.account_id,
+        username: profile.username,
+        avatarUrl: profile.avatar_url,
+      }),
+    );
+
+  return {
+    items,
+  };
+}
+
 
   async getProfileByUsername(username: string) {
     const profile = await this.repository.findByUsername(username);
@@ -205,6 +261,8 @@ export class UserProfileService {
       throw new NotFoundException('User profile not found');
     return profile;
   }
+
+
 
   
 }

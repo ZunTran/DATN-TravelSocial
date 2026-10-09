@@ -17,8 +17,8 @@ import { SavePostService } from '../interaction/save-post/save-post.service';
 
 @Injectable()
 export class PostService {
-  private readonly MAX_DRAFTS = 20;
-  private readonly MAX_MEDIA = 10;
+  private readonly MAX_DRAFTS = 10;
+  private readonly MAX_MEDIA = 5;
   private readonly MAX_HASHTAGS = 10;
 
   constructor(
@@ -134,80 +134,149 @@ async createPostWithFiles(accountId: string,input: CreatePostInput,
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
-  async updatePost(accountId: string, input: UpdatePostInput) {
-    const author = await this.userProfileClient.getByAccountId(accountId);
-    const profileId = author.profileId;
-    this.validateMedia(input.media);
+  async updatePost( accountId: string, input: UpdatePostInput) {
+  const author = await this.userProfileClient.getByAccountId(accountId);
+  const profileId = author.profileId;
+  this.validateMedia(input.media);
+  this.validateHashtags(input.hashtagIds);
 
-    this.validateHashtags(input.hashtagIds);
+  return this.prisma.$transaction(
+    async (tx) => {
+      const post =
+        await this.postRepository.findByIdForTransaction(
+          tx,
+          input.id,
+        );
 
-    return this.prisma.$transaction(async (tx) => {
-      const post = await this.postRepository.findByIdForTransaction(tx, input.id);
-      if (!post) throw new NotFoundException('Post not found');
-      if (post.author_id !== profileId) throw new ForbiddenException('You are not the owner of this post');
-      if (post.status !== PostStatus.DRAFT) throw new BadRequestException('Only draft posts can be updated');
-      
-      if (input.status === PostStatus.DELETED) throw new BadRequestException('Deleted post cannot be updated');
+      if (!post) 
+        throw new NotFoundException('Post not found');
+    
 
-      if (input.status !== undefined) this.validateStatusTransition(post.status, input.status);
+      if (post.author_id !== profileId) {
+        throw new ForbiddenException('You are not the owner of this post');
+      }
 
-      if (input.status === PostStatus.DRAFT && post.status !== PostStatus.DRAFT) {
-        const draftCount = await this.postRepository.countDrafts(tx, profileId);
-        if (draftCount >= this.MAX_DRAFTS) throw new BadRequestException(`Maximum ${this.MAX_DRAFTS} drafts allowed`);
+      if (post.status !== PostStatus.DRAFT) {
+        throw new BadRequestException('Only draft posts can be updated');
+      }
+
+      if (input.status !== undefined) {
+        this.validateStatusTransition(
+          post.status,
+          input.status,
+        );
       }
 
       const finalStatus = input.status ?? post.status;
+
       const finalContent = input.content !== undefined ? input.content : post.content;
-      const existingMediaCount = await tx.post_media.count({where: { post_id: input.id }});
 
-      const hasMedia = input.media !== undefined? input.media.length > 0: existingMediaCount > 0;
-      this.validatePublishedPost(finalStatus, finalContent, hasMedia);
+      const existingMediaCount = await tx.post_media.count({
+          where: { post_id: input.id},
+        });
 
-       if (input.status === PostStatus.PUBLISHED) {
+      const hasMedia =input.media !== undefined? input.media.length > 0: existingMediaCount > 0;
 
-      } else if (input.status !== undefined && input.status !== PostStatus.DRAFT) {
-        throw new BadRequestException('Invalid status transition');
-      }
+      this.validatePublishedPost(
+        finalStatus,
+        finalContent,
+        hasMedia,
+      );
 
       if (input.categoryId) {
-        const category = await this.categoryRepository.findById(tx, input.categoryId);
-        if (!category) throw new NotFoundException('Category not found');
+        const category = await this.categoryRepository.findById(
+            tx,
+            input.categoryId,
+          );
+
+        if (!category) {
+          throw new NotFoundException('Category not found');
+        }
       }
 
       if (input.locationId) {
-        const location = await this.locationRepository.findById(tx, input.locationId);
-        if (!location) throw new NotFoundException('Location not found');
+        const location =
+          await this.locationRepository.findById(
+            tx,
+            input.locationId,
+          );
+
+        if (!location) {
+          throw new NotFoundException(
+            'Location not found',
+          );
+        }
       }
 
-      const updated = await this.postRepository.update(tx, input.id, {
-        ...(input.content !== undefined && { content: input.content }),
-        ...(input.status !== undefined && { status: input.status }),
-        ...(input.privacy !== undefined && { privacy: input.privacy }),
-        ...(input.categoryId !== undefined && { category_id: input.categoryId }),
-        ...(input.locationId !== undefined && { location_id: input.locationId }),
-        updated_at: new Date(),
-      });
+      const updated = await this.postRepository.update(
+          tx,
+          input.id,
+          {
+            ...(input.content !== undefined && {
+              content: input.content,
+            }),
+
+            ...(input.status !== undefined && {
+              status: input.status,
+            }),
+
+            ...(input.privacy !== undefined && {
+              privacy: input.privacy,
+            }),
+
+            ...(input.categoryId !== undefined && {
+              category_id: input.categoryId,
+            }),
+
+            ...(input.locationId !== undefined && {
+              location_id: input.locationId,
+            }),
+
+            updated_at: new Date(),
+          },
+        );
 
       if (input.media !== undefined) {
-        await tx.post_media.deleteMany({ where: { post_id: input.id } });
+        await tx.post_media.deleteMany({
+          where: {
+            post_id: input.id,
+          },
+        });
 
-        if (input.media.length) {
+        if (input.media.length > 0) {
           await tx.post_media.createMany({
-            data: input.media.map((media, index) => ({
-              post_id: input.id,
-              media_url: media.mediaUrl,
-              media_type: media.mediaType,
-              display_order: media.displayOrder ?? index,
-            })),
+            data: input.media.map(
+              (media, index) => ({
+                post_id: input.id,
+                media_url: media.mediaUrl,
+                media_type: media.mediaType,
+                display_order:
+                  media.displayOrder ?? index,
+              }),
+            ),
           });
         }
       }
 
-      if (input.hashtagIds !== undefined) await this.syncHashtags(tx, input.id, input.hashtagIds);
+      if (input.hashtagIds !== undefined) {
+        await this.syncHashtags(
+          tx,
+          input.id,
+          input.hashtagIds,
+        );
+      }
 
-      return this.postRepository.findById(updated.id, tx);
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-  }
+      return this.postRepository.findById(
+        updated.id,
+        tx,
+      );
+    },
+    {
+      isolationLevel:
+        Prisma.TransactionIsolationLevel.Serializable,
+    },
+  );
+}
 
   async deletePost(accountId: string, postId: string) {
     const author = await this.userProfileClient.getByAccountId(accountId);
@@ -222,15 +291,67 @@ async createPostWithFiles(accountId: string,input: CreatePostInput,
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
-  async getPost(postId: string, accountId: string) {
-    const post = await this.postRepository.findById(postId);
-    if (!post || post.status === PostStatus.DELETED) throw new NotFoundException('Post not found');
-    if (post.privacy === PostPrivacy.PUBLIC) return post;
+async getPost(
+  postId: string,
+  accountId: string) {
+    const post =
+      await this.postRepository.findById(
+        postId,
+      );
 
-    const profile = await this.userProfileClient.getByAccountId(accountId);
-    if (post.authorId !== profile.profileId) throw new ForbiddenException('You cannot view this post');
+    if (
+      !post ||
+      post.status === PostStatus.DELETED
+    ) {
+      throw new NotFoundException(
+        'Post not found',
+      );
+    }
 
-    return post;
+    const profile =
+      await this.userProfileClient.getByAccountId(
+        accountId,
+      );
+
+    const isOwner =
+      post.authorId === profile.profileId;
+
+    if (
+      post.status === PostStatus.DRAFT
+    ) {
+      if (!isOwner) {
+        throw new ForbiddenException(
+          'You cannot view this draft post',
+        );
+      }
+
+      return this.attachSinglePostInteractionStatus(
+        accountId,
+        post,
+      );
+    }
+
+    if (
+      post.status !== PostStatus.PUBLISHED
+    ) {
+      throw new NotFoundException(
+        'Post not found',
+      );
+    }
+
+    if (
+      post.privacy === PostPrivacy.PRIVATE &&
+      !isOwner
+    ) {
+      throw new ForbiddenException(
+        'You cannot view this private post',
+      );
+    }
+
+    return this.attachSinglePostInteractionStatus(
+      accountId,
+      post,
+    );
   }
 
 
@@ -240,23 +361,31 @@ async createPostWithFiles(accountId: string,input: CreatePostInput,
     page: number,
     limit: number,
   ) {
-    const where: Prisma.postWhereInput = {
-      status: PostStatus.PUBLISHED,
-      privacy: PostPrivacy.PUBLIC,
+    const keyword = filter.keyword?.trim();
 
-      ...(filter.authorId && {
-        author_id: filter.authorId,
-      }),
+const where: Prisma.postWhereInput = {
+  status: PostStatus.PUBLISHED,
+  privacy: PostPrivacy.PUBLIC,
 
-      ...(filter.categoryId && {
-        category_id: filter.categoryId,
-      }),
+  ...(filter.authorId && {
+    author_id: filter.authorId,
+  }),
 
-      ...(filter.locationId && {
-        location_id: filter.locationId,
-      }),
-    };
+  ...(filter.categoryId && {
+    category_id: filter.categoryId,
+  }),
 
+  ...(filter.locationId && {
+    location_id: filter.locationId,
+  }),
+
+  ...(keyword && {
+    content: {
+      contains: keyword,
+      mode: 'insensitive',
+    },
+  }),
+};
     const skip = (page - 1) * limit;
 
     const [items, total] = await Promise.all([
@@ -269,34 +398,16 @@ async createPostWithFiles(accountId: string,input: CreatePostInput,
     ]);
 
     const postsWithInteraction = await this.attachInteractionStatus( accountId, items);
-
-
-    console.log('===== GET POSTS =====');
-console.log('accountId:', accountId);
-console.log(
-  'items:',
-  items.map((p) => ({
-    id: p.id,
-    author_id: p.authorId,
-    authorId: p.authorId,
-  })),
-);
-console.log(
-  'postsWithInteraction:',
-  postsWithInteraction.map((p) => ({
-    id: p.id,
-    isPostLiked: p.isPostLiked,
-    isPostSaved: p.isPostSaved,
-  })),
-);
-
+    const totalPages = Math.ceil(total / limit);
 
     return {
       items: postsWithInteraction,
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
+      totalPages,
+      hasNextPage: page < totalPages,
+
     };
   }
 
@@ -341,7 +452,7 @@ console.log(
 
   private validateStatusTransition(current: PostStatus, target: PostStatus) {
     if (current === PostStatus.DELETED) throw new BadRequestException('Deleted post cannot be modified');
-    if (target === PostStatus.DELETED) return;
+    if (target === PostStatus.DELETED) throw new BadRequestException('Use deletePost to delete a post');
     if (current === PostStatus.DRAFT && (target === PostStatus.DRAFT || target === PostStatus.PUBLISHED)) return;
     if (current === PostStatus.PUBLISHED && target === PostStatus.PUBLISHED) return;
     throw new BadRequestException(`Invalid post status transition: ${current} -> ${target}`);
@@ -407,10 +518,8 @@ async changePostStatus(accountId: string, postId: string, newStatus: PostStatus)
   return this.prisma.$transaction(async (tx) => {
     const post = await this.postRepository.findByIdForTransaction(tx, postId);
     if (!post) throw new NotFoundException('Post not found');
-
-    if (post.author_id !== profileId) {
+    if (post.author_id !== profileId) 
       throw new ForbiddenException('You are not the owner of this post');
-    }
 
     if (post.status === PostStatus.DELETED || newStatus === PostStatus.DELETED) {
       if (post.status === PostStatus.DELETED) throw new BadRequestException('Deleted post cannot be modified');
@@ -443,30 +552,47 @@ async changePostStatus(accountId: string, postId: string, newStatus: PostStatus)
   });
 }
 
-  async changePostPrivacy(accountId: string, postId: string, newPrivacy: PostPrivacy) {
-    const author = await this.userProfileClient.getByAccountId(accountId);
-    const profileId = author.profileId;
+  async changePostPrivacy(
+  accountId: string,
+  postId: string,
+  newPrivacy: PostPrivacy,
+) {
+  const author = await this.userProfileClient.getByAccountId(accountId);
+  const profileId = author.profileId;
 
-    return this.prisma.$transaction(async (tx) => {
-      const post = await this.postRepository.findByIdForTransaction(tx, postId);
-      if (!post) throw new NotFoundException('Post not found');
-
+  return this.prisma.$transaction(
+    async (tx) => {
+      const post = await this.postRepository.findByIdForTransaction( tx, postId);
+      if (!post)  throw new NotFoundException('Post not found');
       if (post.author_id !== profileId) 
         throw new ForbiddenException('You are not the owner of this post');
+
       if (post.status === PostStatus.DELETED) 
         throw new BadRequestException('Deleted post cannot be modified');
-    
-      if (post.privacy === newPrivacy) return post;
-      await this.postRepository.update(tx, postId, {
-        privacy: newPrivacy,
-        updated_at: new Date(),
-      });
+      
+      if (post.status !== PostStatus.DRAFT) 
+        throw new BadRequestException('Only draft posts can be updated');
+
+      if (post.privacy === newPrivacy) 
+        return this.postRepository.findById(postId, tx);
+      
+      await this.postRepository.update(
+        tx,
+        postId,
+        {
+          privacy: newPrivacy,
+          updated_at: new Date(),
+        },
+      );
 
       return this.postRepository.findById(postId, tx);
-    }, {
+    },
+    {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-    });
-  }
+    },
+  );
+}
+
 
   async getFeed( accountId: string, cursor?: string, limit = 10) {
   if (limit < 1 || limit > 50) 
@@ -505,6 +631,79 @@ async changePostStatus(accountId: string, postId: string, newStatus: PostStatus)
       isPostLiked: likedPostIds.has(post.id),
       isPostSaved: savedPostIds.has(post.id),
     }));
+  }
+
+  private async attachSinglePostInteractionStatus(
+  accountId: string,
+  post: any,
+) {
+  const [result] =
+    await this.attachInteractionStatus(
+      accountId,
+      [post],
+    );
+
+  return result;
+}
+
+async getMyDrafts(
+  accountId: string,
+  page = 1,
+  limit = 10,
+) {
+  const author =
+    await this.userProfileClient.getByAccountId(accountId);
+
+  const safePage = Math.max(1, page);
+  const safeLimit = Math.min(
+    50,
+    Math.max(1, limit),
+  );
+
+  const result = await this.prisma.$transaction(
+    async (tx) => {
+      return this.postRepository.findDraftsByProfileId(
+        tx,
+        author.profileId,
+        safePage,
+        safeLimit,
+      );
+    },
+  );
+
+  const items = result.items.map((post) => ({
+    ...post,
+    isPostLiked: false,
+    isPostSaved: false,
+  }));
+
+  return {
+    ...result,
+    items,
+  };
+}
+
+  async getProfilePosts( accountId: string, targetProfileId: string, page = 1, limit = 10) {
+    const viewer = await this.userProfileClient.getByAccountId(accountId);
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(50, Math.max(1, limit));
+    const isOwner =  viewer.profileId === targetProfileId;
+    return this.prisma.$transaction(async (tx) => {
+      const result = await this.postRepository.findProfilePosts(
+        tx,
+        targetProfileId,
+        isOwner,
+        safePage,
+        safeLimit,
+      );
+
+      const items = await this.attachInteractionStatus( accountId, result.items);
+
+      return {
+        ...result,
+        items,
+      };
+    });
   }
 
 }

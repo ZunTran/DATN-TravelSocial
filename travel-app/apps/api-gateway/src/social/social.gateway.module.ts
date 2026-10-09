@@ -1,19 +1,22 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 
-import { SocialGatewayResolver } from '../social/social.gateway.resolver';
+import { SocialGatewayResolver } from './social.gateway.resolver';
 import { SocialGatewayService } from './social.gateway.service';
-import { LocationGatewayService } from './metadata/location-gateway.service';
-import { HashtagGatewayService } from './metadata/hashtag-gateway.service';
-import { ShareGatewayService } from './interaction/share-gateway.service';
-import { CommentGatewayService } from './interaction/comment-gateway.service';
-import { SaveGatewayService } from './interaction/save-gateway.service';
-import { LikeGatewayService } from './interaction/like-gateway.service';
+import { LocationGatewayService } from './metadata/location/location.gateway.service';
+import { HashtagGatewayService } from './metadata/hashtag/hashtag.gateway.service';
+import { ShareGatewayService } from './interaction/share.gateway.service';
+import { SaveGatewayService } from './interaction/save.gateway.service';
+import { LikeGatewayService } from './interaction/like.gateway.service';
 import { FeedGatewayService } from './post/feed-gateway.service';
 import { PostGatewayService } from './post/post-gateway.service';
 import { SocialGraphqlClient } from './clients/social-graphql.client';
 import { CategoryGatewayService } from './metadata/category/category.gateway.service';
 import { CategoryGatewayResolver } from './metadata/category/category.gateway.resolver';
+import { LocationGatewayResolver } from './metadata/location/location.gateway.resolver';
+import { HashtagGatewayResolver } from './metadata/hashtag/hashtag.gateway.resolver';
+import { CommentGatewayService } from './interaction/comment/comment.gateway.service';
+import { CommentGatewayResolver } from './interaction/comment/comment.gateway.resolver';
 
 @Module({
   imports: [
@@ -29,14 +32,19 @@ import { CategoryGatewayResolver } from './metadata/category/category.gateway.re
 
     LikeGatewayService,
     SaveGatewayService,
-    CommentGatewayService,
     ShareGatewayService,
 
     CategoryGatewayService,
     CategoryGatewayResolver,
 
+    LocationGatewayResolver,
     LocationGatewayService,
+
     HashtagGatewayService,
+    HashtagGatewayResolver,
+
+    CommentGatewayResolver,
+    CommentGatewayService,
 
   ],
 })

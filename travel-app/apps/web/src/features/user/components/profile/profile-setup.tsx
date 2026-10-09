@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import type { UserProfile } from "../../types/profile";
+import type { UserProfile } from "../../user-profile/types/profile";
 import { useRouter } from "next/navigation";
 
 interface ProfileSetupProps {
@@ -104,7 +104,6 @@ try {
         onSubmit={handleSubmit}
         className="space-y-5"
       >
-        {/* USERNAME */}
 
         <div className="space-y-2">
           <label className="text-sm font-medium">
@@ -122,8 +121,6 @@ try {
           />
         </div>
 
-        {/* DISPLAY NAME */}
-
         <div className="space-y-2">
           <label className="text-sm font-medium">
             Display name
@@ -140,7 +137,6 @@ try {
           />
         </div>
 
-        {/* BIO */}
 
         <div className="space-y-2">
           <label className="text-sm font-medium">
@@ -156,8 +152,6 @@ try {
             placeholder="Tell people about yourself..."
           />
         </div>
-
-        {/* GENDER */}
 
         <div className="space-y-2">
           <label className="text-sm font-medium">
@@ -189,8 +183,6 @@ try {
           </select>
         </div>
 
-        {/* BIRTHDAY */}
-
         <div className="space-y-2">
           <label className="text-sm font-medium">
             Birthday
@@ -206,7 +198,6 @@ try {
           />
         </div>
 
-        {/* LOCATION */}
 
         <div className="space-y-2">
           <label className="text-sm font-medium">
@@ -223,7 +214,6 @@ try {
           />
         </div>
 
-        {/* ERROR */}
 
         {error && (
           <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
@@ -231,7 +221,6 @@ try {
           </div>
         )}
 
-        {/* SUBMIT */}
 
         <button
           type="submit"

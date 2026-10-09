@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { InterestSelector } from "@/features/user/components/interest-selector";
 
-import { useInterests } from "@/features/user/hooks/use-interests";
+import { useInterests } from "@/features/user/user-interest/hooks/use-interests";
 
 export default function SetupInterestsPage() {
   const router = useRouter();

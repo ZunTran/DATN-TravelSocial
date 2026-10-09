@@ -27,24 +27,36 @@ export class TravelPlanItemRepository {
     data: {
       travelPlanId: string;
       dayIndex: number;
-      timeSlot?: string | null;
+      timeSlot: string;
       activityName: string;
-      locationId?: string | null;
+      locationId: string;
       description?: string | null;
       costEstimate?: number | null;
     },
-  ): Promise<TravelPlanItemRecord> {
+  ) {
     return tx.travel_plan_item.create({
       data: {
-        travel_plan_id: data.travelPlanId,
-        day_index: data.dayIndex,
-        time_slot: data.timeSlot,
-        activity_name: data.activityName,
-        location_id: data.locationId,
-        description: data.description,
-        cost_estimate: data.costEstimate,
+        travel_plan_id:
+          data.travelPlanId,
+
+        day_index:
+          data.dayIndex,
+
+        time_slot:
+          data.timeSlot,
+
+        activity_name:
+          data.activityName,
+
+        location_id:
+          data.locationId,
+
+        description:
+          data.description ?? null,
+
+        cost_estimate:
+          data.costEstimate ?? null,
       },
-      select: travelPlanItemSelect,
     });
   }
 

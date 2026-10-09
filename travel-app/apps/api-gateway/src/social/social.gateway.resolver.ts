@@ -1,16 +1,12 @@
-import { Args, Context, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Context, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { SocialGatewayService } from './social.gateway.service';
 import { PostObject, PostListObject, PostPrivacy, PostStatus } from './post/types/post.types';
 import { CreatePostInput, UpdatePostInput, PostFilterInput, PaginationInput } from './post/dto/post.inputs';
-import { LikeObject, LikeList, CommentObject, CommentList, SavePostObject, ShareObject, ShareList } from './interaction/types/interaction.types';
-import { CreateCommentInput, UpdateCommentInput } from './interaction/dto/interaction.inputs';
-import { CategoryObject, LocationObject, HashtagObject } from './metadata/types/metadata.types';
+import { LikeObject, LikeList, SavePostObject, ShareObject, ShareList } from './interaction/types/interaction.types';
 import { FeedInput } from './post/dto/feed.inputs';
 import { FeedPageObject } from './post/types/feed.types';
 import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
-import { AdminHashtagFilterInput, CreateHashtagInput, UpdateHashtagInput } from './metadata/hashtag/dto/hashtag.input';
-import { AdminHashtagListObject } from './metadata/hashtag/types/hashtag.object';
-import { CreateLocationInput, UpdateLocationInput } from './metadata/location/dto/location.input';
+
 
 @Resolver()
 export class SocialGatewayResolver {
@@ -111,11 +107,40 @@ export class SocialGatewayResolver {
     );
   }
 
-  @Mutation(() => PostObject)
-  viewPost(
-    @Args('postId', { type: () => ID }) postId: string ) {
-    return this.socialGatewayService.viewPost(postId);
+  @Query(() => PostListObject)
+  searchPosts(
+  @Args('keyword', { type: () => String }) keyword: string,
+  @Args('page', { type: () => Int,
+    nullable: true,
+    defaultValue: 1,
+  }) page: number,
+
+  @Args('limit', {
+    type: () => Int,
+    nullable: true,
+    defaultValue: 20,
+  }) limit: number,
+  @Context() context: any) {
+    return this.socialGatewayService.searchPosts(
+      keyword,
+      page,
+      limit,
+      this.getAuthorization(context),
+    );
   }
+
+@Mutation(() => PostObject)
+async viewPost(
+  @Args('postId', { type: () => ID }) postId: string,
+  @Context() context: any,
+) {
+  const authorization = context.req.headers.authorization;
+
+  return this.socialGatewayService.viewPost(
+    postId,
+    authorization,
+  );
+}
 
   @Mutation(() => PostObject)
   changePostStatus(
@@ -231,70 +256,6 @@ export class SocialGatewayResolver {
     );
   }
 
-
-  @Mutation(() => CommentObject)
-  createComment(
-    @Args('input') input: CreateCommentInput,
-    @Context() context: any,
-  ) {
-    return this.socialGatewayService.createComment(
-      input,
-      this.getAuthorization(context),
-    );
-  }
-
-  @Mutation(() => CommentObject)
-  updateComment(
-    @Args('input') input: UpdateCommentInput,
-    @Context() context: any,
-  ) {
-    return this.socialGatewayService.updateComment(
-      input,
-      this.getAuthorization(context),
-    );
-  }
-
-  @Mutation(() => Boolean)
-  deleteComment(
-    @Args('commentId', { type: () => ID }) commentId: string,
-    @Context() context: any,
-  ) {
-    return this.socialGatewayService.deleteComment(
-      commentId,
-      this.getAuthorization(context),
-    );
-  }
-
-  @Query(() => CommentList)
-  comments(
-    @Args('postId', { type: () => ID }) postId: string,
-
-    @Args('pagination', {
-      type: () => PaginationInput,
-    })
-    pagination: PaginationInput,
-
-    @Context() context: any,
-  ) {
-    return this.socialGatewayService.comments(
-      postId,
-      pagination,
-      this.getAuthorization(context),
-    );
-  }
-
-  @Query(() => [CommentObject])
-  replies(
-    @Args('commentId', { type: () => ID }) commentId: string,
-    @Context() context: any,
-  ) {
-    return this.socialGatewayService.replies(
-      commentId,
-      this.getAuthorization(context),
-    );
-  }
-
-
   @Mutation(() => ShareObject)
   sharePost(
     @Args('postId', { type: () => ID }) postId: string,
@@ -325,69 +286,6 @@ export class SocialGatewayResolver {
   }
 
 
-  @Query(() => [LocationObject])
-  locations() {
-    return this.socialGatewayService.locations();
-  }
-
-  @Query(() => [HashtagObject])
-  hashtags() {
-    return this.socialGatewayService.hashtags();
-  }
-
-
-
-  @Mutation(() => CategoryObject)
-  createLocation(
-    @Args('input') input: CreateLocationInput,
-    @Context() context: any,
-  ) {
-    return this.socialGatewayService.createLocation(
-      input,
-      this.getAuthorization(context),
-    );
-  }
-
-  @Mutation(() => LocationObject)
-  updateLocation(
-    @Args('input') input: UpdateLocationInput,
-    @Context() context: any,
-  ) {
-    return this.socialGatewayService.updateLocation(
-      input,
-      this.getAuthorization(context),
-    );
-  }
-
-@Mutation(() => HashtagObject)
-createHashtag(
-  @Args('input', {
-    type: () => CreateHashtagInput,
-  })
-  input: CreateHashtagInput,
-
-  @Context() context: any,
-) {
-  return this.socialGatewayService.createHashtag(
-    input,
-    this.getAuthorization(context),
-  );
-}
-
-@Mutation(() => HashtagObject)
-updateHashtag(
-  @Args('input', {
-    type: () => UpdateHashtagInput,
-  })
-  input: UpdateHashtagInput,
-
-  @Context() context: any,
-) {
-  return this.socialGatewayService.updateHashtag(
-    input,
-    this.getAuthorization(context),
-  );
-}
 
   @Query(() => FeedPageObject)
 feed(
@@ -402,44 +300,69 @@ feed(
   );
 }
 
-@Query(() => PostListObject)
-savedPosts(
-  @Args('pagination', {
-    type: () => PaginationInput,
-  })
-  pagination: PaginationInput,
 
+  @Query(() => PostListObject)
+savedPosts(
+  @Args('profileId', { type: () => ID }) profileId: string,
+  @Args('pagination', { type: () => PaginationInput })
+  pagination: PaginationInput,
   @Context() context: any,
 ) {
   return this.socialGatewayService.savedPosts(
+    profileId,
     pagination,
     this.getAuthorization(context),
   );
 }
 
 
-  @Query(() => AdminHashtagListObject)
-  adminHashtags(
-    @Args('filter', { type: () => AdminHashtagFilterInput, nullable: true})
-    filter?: AdminHashtagFilterInput,
-    @Context() context?: any) {
-    return this.socialGatewayService.adminHashtags(
-      filter ?? {
-        page: 1,
-        limit: 20,
-      },
-      context?.req?.headers?.authorization,
-    );
-  }
+@Query(() => PostListObject)
+async profilePosts(
+  @Args('profileId', { type: () => ID }) profileId: string,
+  @Args('page', {
+    type: () => Int,
+    nullable: true,
+    defaultValue: 1,
+  }) page: number,
+  @Args('limit', {
+    type: () => Int,
+    nullable: true,
+    defaultValue: 10,
+  }) limit: number,
+  @Context() context: any,
+): Promise<PostListObject> {
+  const authorization = context.req.headers.authorization;
 
-  @Mutation(() => Boolean)
-  async adminDeleteHashtag(
-    @Args('id', {type: () => ID})id: string,
-    @Context() context?: any) {
-    return this.socialGatewayService.adminDeleteHashtag(
-      id,
-      context?.req?.headers?.authorization,
-    );
-  }
+  return this.socialGatewayService.profilePosts(
+    profileId,
+    page,
+    limit,
+    authorization,
+  );
+}
+
+
+@Query(() => PostListObject)
+async myDraftPosts(
+  @Args('page', {
+    type: () => Int,
+    nullable: true,
+    defaultValue: 1,
+  }) page: number,
+  @Args('limit', {
+    type: () => Int,
+    nullable: true,
+    defaultValue: 10,
+  }) limit: number,
+  @Context() context: any,
+): Promise<PostListObject> {
+  const authorization = context.req.headers.authorization;
+
+  return this.socialGatewayService.myDraftPosts(
+    page,
+    limit,
+    authorization,
+  );
+}
 
 }

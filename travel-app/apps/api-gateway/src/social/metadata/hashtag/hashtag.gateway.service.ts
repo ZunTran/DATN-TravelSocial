@@ -1,24 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { SocialGraphqlClient } from '../../clients/social-graphql.client';
-import { HashtagObject } from '../types/metadata.types';
-import { AdminHashtagFilterInput, CreateHashtagInput, UpdateHashtagInput } from './dto/hashtag.input';
-import { AdminHashtagListObject } from './types/hashtag.object';
-
-interface HashtagsResponse {
-  hashtags: HashtagObject[];
-}
-
-interface CreateHashtagResponse {
-  createHashtag: HashtagObject;
-}
-
-interface UpdateHashtagResponse {
-  updateHashtag: HashtagObject;
-}
-
-interface AdminHashtagsResponse {
-  adminHashtags: AdminHashtagListObject;
-}
+import { AdminHashtagFilterInput, CreateHashtagInput, HashtagFilterInput, UpdateHashtagInput } from './dto/hashtag.input';
+import { AdminHashtagListObject, HashtagObject, HashtagPageObject } from './types/hashtag.object';
+import { ADMIN_DELETE_HASHTAG_MUTATION, ADMIN_HASHTAGS_QUERY, CREATE_HASHTAG_MUTATION, HASHTAG_OPTIONS_QUERY, HASHTAGS_QUERY, UPDATE_HASHTAG_MUTATION } from './hashtag.queries';
+import { AdminHashtagsResponse, CreateHashtagResponse, HashtagOptionsResponse, HashtagsResponse, UpdateHashtagResponse } from './types/hashtag.types';
 
 @Injectable()
 export class HashtagGatewayService {
@@ -26,37 +11,34 @@ export class HashtagGatewayService {
     private readonly socialClient: SocialGraphqlClient,
   ) {}
 
-  async hashtags(): Promise<
-    HashtagObject[]
-  > {
-    const data = await this.socialClient.execute<HashtagsResponse>(
-        `
-        query Hashtags {
-          hashtags {
-            id
-            name
-          }
-        }
-        `,
+  async hashtags(): Promise<HashtagObject[]> {
+    const data = await this.socialClient.execute<HashtagsResponse>(HASHTAGS_QUERY );
+    return data.hashtags;
+  }
+
+  async hashtagOptions(
+    filter: HashtagFilterInput,
+    authorization?: string,
+  ): Promise<HashtagPageObject> {
+    const data =
+      await this.socialClient.execute<HashtagOptionsResponse>(
+        HASHTAG_OPTIONS_QUERY,
+        {
+          filter,
+        },
+        authorization,
       );
 
-    return data.hashtags;
+    return data.hashtagOptions;
   }
 
   async createHashtag(
     input: CreateHashtagInput,
-    authorization?: string): Promise<HashtagObject> {
-    const data = await this.socialClient.execute<CreateHashtagResponse>(
-        `
-        mutation CreateHashtag(
-          $input: CreateHashtagInput!
-        ) {
-          createHashtag(input: $input) {
-            id
-            name
-          }
-        }
-        `,
+    authorization?: string,
+  ): Promise<HashtagObject> {
+    const data =
+      await this.socialClient.execute<CreateHashtagResponse>(
+        CREATE_HASHTAG_MUTATION,
         { input },
         authorization,
       );
@@ -68,17 +50,9 @@ export class HashtagGatewayService {
     input: UpdateHashtagInput,
     authorization?: string,
   ): Promise<HashtagObject> {
-    const data = await this.socialClient.execute<UpdateHashtagResponse>(
-        `
-        mutation UpdateHashtag(
-          $input: UpdateHashtagInput!
-        ) {
-          updateHashtag(input: $input) {
-            id
-            name
-          }
-        }
-        `,
+    const data =
+      await this.socialClient.execute<UpdateHashtagResponse>(
+        UPDATE_HASHTAG_MUTATION,
         { input },
         authorization,
       );
@@ -86,48 +60,35 @@ export class HashtagGatewayService {
     return data.updateHashtag;
   }
 
-  async adminHashtags(input: AdminHashtagFilterInput, authorization?: string): Promise<AdminHashtagListObject> {
-    const data = await this.socialClient.execute<AdminHashtagsResponse>(
-        `
-        query AdminHashtags(
-          $filter: AdminHashtagFilterInput!
-) {
-          adminHashtags(filter: $filter) {
-            items {
-              id
-              name
-              postCount
-            }
-            total
-            page
-            limit
-            totalPages
-          }
-        }
-        `,
-        { filter: input },
+  async adminHashtags(
+    input: AdminHashtagFilterInput,
+    authorization?: string,
+  ): Promise<AdminHashtagListObject> {
+    const data =
+      await this.socialClient.execute<AdminHashtagsResponse>(
+        ADMIN_HASHTAGS_QUERY,
+        {
+          filter: input,
+        },
         authorization,
       );
 
     return data.adminHashtags;
   }
 
-  async adminDeleteHashtag( id: string, authorization?: string ): Promise<boolean> {
-    const data = await this.socialClient.execute<{
+  async adminDeleteHashtag(
+    id: string,
+    authorization?: string,
+  ): Promise<boolean> {
+    const data =
+      await this.socialClient.execute<{
         adminDeleteHashtag: boolean;
       }>(
-        `
-        mutation AdminDeleteHashtag(
-          $id: ID!
-        ) {
-          adminDeleteHashtag(id: $id)
-        }
-        `,
+        ADMIN_DELETE_HASHTAG_MUTATION,
         { id },
         authorization,
       );
 
     return data.adminDeleteHashtag;
   }
-  
 }

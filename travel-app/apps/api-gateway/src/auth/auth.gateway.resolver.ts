@@ -211,33 +211,6 @@ async register(@Args('input') input: GatewayRegisterInput, @Context() context: a
     return this.authGatewayService.resendVerifyEmail(email);
   }
 
-// async oauthLogin(
-//   input: any,
-//   authorization?: string,
-// ) {
-//   const result = await this.execute<{
-//     oauthLogin: {
-//       accessToken: string;
-//       refreshToken: string;
-//     };
-//   }>(
-//     `
-//     mutation OauthLogin($input: OauthLoginInput!) {
-//       oauthLogin(input: $input) {
-//         accessToken
-//         refreshToken
-//       }
-//     }
-//     `,
-//     {
-//       input,
-//     },
-//     authorization,
-//   );
-
-//   return result.oauthLogin;
-// }
-
 
   @Query(() => String)
   getMyProfile(
@@ -248,16 +221,17 @@ async register(@Args('input') input: GatewayRegisterInput, @Context() context: a
     );
   }
 
+
   @Mutation(() => Boolean)
-  changePassword(
-    @Args('input') input: GatewayChangePasswordInput,
-    @Context() context: any,
-  ) {
-    return this.authGatewayService.changePassword(
-      input,
-      context.req?.headers?.authorization,
-    );
-  }
+changePassword(
+  @Args('input') input: GatewayChangePasswordInput,
+  @Context() context: any,
+) {
+  return this.authGatewayService.changePassword(
+    input,
+    context.req?.headers?.authorization,
+  );
+}
 
   @Query(() => [GatewayLoginSession])
   getActiveSessions(

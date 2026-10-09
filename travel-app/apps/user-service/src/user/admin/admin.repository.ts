@@ -116,9 +116,6 @@ async getUserGrowth(
   startDate?: Date,
   endDate?: Date,
 ) {
-  // =========================
-  // ALL TIME
-  // =========================
   if (!startDate || !endDate) {
     const result =
       await this.prisma.$queryRaw<
@@ -142,9 +139,6 @@ async getUserGrowth(
     }));
   }
 
-  // =========================
-  // LIMITED PERIOD
-  // =========================
   const result =
     await this.prisma.$queryRaw<
       {
@@ -283,9 +277,6 @@ return result.map((item) => ({
 }));
   }
 
-  // =========================
-  // LIMITED PERIOD
-  // =========================
   const result =
     await this.prisma.$queryRaw<
       {

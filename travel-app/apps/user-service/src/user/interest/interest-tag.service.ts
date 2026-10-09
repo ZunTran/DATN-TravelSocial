@@ -140,15 +140,22 @@ export class InterestTagService {
   }
 
   async getSuggestedUsersByInterests(accountId: string) {
+
     const profile = await this.userProfileRepository.findByAccountId(accountId);
     if (!profile) throw new NotFoundException('Không tìm thấy profile của tài khoản này');
-
-    const myInterests = await this.repository.findByProfileId(profile.id);
-    const myInterestIds = myInterests.map((tag) => tag.id);
+    
+    const myInterests =await this.repository.findByProfileId(profile.id);
+    const myInterestIds = myInterests.map(
+      (tag) => tag.id,
+    );
 
     if (myInterestIds.length === 0) return [];
 
-    return this.repository.findUsersWithCommonInterests(profile.id, myInterestIds);
+    return this.repository.findUsersWithCommonInterests(
+      profile.id,
+      myInterestIds,
+      10
+    );
   }
 
   async getAllTagsPaginated( page: number, limit: number, search?: string) {

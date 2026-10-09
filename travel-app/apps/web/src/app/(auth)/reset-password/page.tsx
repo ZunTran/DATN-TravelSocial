@@ -6,7 +6,6 @@ export default function ExplorePage() {
         Reset pass
       </h1>
 
-      {/* <PostList /> */}
     </main>
   );
 }

@@ -2,7 +2,7 @@ import {  Injectable,  BadGatewayException,  NotFoundException} from '@nestjs/co
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
-import { UserProfileSnapshot } from './user-profile.types';
+import { UserProfilesBatchResponse, UserProfileSnapshot } from './user-profile.types';
 
 @Injectable()
 export class UserProfileClient {
@@ -12,25 +12,48 @@ export class UserProfileClient {
     private readonly http: HttpService,
   ) {}
 
-  async getByAccountId(
-  accountId: string,
-): Promise<UserProfileSnapshot> {
-  try {
-    const response = await firstValueFrom(
-      this.http.get<UserProfileSnapshot>(
-        `${this.baseUrl}/internal/user-profiles/account/${accountId}`,
-      ),
-    );
+  async getByAccountId( accountId: string): Promise<UserProfileSnapshot> {
+      try {
+        const response = await firstValueFrom(
+          this.http.get<UserProfileSnapshot>(
+            `${this.baseUrl}/internal/user-profiles/account/${accountId}`,
+          ),
+        );
 
-    return response.data;
-  } catch (error: any) {
-    if (error?.response?.status === 404) {
-      throw new NotFoundException('User profile not found');
+        return response.data;
+      } catch (error: any) {
+        if (error?.response?.status === 404) {
+          throw new NotFoundException('User profile not found');
+        }
+
+        throw new BadGatewayException(
+          'Unable to communicate with User Service',
+        );
+      }
     }
 
-    throw new BadGatewayException(
-      'Unable to communicate with User Service',
-    );
+
+   async getByProfileIds( profileIds: string[]): Promise<UserProfilesBatchResponse> {
+    if (!profileIds.length) 
+      return { items: []};
+    
+    try {
+      const response = await firstValueFrom(
+        this.http.post<UserProfilesBatchResponse>(
+          `${this.baseUrl}/internal/user-profiles/comment-ids`,
+          {
+            profileIds,
+          },
+        ),
+      );
+
+      return response.data;
+    } catch (error: any) {
+      throw new BadGatewayException(
+        'Unable to communicate with User Service',
+      );
+    }
   }
-}
+
+
 }

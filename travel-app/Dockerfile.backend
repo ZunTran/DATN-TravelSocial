@@ -1,26 +1,302 @@
-FROM node:22-alpine
+# FROM node:22-alpine
+
+# WORKDIR /apps
+
+# ARG APP_NAME
+# ENV APP_NAME=${APP_NAME}
+
+# COPY package.json package-lock.json ./
+
+# RUN npm install --include=optional --include=dev
+
+# COPY . .
+
+# ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+
+
+# RUN if [ "$APP_NAME" = "auth-service" ]; then \
+#       npx prisma generate --schema=apps/auth-service/prisma/schema.prisma; \
+#     elif [ "$APP_NAME" = "user-service" ]; then \
+#       npx prisma generate --schema=apps/user-service/prisma/schema.prisma; \
+#     elif [ "$APP_NAME" = "social-service" ]; then \
+#       npx prisma generate --schema=apps/social-service/prisma/schema.prisma; \
+#     elif [ "$APP_NAME" = "ai-service" ]; then \
+#       npx prisma generate --schema=apps/ai-service/prisma/schema.prisma; \
+#     fi
+
+# RUN npx nx build ${APP_NAME}
+
+# EXPOSE 3000
+
+# CMD ["sh", "-c", "node apps/${APP_NAME}/dist/main.js"]
+
+
+# # =========================================================
+# # BUILD STAGE
+# # =========================================================
+# FROM node:22-alpine AS builder
+
+# WORKDIR /apps
+
+# ARG APP_NAME
+# ENV APP_NAME=${APP_NAME}
+
+# # =========================================================
+# # 1. Install toàn bộ workspace dependencies
+# # =========================================================
+
+# # COPY package.json package-lock.json ./
+
+# COPY package.json package-lock.json .npmrc ./
+
+# # RUN --mount=type=cache,target=/root/.npm \
+# #     npm ci \
+# #       --include=dev \
+# #       --include=optional \
+# #       --fetch-retries=5 \
+# #       --fetch-retry-mintimeout=20000 \
+# #       --fetch-retry-maxtimeout=120000
+
+# # RUN --mount=type=cache,target=/root/.npm \
+# #     npm ci --include=dev --no-audit --no-fund
+
+# RUN npm ci --include=dev --no-audit --no-fund
+
+# # =========================================================
+# # 2. Copy source code
+# # =========================================================
+# COPY . .
+
+# # =========================================================
+# # 3. Dummy DATABASE_URL
+# #    Chỉ để Prisma generate ở BUILD TIME
+# # =========================================================
+# ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+
+# # =========================================================
+# # 4. Generate Prisma Client
+# #
+# #    api-gateway KHÔNG dùng Prisma
+# # =========================================================
+# RUN if [ "$APP_NAME" = "auth-service" ]; then \
+#       npx prisma generate \
+#         --schema=apps/auth-service/prisma/schema.prisma; \
+#     elif [ "$APP_NAME" = "user-service" ]; then \
+#       npx prisma generate \
+#         --schema=apps/user-service/prisma/schema.prisma; \
+#     elif [ "$APP_NAME" = "social-service" ]; then \
+#       npx prisma generate \
+#         --schema=apps/social-service/prisma/schema.prisma; \
+#     elif [ "$APP_NAME" = "ai-service" ]; then \
+#       npx prisma generate \
+#         --schema=apps/ai-service/prisma/schema.prisma; \
+#     fi
+
+# # api-gateway không generate Prisma,
+# # nhưng tạo thư mục để COPY ở runtime không bị lỗi
+# RUN mkdir -p /apps/node_modules/.prisma
+
+# # =========================================================
+# # 5. Build service
+# # =========================================================
+# RUN npx nx build ${APP_NAME}
+
+# # =========================================================
+# # 6. Prune dependencies theo từng service
+# # =========================================================
+# RUN npx nx run ${APP_NAME}:prune
+
+
+# # =========================================================
+# # RUNTIME STAGE
+# # =========================================================
+# FROM node:22-alpine AS runner
+
+# WORKDIR /app
+
+# ARG APP_NAME
+# ENV APP_NAME=${APP_NAME}
+# ENV NODE_ENV=production
+
+# # =========================================================
+# # 7. Lấy package.json + package-lock.json ĐÃ PRUNE
+# #
+# #    Đây là dependency RIÊNG của service
+# # =========================================================
+
+# # COPY --from=builder \
+# #     /apps/apps/${APP_NAME}/dist/package.json \
+# #     ./package.json
+
+# # COPY --from=builder \
+# #     /apps/apps/${APP_NAME}/dist/package-lock.json \
+# #     ./package-lock.json
+# COPY --from=builder \
+#     /apps/apps/${APP_NAME}/dist/package.json \
+#     ./package.json
+
+# COPY --from=builder \
+#     /apps/apps/${APP_NAME}/dist/package-lock.json \
+#     ./package-lock.json
+
+# COPY --from=builder \
+#     /apps/.npmrc \
+#     ./.npmrc
+
+# # =========================================================
+# # 8. Chỉ install production dependencies
+# # =========================================================
+# RUN --mount=type=cache,target=/root/.npm \
+#     npm ci \
+#       --omit=dev \
+#       --fetch-retries=10 \
+#       --fetch-retry-mintimeout=30000 \
+#       --fetch-retry-maxtimeout=180000 \
+#       --fetch-timeout=600000
+
+# # =========================================================
+# # 9. Copy Prisma Client runtime
+# #
+# #    Chỉ service có Prisma mới thực sự có nội dung ở đây.
+# #    api-gateway sẽ copy thư mục rỗng.
+# # =========================================================
+# COPY --from=builder \
+#     /apps/node_modules/.prisma \
+#     /app/node_modules/.prisma
+
+# # =========================================================
+# # 10. Copy deployment output đã build/prune
+# # =========================================================
+# COPY --from=builder \
+#     /apps/apps/${APP_NAME}/dist/ \
+#     ./
+
+# # =========================================================
+# # 11. Port
+# # =========================================================
+# EXPOSE 3000
+
+# # =========================================================
+# # 12. Start
+# # =========================================================
+# CMD ["node", "main.js"]
+
+
+
+# =========================================================
+# BUILD STAGE
+# =========================================================
+FROM node:22-alpine AS builder
 
 WORKDIR /apps
 
 ARG APP_NAME
 ENV APP_NAME=${APP_NAME}
 
-COPY package.json package-lock.json ./
+# =========================================================
+# 1. Install toàn bộ workspace dependencies
+# =========================================================
+COPY package.json package-lock.json .npmrc ./
 
-RUN npm install --include=optional --include=dev
+RUN npm ci --include=dev --no-audit --no-fund
 
+# =========================================================
+# 2. Copy source code
+# =========================================================
 COPY . .
 
+# =========================================================
+# 3. Dummy DATABASE_URL
+#    Chỉ dùng cho Prisma generate ở BUILD TIME
+# =========================================================
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+
+# =========================================================
+# 4. Generate Prisma Client
+# =========================================================
 RUN if [ "$APP_NAME" = "auth-service" ]; then \
-      npx prisma generate --schema=apps/auth-service/prisma/schema.prisma; \
+      npx prisma generate \
+        --schema=apps/auth-service/prisma/schema.prisma; \
     elif [ "$APP_NAME" = "user-service" ]; then \
-      npx prisma generate --schema=apps/user-service/prisma/schema.prisma; \
+      npx prisma generate \
+        --schema=apps/user-service/prisma/schema.prisma; \
     elif [ "$APP_NAME" = "social-service" ]; then \
-      npx prisma generate --schema=apps/social-service/prisma/schema.prisma; \
+      npx prisma generate \
+        --schema=apps/social-service/prisma/schema.prisma; \
+    elif [ "$APP_NAME" = "ai-service" ]; then \
+      npx prisma generate \
+        --schema=apps/ai-service/prisma/schema.prisma; \
     fi
 
+# api-gateway không dùng Prisma
+# Tạo thư mục để runtime COPY không bị lỗi
+RUN mkdir -p /apps/node_modules/.prisma
+
+# =========================================================
+# 5. Build service
+# =========================================================
 RUN npx nx build ${APP_NAME}
 
+# =========================================================
+# 6. Prune dependencies theo từng service
+# =========================================================
+RUN npx nx run ${APP_NAME}:prune
+
+
+# =========================================================
+# RUNTIME STAGE
+# =========================================================
+FROM node:22-alpine AS runner
+
+WORKDIR /app
+
+ARG APP_NAME
+ENV APP_NAME=${APP_NAME}
+ENV NODE_ENV=production
+
+# =========================================================
+# 7. Copy package.json + package-lock.json đã prune
+# =========================================================
+COPY --from=builder \
+    /apps/apps/${APP_NAME}/dist/package.json \
+    ./package.json
+
+COPY --from=builder \
+    /apps/apps/${APP_NAME}/dist/package-lock.json \
+    ./package-lock.json
+
+# Copy .npmrc để giữ legacy-peer-deps=true
+COPY --from=builder \
+    /apps/.npmrc \
+    ./.npmrc
+
+# =========================================================
+# 8. Install production dependencies
+#
+#    KHÔNG dùng npm cache mount để tránh lỗi npm concurrency
+# =========================================================
+RUN npm ci --omit=dev --no-audit --no-fund
+
+# =========================================================
+# 9. Copy Prisma Client runtime
+# =========================================================
+COPY --from=builder \
+    /apps/node_modules/.prisma \
+    /app/node_modules/.prisma
+
+# =========================================================
+# 10. Copy deployment output
+# =========================================================
+COPY --from=builder \
+    /apps/apps/${APP_NAME}/dist/ \
+    ./
+
+# =========================================================
+# 11. Port
+# =========================================================
 EXPOSE 3000
 
-CMD ["sh", "-c", "node apps/${APP_NAME}/dist/main.js"]
+# =========================================================
+# 12. Start
+# =========================================================
+CMD ["node", "main.js"]

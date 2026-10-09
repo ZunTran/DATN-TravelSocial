@@ -1,11 +1,11 @@
-import { Field, ID, ObjectType, registerEnumType } from '@nestjs/graphql';
+import { Field, GraphQLISODateTime, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
 import {
   gender_type,
   user_privacy
 } from '@prisma/client';
 
 registerEnumType(gender_type, {
-  name: 'GenderType', // Tên sẽ hiển thị trên GraphQL Schema
+  name: 'GenderType', 
 });
 
 registerEnumType(user_privacy, {
@@ -36,8 +36,7 @@ export class UserProfileObject {
   @Field(() => gender_type, { nullable: true })
   gender?: gender_type;
 
-  @Field({ nullable: true })
-  birthday?: Date;
+
 
   @Field({ nullable: true })
   location?: string;
@@ -48,9 +47,15 @@ export class UserProfileObject {
   @Field()
   isCompleted: boolean;
 
-  @Field()
+  @Field(() => GraphQLISODateTime, { nullable: true })
+  birthday?: Date | null;
+
+  @Field(() => GraphQLISODateTime)
   created_at: Date;
 
-  @Field()
+  @Field(() => GraphQLISODateTime)
   updated_at: Date;
+
+  @Field(() => Int, { nullable: true }) 
+  commonInterestsCount?: number;
 }

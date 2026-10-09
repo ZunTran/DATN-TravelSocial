@@ -33,3 +33,9 @@ export const REFRESH_TOKEN_MUTATION = gql`
     }
   }
 `;
+
+export const CHANGE_PASSWORD_MUTATION = gql`
+  mutation ChangePassword($input: GatewayChangePasswordInput!) {
+    changePassword(input: $input)
+  }
+`;

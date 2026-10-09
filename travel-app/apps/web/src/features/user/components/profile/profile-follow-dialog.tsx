@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { FollowUser } from "../../types/follow";
+import { FollowUser } from "../../user-interact/types/follow";
 
 interface ProfileFollowDialogProps {
   open: boolean;

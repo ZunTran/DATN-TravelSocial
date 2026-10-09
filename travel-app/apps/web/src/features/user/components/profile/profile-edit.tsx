@@ -2,42 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-
-import {
-  ArrowLeft,
-  Save,
-} from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-
 import { Textarea } from '@/components/ui/textarea';
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-
-import type { UserProfile } from '../../types/profile';
-
-import { useUpdateProfile } from '../../hooks/use-update-profile';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { UserProfile } from '../../user-profile/types/profile';
+import { useUpdateProfile } from '../../user-profile/hooks/use-update-profile';
 
 interface ProfileEditProps {
   profile: UserProfile;
-
   onCancel?: () => void;
-
   onSuccess?: (
     profile: UserProfile,
   ) => void;
@@ -160,13 +137,12 @@ export default function ProfileEdit({
 
       onSuccess?.(updatedProfile);
     } catch {
-      // Error được expose qua useUpdateProfile()
+
     }
   };
 
   return (
     <Card className="rounded-2xl">
-      {/* HEADER */}
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <div>
           <CardTitle className="text-lg">
@@ -314,7 +290,6 @@ export default function ProfileEdit({
             />
           </div>
 
-          {/* PRIVACY */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
               Privacy

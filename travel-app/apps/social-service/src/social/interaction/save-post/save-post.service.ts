@@ -12,37 +12,47 @@ export class SavePostService {
     private readonly repository: SavePostRepository,
     private readonly userProfileClient: UserProfileClient,
   private readonly likeService: LikeService,
+  // private readonly savePostSerivce: SavePostService,
   ) {}
 
-  private async attachInteractionStatus(
-  accountId: string,
+private async attachInteractionStatus(
+  profileId: string,
   posts: any[],
 ) {
-  if (posts.length === 0) {
-    return posts;
-  }
+  if (posts.length === 0) return posts;
 
-  const postIds = posts.map(
-    (post) => post.id,
+  const result = await Promise.all(
+    posts.map(async (post) => {
+      const [isPostLiked, isPostSaved] = await Promise.all([
+        this.likeService.isLikedByProfileId(profileId, post.id),
+        this.isSavedByProfileId(profileId, post.id),
+      ]);
+
+      return {
+        ...post,
+        isPostLiked: Boolean(isPostLiked),
+        isPostSaved: Boolean(isPostSaved),
+      };
+    }),
   );
 
-  const [likedPostIds, savedPostIds] =
-    await Promise.all([
-      this.likeService.getLikedPostIds(
-        accountId,
-        postIds,
-      ),
-      this.getSavedPostIds(
-        accountId,
-        postIds,
-      ),
-    ]);
+  return result;
+}
 
-  return posts.map((post) => ({
-    ...post,
-    isPostLiked: likedPostIds.has(post.id),
-    isPostSaved: savedPostIds.has(post.id),
-  }));
+private async isSavedByProfileId(
+  profileId: string,
+  postId: string,
+): Promise<boolean> {
+  const saved = await this.prisma.save_post.findUnique({
+    where: {
+      post_id_user_id: {
+        post_id: postId,
+        user_id: profileId,
+      },
+    },
+  });
+
+  return !!saved;
 }
 
   async save( postId: string, accountId: string, ) {
@@ -165,16 +175,13 @@ export class SavePostService {
     );
   }
 
+
 async getSavedPosts(
+  profileId: string,
   accountId: string,
   page = 1,
   limit = 10,
 ) {
-  const profile =
-    await this.userProfileClient.getByAccountId(accountId);
-
-  const profileId = profile.profileId;
-
   const skip = (page - 1) * limit;
 
   const [posts, total] = await Promise.all([
@@ -188,18 +195,21 @@ async getSavedPosts(
     ),
   ]);
 
-  const postsWithInteraction =
-    await this.attachInteractionStatus(
-      accountId,
-      posts,
-    );
+  const postsWithInteraction = await this.attachInteractionStatus(
+    profileId,
+    posts,
+  );
+
+  const totalPages = Math.ceil(total / limit);
 
   return {
     items: postsWithInteraction,
     total,
     page,
     limit,
-    totalPages: Math.ceil(total / limit),
+    totalPages,
+    hasNextPage: page < totalPages,
   };
 }
+
 }

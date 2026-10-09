@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -100,17 +101,35 @@ export class FollowRepository {
     }});
 }
 
-  async findFollowingIds(profileId: string) {
-    return this.prisma.follow.findMany({
+  async findFollowingIds(
+  profileId: string,
+): Promise<{ following_id: string }[]> {
+  return this.prisma.follow.findMany({
+    where: {
+      follower_id: profileId,
+    },
+    select: {
+      following_id: true,
+    },
+  });
+}
+
+async findFollowerIds(
+  followingId: string,
+): Promise<string[]> {
+  const rows =
+    await this.prisma.follow.findMany({
       where: {
-        follower_id: profileId,
+        following_id: followingId,
       },
+
       select: {
-        following_id: true,
-      },
-      orderBy: {
-        created_at: 'desc',
+        follower_id: true,
       },
     });
-  }
+
+  return rows.map(
+    (row) => row.follower_id,
+  );
+}
 }

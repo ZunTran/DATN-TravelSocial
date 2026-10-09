@@ -1,4 +1,4 @@
-import type { InterestTag } from "../../types/interest";
+import type { InterestTag } from "../../user-interest/types/interest";
 
 interface ProfileInterestsProps {
   interests: InterestTag[];

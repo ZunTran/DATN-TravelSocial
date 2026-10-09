@@ -67,20 +67,22 @@ export class UserProfileResolver {
     return this.service.checkUsername(username);
   }
 
- @Query(() => UserProfilePageObject) 
-@UseGuards(JwtAuthGuard)
-async searchUsers(@Args('input') input: SearchUserInput) {
-  return this.service.searchUsers(input);
-}
+  @Query(() => UserProfilePageObject)
+  @UseGuards(JwtAuthGuard)
+  async searchUsers(@CurrentUser() user: ActiveUserData, @Args('input') input: SearchUserInput) {
+    return this.service.searchUsers(
+      user.accountId,
+      input,
+    );
+  }
 
-@UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Mutation(() => UserProfileObject)
   async updateProfileWithFiles(
     @CurrentUser() user: ActiveUserData,
     @Args('input') input: UpdateProfileInput,
     @Args({ name: 'avatar', type: () => GraphQLUpload, nullable: true }) avatar?: FileUpload,
-    @Args({ name: 'cover', type: () => GraphQLUpload, nullable: true }) cover?: FileUpload,
-  ) {
+    @Args({ name: 'cover', type: () => GraphQLUpload, nullable: true }) cover?: FileUpload) {
     return this.service.updateProfileWithFiles(user.accountId, input, avatar, cover);
   }
 

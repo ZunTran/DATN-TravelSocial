@@ -149,17 +149,9 @@ export function useAdminLocations() {
     DELETE_LOCATION_MUTATION,
   );
 
-  const adminLocations =
-    data?.adminLocations;
+  const adminLocations = data?.adminLocations;
+  const locations =  adminLocations?.items ?? [];
 
-  const locations =
-    adminLocations?.items ?? [];
-
-  /**
-   * Debounce search.
-   *
-   * Hook không đổi page ngay khi user đang gõ.
-   */
   const [
     pendingSearch,
     setPendingSearch,

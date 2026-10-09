@@ -7,19 +7,18 @@ import {
 
 import {
   useProfile,
-} from "@/features/user/hooks/use-profile";
-
+} from "@/features/user/user-profile/hooks/use-profile";
 
 
 import {
   usePosts,
 } from "@/features/social/hooks/use-posts";
-import { useFollowList } from "@/features/user/hooks/use-follow-list";
-import { useFollowCounts } from "@/features/user/hooks/use-follow-counts";
-import { useInterests } from "@/features/user/hooks/use-interests";
+import { useFollowList } from "@/features/user/user-interact/hooks/use-follow-list";
+import { useFollowCounts } from "@/features/user/user-interact/hooks/use-follow-counts";
+import { useInterests } from "@/features/user/user-interest/hooks/use-interests";
 import { useRouter } from "next/navigation";
-import { FollowUser } from "@/features/user/types/follow";
-import { useUpdateAvatar } from "@/features/user/hooks/use-update-avatar";
+import { useUpdateAvatar } from "@/features/user/user-profile/hooks/use-update-avatar";
+import { FollowUser } from "@/features/user/user-interact/types/follow";
 
 export default function ProfileRoute() {
 
@@ -51,9 +50,8 @@ const {
   loadingMore: postsLoadingMore,
   hasMore,
   loadMore,
+  reloadPosts,
   prependPost,
-  replacePost,
-  removePost,
 } = usePosts(
   1,
   3,
@@ -63,7 +61,6 @@ const {
       }
     : undefined,
 );
-
 const {
   followers,
   following,
@@ -197,7 +194,9 @@ const handleFollowingClick = () => {
   stories={[]}
 
   posts={posts ?? []}
+
   onPostCreated={prependPost}
+  onPostDeleted={() => void reloadPosts()}
 
   savedPosts={[]}
 
@@ -210,24 +209,19 @@ const handleFollowingClick = () => {
   hasMorePosts={ hasMore}
   onLoadMorePosts={loadMore}
 
-  followers={followers}
+   followers={followers}
   following={following}
-
   followersLoading={followersLoading}
   followingLoading={followingLoading}
-
   followersLoadingMore={followersLoadingMore}
   followingLoadingMore={followingLoadingMore}
-
   followersHasMore={followersHasMore}
   followingHasMore={followingHasMore}
-
   onFollowersClick={handleFollowersClick}
   onFollowingClick={handleFollowingClick}
-  onLoadMoreFollowers={ loadMoreFollowers}
+  onLoadMoreFollowers={loadMoreFollowers}
   onLoadMoreFollowing={loadMoreFollowing}
-
-  onUserClick={ handleUserClick }
+  onUserClick={handleUserClick}
 />
     </div>
   );

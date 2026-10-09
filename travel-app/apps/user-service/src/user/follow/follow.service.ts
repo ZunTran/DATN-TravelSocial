@@ -1,17 +1,17 @@
 import {ConflictException,Injectable,NotFoundException,} from '@nestjs/common';
 import { FollowRepository } from './follow.repository';
 import { UserProfileRepository } from '../user-profile/user-profile.repository';
-import { NotificationRepository } from '../notification/notification.repository';
 import { BlockRepository } from '../block/block.repository';
 import { TransactionService } from '../../prisma/transaction.service';
+import { NotificationService } from '../notification/notification.service';
 @Injectable()
 export class FollowService {
   constructor(
     private readonly repository: FollowRepository,
     private readonly userProfileRepository: UserProfileRepository,
     private readonly blockRepository: BlockRepository,
-    private readonly notificationRepository: NotificationRepository,
     private readonly transactionService: TransactionService,
+    private readonly notificationService:NotificationService
   ) {}
 
   async follow(accountId: string, targetProfileId: string) {
@@ -29,25 +29,20 @@ export class FollowService {
     const existed = await this.repository.find(profile.id,targetProfileId);
     if (existed) throw new ConflictException('Đã follow người dùng này');
     
-     return this.transactionService.run(async (tx) => {
-
-      const follow =await this.repository.create(
+     return this.transactionService.run(
+  async (tx) => {
+    const follow =
+      await this.repository.create(
         profile.id,
         targetProfileId,
         tx,
       );
 
-      await this.notificationRepository.create({
-        receiver: {connect: {id: targetProfileId}},
-        sender: {connect: {id: profile.id}},
-        type: 'NEW_FOLLOWER',
-        message: `${profile.display_name} đã follow bạn`
-      },
-      tx,
-    );
+    await this.notificationService.createNewFollowerNotification(profile.id,targetProfileId,profile.display_name,tx);
 
     return follow;
-    });
+  },
+);
   }
 
   async unfollow(accountId: string, targetProfileId: string) {
@@ -116,5 +111,7 @@ export class FollowService {
     (follow) => follow.following_id,
   );
 }
+
+
 
 }

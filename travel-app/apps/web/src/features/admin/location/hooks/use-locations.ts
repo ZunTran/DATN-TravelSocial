@@ -209,23 +209,13 @@ export function useLocations() {
 
   const clear = useCallback(() => {
     searchRef.current = '';
-
     pageRef.current = 1;
-
     setKeyword('');
-
     setLocations([]);
-
     setPage(1);
-
     setHasNextPage(true);
   }, []);
 
-  /**
-   * Initial load + debounce search.
-   *
-   * Không cần firstRenderRef nữa.
-   */
   useEffect(() => {
     const timer =
       setTimeout(() => {
@@ -234,7 +224,7 @@ export function useLocations() {
           page: 1,
           reset: true,
         });
-      }, keyword ? 400 : 0);
+      }, keyword ? 700 : 0);
 
     return () => {
       clearTimeout(timer);

@@ -77,9 +77,6 @@ export class TravelPlanItemService {
     return profile.profileId;
   }
 
-  /**
-   * Kiểm tra travel plan có thuộc current user không.
-   */
   private async ensureTravelPlanOwner(
     travelPlanId: string,
     userId: string,

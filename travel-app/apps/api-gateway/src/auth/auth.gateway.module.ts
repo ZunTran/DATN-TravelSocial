@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { AuthGatewayResolver } from './auth.gateway.resolver';
 import { AuthGatewayService } from './auth.gateway.service';
+import { UserGraphqlClient } from '../user/clients/user-graphql-client';
 
 @Module({
   imports: [
@@ -11,6 +12,8 @@ import { AuthGatewayService } from './auth.gateway.service';
   providers: [
     AuthGatewayResolver,
     AuthGatewayService,
+    UserGraphqlClient
+
   ],
 
   exports: [

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { SocialGraphqlClient } from '../../clients/social-graphql.client';
 import { GatewayCategoryObject, GatewayCategoryPageObject} from './types/category.types';
 import { CategoryFilterInput, CreateCategoryInput, UpdateCategoryInput } from './dto/category.input';
+import { ADMIN_CREATE_CATEGORY_MUTATION, ADMIN_DELETE_CATEGORY_MUTATION, ADMIN_UPDATE_CATEGORY_MUTATION, CATEGORIES_QUERY, CATEGORY_OPTIONS_QUERY } from './category.queries';
 
 interface CategoryPageResponse {
   categoryOptions: GatewayCategoryPageObject;
@@ -29,58 +30,19 @@ export class CategoryGatewayService {
     private readonly socialClient: SocialGraphqlClient,
   ) {}
 
-  /**
-   * Category dùng cho Create/Edit Post.
-   * Có pagination + search.
-   */
-  async categoryOptions(
-    filter: CategoryFilterInput,
-  ): Promise<GatewayCategoryPageObject> {
-    const data =
-      await this.socialClient.execute<CategoryPageResponse>(
-        `
-        query CategoryOptions(
-          $filter: CategoryFilterInput
-        ) {
-          categoryOptions(filter: $filter) {
-            items {
-              id
-              name
-              description
-            }
-            total
-            page
-            limit
-            totalPages
-            hasNextPage
-          }
-        }
-        `,
-        {
-          filter,
-        },
-      );
+async categoryOptions( filter: CategoryFilterInput, authorization?: string): Promise<GatewayCategoryPageObject> {
+  const data = await this.socialClient.execute<CategoryPageResponse>(
+      CATEGORY_OPTIONS_QUERY,
+      { filter },
+      authorization,
+    );
 
-    return data.categoryOptions;
-  }
+  return data.categoryOptions;
+}
+  //API cũ.
 
-  /**
-   * API cũ.
-   */
   async categories(): Promise<GatewayCategoryObject[]> {
-    const data =
-      await this.socialClient.execute<CategoriesResponse>(
-        `
-        query Categories {
-          categories {
-            id
-            name
-            description
-          }
-        }
-        `,
-      );
-
+    const data = await this.socialClient.execute<CategoriesResponse>(CATEGORIES_QUERY,);
     return data.categories;
   }
 
@@ -90,17 +52,7 @@ export class CategoryGatewayService {
   ): Promise<GatewayCategoryObject> {
     const data =
       await this.socialClient.execute<CreateCategoryResponse>(
-        `
-        mutation CreateCategory(
-          $input: CreateCategoryInput!
-        ) {
-          createCategory(input: $input) {
-            id
-            name
-            description
-          }
-        }
-        `,
+        ADMIN_CREATE_CATEGORY_MUTATION,
         { input },
         authorization,
       );
@@ -114,17 +66,7 @@ export class CategoryGatewayService {
   ): Promise<GatewayCategoryObject> {
     const data =
       await this.socialClient.execute<UpdateCategoryResponse>(
-        `
-        mutation UpdateCategory(
-          $input: UpdateCategoryInput!
-        ) {
-          updateCategory(input: $input) {
-            id
-            name
-            description
-          }
-        }
-        `,
+        ADMIN_UPDATE_CATEGORY_MUTATION,
         {
           input,
         },
@@ -140,13 +82,7 @@ export class CategoryGatewayService {
   ): Promise<boolean> {
     const data =
       await this.socialClient.execute<DeleteCategoryResponse>(
-        `
-        mutation DeleteCategory(
-          $id: ID!
-        ) {
-          deleteCategory(id: $id)
-        }
-        `,
+        ADMIN_DELETE_CATEGORY_MUTATION,
         {
           id,
         },

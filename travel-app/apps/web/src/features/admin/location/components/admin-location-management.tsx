@@ -119,7 +119,7 @@ export function AdminLocationManagement() {
         > + Thêm địa điểm </button>
       </div>
 
-      {/* FILTER */}
+
       <div className="grid gap-3 md:grid-cols-2">
         <input
           value={search}
@@ -130,14 +130,6 @@ export function AdminLocationManagement() {
           className="rounded-md border bg-background px-3 py-2 text-sm"
         />
 
-        {/* <input
-          value={province}
-          onChange={(event) =>
-            setProvince(event.target.value)
-          }
-          placeholder="Lọc theo tỉnh/thành..."
-          className="rounded-md border bg-background px-3 py-2 text-sm"
-        /> */}
       </div>
 
       <LocationTable
