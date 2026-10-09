@@ -53,3 +53,5 @@ test-output
 
 .env
 .env.docker
+
+.env.docker
