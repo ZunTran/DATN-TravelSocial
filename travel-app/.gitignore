@@ -55,3 +55,5 @@ test-output
 .env.docker
 
 .env.docker
+
+travel_db.dump

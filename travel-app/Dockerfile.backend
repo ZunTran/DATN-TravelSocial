@@ -181,11 +181,6 @@
 # # =========================================================
 # CMD ["node", "main.js"]
 
-
-
-# =========================================================
-# BUILD STAGE
-# =========================================================
 FROM node:22-alpine AS builder
 
 WORKDIR /apps
@@ -193,27 +188,13 @@ WORKDIR /apps
 ARG APP_NAME
 ENV APP_NAME=${APP_NAME}
 
-# =========================================================
-# 1. Install toàn bộ workspace dependencies
-# =========================================================
 COPY package.json package-lock.json .npmrc ./
-
 RUN npm ci --include=dev --no-audit --no-fund
 
-# =========================================================
-# 2. Copy source code
-# =========================================================
 COPY . .
 
-# =========================================================
-# 3. Dummy DATABASE_URL
-#    Chỉ dùng cho Prisma generate ở BUILD TIME
-# =========================================================
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
-# =========================================================
-# 4. Generate Prisma Client
-# =========================================================
 RUN if [ "$APP_NAME" = "auth-service" ]; then \
       npx prisma generate \
         --schema=apps/auth-service/prisma/schema.prisma; \
@@ -228,24 +209,15 @@ RUN if [ "$APP_NAME" = "auth-service" ]; then \
         --schema=apps/ai-service/prisma/schema.prisma; \
     fi
 
-# api-gateway không dùng Prisma
-# Tạo thư mục để runtime COPY không bị lỗi
+
 RUN mkdir -p /apps/node_modules/.prisma
 
-# =========================================================
-# 5. Build service
-# =========================================================
+
 RUN npx nx build ${APP_NAME}
 
-# =========================================================
-# 6. Prune dependencies theo từng service
-# =========================================================
 RUN npx nx run ${APP_NAME}:prune
 
 
-# =========================================================
-# RUNTIME STAGE
-# =========================================================
 FROM node:22-alpine AS runner
 
 WORKDIR /app
@@ -254,9 +226,6 @@ ARG APP_NAME
 ENV APP_NAME=${APP_NAME}
 ENV NODE_ENV=production
 
-# =========================================================
-# 7. Copy package.json + package-lock.json đã prune
-# =========================================================
 COPY --from=builder \
     /apps/apps/${APP_NAME}/dist/package.json \
     ./package.json
@@ -265,38 +234,25 @@ COPY --from=builder \
     /apps/apps/${APP_NAME}/dist/package-lock.json \
     ./package-lock.json
 
-# Copy .npmrc để giữ legacy-peer-deps=true
+
 COPY --from=builder \
     /apps/.npmrc \
     ./.npmrc
 
-# =========================================================
-# 8. Install production dependencies
-#
-#    KHÔNG dùng npm cache mount để tránh lỗi npm concurrency
-# =========================================================
+
 RUN npm ci --omit=dev --no-audit --no-fund
 
-# =========================================================
-# 9. Copy Prisma Client runtime
-# =========================================================
+
 COPY --from=builder \
     /apps/node_modules/.prisma \
     /app/node_modules/.prisma
 
-# =========================================================
-# 10. Copy deployment output
-# =========================================================
+
 COPY --from=builder \
     /apps/apps/${APP_NAME}/dist/ \
     ./
 
-# =========================================================
-# 11. Port
-# =========================================================
+
 EXPOSE 3000
 
-# =========================================================
-# 12. Start
-# =========================================================
 CMD ["node", "main.js"]
