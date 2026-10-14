@@ -16,10 +16,12 @@ async function bootstrap() {
   );
   
 app.enableCors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: [
+    process.env.FRONTEND_URL || 'http://localhost:3000',
+    'https://datn-travel-social.vercel.app',
+  ],
   credentials: true,
 });
-
   const port = process.env.PORT || 4000;
   await app.listen(port, '0.0.0.0');
 
