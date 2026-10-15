@@ -15,8 +15,8 @@ import { EventsModule } from './common/events/event.module';
       driver: ApolloDriver,
       autoSchemaFile: true,
       sortSchema: true,
-
-      introspection: true, 
+      playground: true,
+      introspection: true,
     }),
 
     PrismaModule,
