@@ -18,7 +18,8 @@ import { UserRegisteredConsumer } from './common/events/user-registered.consumer
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
-      playground: true, 
+      playground: true,
+      introspection: true
     }),
     
     UserModule,
