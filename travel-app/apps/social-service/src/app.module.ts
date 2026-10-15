@@ -8,12 +8,12 @@ import { SocialModule } from './social/social.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
 
-    GraphQLModule.forRoot<ApolloDriverConfig>({
+      GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: true,
       sortSchema: true,
+      playground: true,
       introspection: true,
-
       csrfPrevention: true,
     }),
 

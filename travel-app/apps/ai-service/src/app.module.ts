@@ -15,6 +15,7 @@ import { LlmModule } from './llm/llm.module';
       driver: ApolloDriver,
       autoSchemaFile: true,
       sortSchema: true,
+      playground: true,
       introspection: true,
       csrfPrevention: true,
     }),
